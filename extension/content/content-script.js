@@ -25,7 +25,9 @@
     maxLength: 500,
     debounceMs: 1500,
     onFlush: (text) => {
-      analyzeText(text, platform);
+      analyzeText(text, platform).catch((error) => {
+        console.warn("[PlanWise] analyzeText failed:", error);
+      });
     }
   });
 
@@ -51,7 +53,7 @@
   console.log("[PlanWise] Monitoring active on", platform.name);
 })();
 
-function analyzeText(text, platform) {
+async function analyzeText(text, platform) {
   const result = window.PlanWiseEngine.analyzeIntent(text);
 
   console.log(
@@ -60,16 +62,18 @@ function analyzeText(text, platform) {
   );
 
   if (result.triggered) {
-    console.log("[PlanWise] Plan detected! Notifying background...");
+    const settings = await window.PlanWiseStorage.getSettings();
+    const event = window.PlanWiseExtractor.extractEvent(text, settings.contacts);
+    const pending = await window.PlanWiseStorage.enqueuePendingEvent(event);
+
+    console.log("[PlanWise] Plan detected and queued:", pending);
+
     chrome.runtime.sendMessage({
       type: "PLAN_DETECTED",
       payload: {
-        text: result.text,
-        score: result.score,
-        intent: result.intent,
-        matches: result.matches,
-        platform: platform.name,
-        timestamp: Date.now()
+        id: pending.id,
+        event,
+        platform: platform.name
       }
     });
   }

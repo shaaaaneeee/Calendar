@@ -27,8 +27,10 @@
         "https://mail.google.com/*"
       ],
       "js": [
+        "utils/storage.js",
         "detection/rules.js",
         "detection/engine.js",
+        "detection/extractor.js",
         "content/text-buffer.js",
         "content/dom-observer.js",
         "content/content-script.js"
