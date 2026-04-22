@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "PlanWise",
+  "version": "0.1.0",
+  "description": "Automatically detect plans in conversations and add them to your calendar.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://web.whatsapp.com/*",
+    "https://discord.com/*",
+    "https://web.telegram.org/*",
+    "https://mail.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://web.whatsapp.com/*",
+        "https://discord.com/*",
+        "https://web.telegram.org/*",
+        "https://mail.google.com/*"
+      ],
+      "js": [
+        "detection/rules.js",
+        "detection/engine.js",
+        "content/text-buffer.js",
+        "content/dom-observer.js",
+        "content/content-script.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "PlanWise"
+  }
+}
