@@ -189,3 +189,22 @@ body {
   text-align: center;
   margin-top: 2px;
 }
+
+/* ── Dashboard link ──────────────────────────────── */
+
+.dashboard-link {
+  text-align: center;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #2d2d4e;
+}
+
+.dashboard-link a {
+  font-size: 11px;
+  color: #a29bfe;
+  text-decoration: none;
+}
+
+.dashboard-link a:hover {
+  text-decoration: underline;
+}

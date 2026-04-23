@@ -233,5 +233,9 @@ el("btn-signin").addEventListener("click", handleSignIn);
 el("btn-signup").addEventListener("click", handleSignUp);
 el("btn-yes").addEventListener("click", handleYes);
 el("btn-no").addEventListener("click", handleNo);
+el("btn-dashboard").addEventListener("click", (e) => {
+  e.preventDefault();
+  chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html") });
+});
 
 init();

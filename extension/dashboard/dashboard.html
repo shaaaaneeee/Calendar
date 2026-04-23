@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PlanWise — Calendar</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-logo">PlanWise</div>
+
+      <div class="mini-today">
+        <div class="mini-today-label">Today</div>
+        <div class="mini-today-date" id="today-display"></div>
+      </div>
+
+      <div class="upcoming-label">Upcoming</div>
+      <div id="upcoming-list" class="upcoming-list"></div>
+    </aside>
+
+    <!-- Main calendar area -->
+    <main id="main">
+
+      <!-- Header -->
+      <div class="cal-header">
+        <button id="btn-prev" class="nav-btn">&#8592;</button>
+        <h1 id="cal-title"></h1>
+        <button id="btn-next" class="nav-btn">&#8594;</button>
+
+        <div class="view-switcher">
+          <button id="view-month" class="view-btn active">Month</button>
+          <button id="view-week" class="view-btn">Week</button>
+        </div>
+      </div>
+
+      <!-- Calendar grid — rendered by JS -->
+      <div id="calendar-grid"></div>
+
+      <!-- Day panel — shown when a day is clicked -->
+      <div id="day-panel" class="hidden">
+        <div class="day-panel-header">
+          <h2 id="day-panel-title"></h2>
+          <button id="day-panel-close">✕</button>
+        </div>
+        <div id="day-panel-events"></div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Event edit modal -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Edit Event</h2>
+        <button id="modal-close">✕</button>
+      </div>
+
+      <div class="modal-fields">
+        <div class="modal-field">
+          <label>Title</label>
+          <input type="text" id="modal-field-title" />
+        </div>
+        <div class="modal-field">
+          <label>Date</label>
+          <input type="date" id="modal-field-date" />
+        </div>
+        <div class="modal-field">
+          <label>Time</label>
+          <input type="time" id="modal-field-time" />
+        </div>
+        <div class="modal-field">
+          <label>People</label>
+          <input type="text" id="modal-field-participants" />
+        </div>
+        <div class="modal-field">
+          <label>Notes</label>
+          <input type="text" id="modal-field-notes" />
+        </div>
+      </div>
+
+      <div class="modal-source" id="modal-source"></div>
+
+      <div class="modal-actions">
+        <button id="modal-save" class="btn btn-yes">Save</button>
+        <button id="modal-delete" class="btn btn-delete">Delete</button>
+        <button id="modal-cancel" class="btn btn-no">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../vendor/supabase.js"></script>
+  <script src="../utils/storage.js"></script>
+  <script src="../utils/supabase-client.js"></script>
+  <script src="dashboard.js"></script>
+
+</body>
+</html>
