@@ -1,5 +1,9 @@
 /**
  * PlanWise Content Script orchestrator.
+ *
+ * WhatsApp loads its input element only after a chat is opened,
+ * not on the home screen. We use a MutationObserver to watch for
+ * the input appearing at any point after the script loads.
  */
 
 (async function init() {
@@ -12,15 +16,64 @@
   }
   console.log("[PlanWise] Detected platform:", platform.name);
 
-  let inputElement;
-  try {
-    inputElement = await window.DOMObserver.waitForElement(platform.inputSelector);
-    console.log("[PlanWise] Input element found.");
-  } catch (err) {
-    console.warn("[PlanWise] Could not find input element:", err.message);
-    return;
-  }
+  // Try to find the input element immediately (works if chat already open)
+  // or wait up to 30 seconds for it to appear.
+  // If it never appears (e.g. user stays on home screen), watch indefinitely.
+  attachWhenReady(platform);
+})();
 
+
+/**
+ * Attempt to attach to the input element.
+ * If not found within 30s, switch to indefinite watching mode -
+ * activates the moment the user opens a chat.
+ */
+async function attachWhenReady(platform) {
+  try {
+    const inputElement = await window.DOMObserver.waitForElement(
+      platform.inputSelector,
+      30000
+    );
+    console.log("[PlanWise] Input element found.");
+    attachBuffer(inputElement, platform);
+  } catch (err) {
+    // Element not found within timeout - watch indefinitely for it.
+    // This handles WhatsApp's home screen: input only exists inside a chat.
+    console.log("[PlanWise] Input not found yet - watching for chat to open...");
+    watchForInput(platform);
+  }
+}
+
+
+/**
+ * Watch indefinitely for the input element to appear.
+ * Disconnects once found so we don't keep watching unnecessarily.
+ */
+function watchForInput(platform) {
+  const selectors = Array.isArray(platform.inputSelector)
+    ? platform.inputSelector
+    : [platform.inputSelector];
+
+  const observer = new MutationObserver(() => {
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        observer.disconnect();
+        console.log("[PlanWise] Input element appeared - attaching.");
+        attachBuffer(el, platform);
+        return;
+      }
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+
+/**
+ * Wire up the text buffer and listeners to the found input element.
+ */
+function attachBuffer(inputElement, platform) {
   const buffer = new window.TextBuffer({
     maxLength: 500,
     debounceMs: 1500,
@@ -51,7 +104,7 @@
   }
 
   console.log("[PlanWise] Monitoring active on", platform.name);
-})();
+}
 
 async function analyzeText(text, platform) {
   const result = window.PlanWiseEngine.analyzeIntent(text);
@@ -86,7 +139,7 @@ async function waitForSendButton(selector, buffer) {
       buffer.flushNow();
     });
   } catch (e) {
-    // Button not required on every platform.
+    // Not critical - Enter key still works.
   }
 }
 

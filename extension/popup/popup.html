@@ -7,9 +7,24 @@
   </head>
   <body>
     <div id="app">
+
       <div class="header">
         <span class="logo">PlanWise</span>
-        <span class="subtitle">Plan detected</span>
+        <span class="subtitle" id="header-subtitle">Plan detected</span>
+      </div>
+
+      <!-- Auth screen — shown when not logged in -->
+      <div id="auth-screen" class="hidden">
+        <div class="auth-form">
+          <p class="auth-subtitle">Sign in to save your plans</p>
+          <input type="email" id="auth-email" placeholder="Email" autocomplete="email" />
+          <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" />
+          <div class="auth-actions">
+            <button id="btn-signin" class="btn btn-yes">Sign in</button>
+            <button id="btn-signup" class="btn btn-no">Sign up</button>
+          </div>
+          <p class="auth-error hidden" id="auth-error"></p>
+        </div>
       </div>
 
       <div id="loading" class="state">
@@ -23,7 +38,6 @@
 
       <div id="event-card" class="hidden">
         <div class="source-text" id="source-text"></div>
-
         <div class="fields">
           <div class="field">
             <label>Title</label>
@@ -49,14 +63,16 @@
 
         <div class="actions">
           <button id="btn-yes" class="btn btn-yes">Add</button>
-          <button id="btn-no" class="btn btn-no">Dismiss</button>
+          <button id="btn-no"  class="btn btn-no" >Dismiss</button>
         </div>
-
         <div class="queue-info" id="queue-info"></div>
       </div>
     </div>
 
+    <!-- Load order matters: vendor → storage → supabase client → popup logic -->
+    <script src="../vendor/supabase.js"></script>
     <script src="../utils/storage.js"></script>
+    <script src="../utils/supabase-client.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

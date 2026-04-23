@@ -4,7 +4,10 @@
 
 const PLATFORM_SELECTORS = {
   "web.whatsapp.com": {
-    inputSelector: 'div[contenteditable="true"][data-tab="10"]',
+    inputSelector: [
+      'div[role="textbox"][data-tab="10"]',
+      'div[role="textbox"][data-lexical-editor="true"]',
+    ],
     messageSelector: ".message-in .copyable-text, .message-out .copyable-text",
     sendButtonSelector: 'button[data-testid="send"]',
     name: "WhatsApp"
@@ -16,13 +19,21 @@ const PLATFORM_SELECTORS = {
     name: "Discord"
   },
   "web.telegram.org": {
-    inputSelector: 'div.input-message-input[contenteditable="true"]',
+    inputSelector: [
+      'div.input-message-input[contenteditable="true"]',
+      "div[contenteditable=\"true\"].input-message-input",
+      "div[data-peer-id] div[contenteditable=\"true\"]",
+      "div.composer-wrapper div[contenteditable=\"true\"]",
+    ],
     messageSelector: ".text-content",
     sendButtonSelector: "button.send",
     name: "Telegram"
   },
   "mail.google.com": {
-    inputSelector: 'div[role="textbox"][aria-label="Message Body"]',
+    inputSelector: [
+      'div[role="textbox"][aria-label="Message Body"]',
+      'div.Am.aiL.editable',
+    ],
     messageSelector: null,
     sendButtonSelector: null,
     name: "Gmail"
@@ -39,19 +50,29 @@ function detectPlatform() {
   return null;
 }
 
-function waitForElement(selector, timeout = 10000) {
+function waitForElement(selectorOrList, timeout = 10000) {
+  // Normalise to array so the rest of the logic is the same
+  const selectors = Array.isArray(selectorOrList) ? selectorOrList : [selectorOrList];
+
   return new Promise((resolve, reject) => {
-    const element = document.querySelector(selector);
-    if (element) {
-      resolve(element);
-      return;
+    // Check if any selector already matches
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        resolve(el);
+        return;
+      }
     }
 
+    // Watch for any of the selectors to appear
     const observer = new MutationObserver(() => {
-      const found = document.querySelector(selector);
-      if (found) {
-        observer.disconnect();
-        resolve(found);
+      for (const selector of selectors) {
+        const el = document.querySelector(selector);
+        if (el) {
+          observer.disconnect();
+          resolve(el);
+          return;
+        }
       }
     });
 
@@ -59,7 +80,7 @@ function waitForElement(selector, timeout = 10000) {
 
     setTimeout(() => {
       observer.disconnect();
-      reject(new Error(`Element not found: ${selector}`));
+      reject(new Error(`Element not found: ${selectors.join(" | ")}`));
     }, timeout);
   });
 }
