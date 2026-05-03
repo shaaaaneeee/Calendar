@@ -12,9 +12,8 @@
  * Depends on: vendor/supabase.js (must load first in popup.html)
  */
 
-const SUPABASE_URL  = 'https://zblizqtjdzcybhllljja.supabase.co';   // e.g. https://xxxx.supabase.co
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpibGl6cXRqZHpjeWJobGxsamphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4OTYzNzMsImV4cCI6MjA5MjQ3MjM3M30.8-VRaHrB6KyTT_OSr0uKC4GMRH4XNjCcvuGddr0DM6g';      // the long JWT from Settings → API
-
+const SUPABASE_URL  = 'https://jxdykrgztffzddhzkkxs.supabase.co';   // e.g. https://xxxx.supabase.co
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZHlrcmd6dGZmemRkaHpra3hzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NzA5NTAsImV4cCI6MjA5MzM0Njk1MH0.pU8PV8Uhhj7KBKixoc3u8PV2F9yfbdCHsIxkshxKQZM';
 const { createClient } = supabase;
 
 const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
