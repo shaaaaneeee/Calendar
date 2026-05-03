@@ -103,7 +103,11 @@ const HARD_BLOCK_RULES = [
   /\bnext\s+time\b/i,
   /\bcan'?t\s+do\b/i,
   /\bnot\s+available\b/i,
-  /\bunavailable\b/i
+  /\bunavailable\b/i,
+  /\bhad\s+.+\s+(at|tonight|tomorrow)\b/i,
+  /\blast\s+(night|week|month)\b/i,
+  /\byesterday\b/i,
+  /\bwas\s+supposed\s+to\b/i
 ];
 
 /**

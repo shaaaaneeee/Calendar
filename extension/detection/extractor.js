@@ -72,7 +72,9 @@ function extractDateTime(text) {
     const bare = text.match(/\bat\s+(\d{1,2})\b/i);
     if (bare) {
       let hours = parseInt(bare[1], 10);
-      if (hours >= 1 && hours <= 6) hours += 12;
+      // Heuristic: bare numbers 1-11 without am/pm default to PM
+      // because social plans almost never mean 1am-11am
+      if (hours >= 1 && hours <= 11) hours += 12;
       time = `${String(hours).padStart(2, "0")}:00`;
       rawTime = bare[0];
     }

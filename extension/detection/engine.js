@@ -192,11 +192,21 @@ function analyzeIntent(text, customRules = {}) {
 
   const intentResult = classifyIntent(text);
 
+  // If classifyIntent found no signals but score passed threshold,
+  // default to CONFIRM (no rejection evidence = assume intent).
+  let intent = intentResult.intent;
+  let reason = intentResult.reason;
+  if (intentResult.intent === INTENT.AMBIGUOUS &&
+      intentResult.reason === "no_intent_signal") {
+    intent = INTENT.CONFIRM;
+    reason = "default_confirm_no_signals";
+  }
+
   return {
-    triggered: intentResult.intent === INTENT.CONFIRM,
+    triggered: intent === INTENT.CONFIRM,
     score: scoreResult.score,
-    intent: intentResult.intent,
-    reason: intentResult.reason,
+    intent: intent,
+    reason: reason,
     matches: scoreResult.matches,
     votes: intentResult.votes,
     text: scoreResult.text
