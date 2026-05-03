@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PlanWise — Settings</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <aside id="sidebar">
+      <div class="sidebar-logo">PlanWise</div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-section="detection">Detection</a>
+        <a href="#" class="nav-item"        data-section="contacts">Contacts</a>
+        <a href="#" class="nav-item"        data-section="notifications">Notifications</a>
+        <a href="#" class="nav-item"        data-section="account">Account</a>
+      </nav>
+    </aside>
+
+    <main id="main">
+
+      <!-- Detection -->
+      <section id="section-detection" class="section active">
+        <h1 class="section-title">Detection</h1>
+        <p class="section-desc">Control how PlanWise detects plans in your conversations.</p>
+
+        <div class="setting-group">
+          <label class="setting-label">Detection Sensitivity</label>
+          <p class="setting-hint">
+            Lower = catches more plans (more false positives).<br>
+            Higher = only catches obvious plans (fewer false positives).
+          </p>
+          <div class="sensitivity-row">
+            <span class="sens-label">Low</span>
+            <input type="range" id="sensitivity-slider" min="1" max="4" step="1" />
+            <span class="sens-label">High</span>
+          </div>
+          <div class="sensitivity-value">Threshold: <strong id="sensitivity-display">2</strong></div>
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-label">Custom Trigger Words</label>
+          <p class="setting-hint">
+            Words that strongly suggest a plan. Each word adds +2 to the detection score.
+          </p>
+          <div class="tag-input-row">
+            <input type="text" id="trigger-word-input" placeholder="e.g. rehearsal, training..." />
+            <button id="btn-add-trigger" class="btn btn-add">Add</button>
+          </div>
+          <div id="trigger-tags" class="tag-list"></div>
+        </div>
+      </section>
+
+      <!-- Contacts -->
+      <section id="section-contacts" class="section hidden">
+        <h1 class="section-title">Contacts</h1>
+        <p class="section-desc">
+          People PlanWise should recognise in conversations.
+          Add their name and any nicknames you use for them.
+        </p>
+
+        <div class="setting-group">
+          <div class="contact-add-row">
+            <input type="text" id="contact-name-input"     placeholder="Name (e.g. Alex)" />
+            <input type="text" id="contact-nickname-input" placeholder="Nicknames (comma separated)" />
+            <button id="btn-add-contact" class="btn btn-add">Add</button>
+          </div>
+          <div id="contact-list" class="contact-list"></div>
+        </div>
+      </section>
+
+      <!-- Notifications -->
+      <section id="section-notifications" class="section hidden">
+        <h1 class="section-title">Notifications</h1>
+        <p class="section-desc">Control how PlanWise alerts you when a plan is detected.</p>
+
+        <div class="setting-group">
+          <div class="toggle-row">
+            <div>
+              <div class="setting-label">Badge icon</div>
+              <div class="setting-hint">Show a ! badge on the extension icon when a plan is detected.</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="toggle-notifications" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Account -->
+      <section id="section-account" class="section hidden">
+        <h1 class="section-title">Account</h1>
+        <p class="section-desc">Manage your PlanWise account.</p>
+
+        <div class="setting-group">
+          <div class="account-info">
+            <div class="account-label">Signed in as</div>
+            <div class="account-email" id="account-email">—</div>
+          </div>
+          <button id="btn-signout" class="btn btn-danger">Sign out</button>
+        </div>
+      </section>
+
+      <!-- Save bar -->
+      <div id="save-bar">
+        <span id="save-status"></span>
+        <button id="btn-save" class="btn btn-save">Save Settings</button>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="../vendor/supabase.js"></script>
+  <script src="../utils/storage.js"></script>
+  <script src="../utils/supabase-client.js"></script>
+  <script src="settings.js"></script>
+
+</body>
+</html>

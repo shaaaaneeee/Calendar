@@ -190,21 +190,29 @@ body {
   margin-top: 2px;
 }
 
-/* ── Dashboard link ──────────────────────────────── */
+/* ── Footer links ────────────────────────────── */
 
-.dashboard-link {
-  text-align: center;
+.footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid #2d2d4e;
 }
 
-.dashboard-link a {
+.footer-links a {
   font-size: 11px;
   color: #a29bfe;
   text-decoration: none;
 }
 
-.dashboard-link a:hover {
+.footer-links a:hover {
   text-decoration: underline;
+}
+
+.footer-sep {
+  font-size: 11px;
+  color: #555;
 }

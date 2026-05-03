@@ -132,6 +132,9 @@ function setAuthError(msg) {
 // ─────────────────────────────────────────────
 
 async function showQueue() {
+  show("btn-settings");
+  show("footer-sep");
+
   const pending = await PlanStorage.getPendingEvents();
 
   if (pending.length === 0) {
@@ -236,6 +239,10 @@ el("btn-no").addEventListener("click", handleNo);
 el("btn-dashboard").addEventListener("click", (e) => {
   e.preventDefault();
   chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html") });
+});
+el("btn-settings").addEventListener("click", (e) => {
+  e.preventDefault();
+  chrome.tabs.create({ url: chrome.runtime.getURL("settings/settings.html") });
 });
 
 init();

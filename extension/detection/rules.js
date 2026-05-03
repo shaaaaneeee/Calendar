@@ -147,7 +147,16 @@ const CREATION_PHRASES = [
   /\bworks for me\b/i,
   /\bi'?m\s+(in|down|free|available)\b/i,
   /\bcount\s+me\s+in\b/i,
-  /\bsee\s+you\s+(there|then|at)\b/i
+  /\bsee\s+you\s+(there|then|at)\b/i,
+  /\bmeet\s+(me|us|at|with)\b/i,
+  /\bbe\s+there\b/i,
+  /\bjoin\s+me\s+at\b/i,
+  /\bi'?ll\s+be\s+at\b/i,
+  /\bi'?ll\s+join\s+you\b/i,
+  /\bcome\s+to\b/i,
+  /\bcome\s+at\b/i,
+  /\bhead\s+over\s+to\b/i,
+  /\blet'?s\s+(sync|connect|meet|catch\s+up)\b/i,
 ];
 
 if (typeof window !== "undefined") {
