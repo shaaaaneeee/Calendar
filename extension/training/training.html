@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PlanWise — Training Data</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="training.css" />
+</head>
+<body>
+  <div id="app">
+
+    <aside id="sidebar">
+      <div class="sidebar-head">
+        <div class="sidebar-logo">PlanWise</div>
+        <div class="sidebar-sub">TRAINING DATA</div>
+      </div>
+
+      <div class="stats-block">
+        <div class="block-label">STATS</div>
+        <div class="stat-row"><span>Total logged</span><strong id="stat-total">—</strong></div>
+        <div class="stat-row"><span>Labelled</span><strong id="stat-labelled">—</strong></div>
+        <div class="stat-row"><span>Correct</span><strong id="stat-correct">—</strong></div>
+        <div class="stat-row"><span>False positives</span><strong id="stat-fp">—</strong></div>
+        <div class="stat-row"><span>False negatives</span><strong id="stat-fn">—</strong></div>
+      </div>
+
+      <div class="sidebar-nav">
+        <a href="../dashboard/dashboard.html" class="sidebar-link">← Calendar</a>
+        <a href="../tasks/tasks.html"         class="sidebar-link">Tasks</a>
+        <a href="../settings/settings.html"   class="sidebar-link">Settings</a>
+      </div>
+
+      <div class="sidebar-actions">
+        <button id="btn-export" class="btn btn-accent">Export JSON</button>
+        <button id="btn-clear"  class="btn btn-danger">Clear Log</button>
+      </div>
+    </aside>
+
+    <main id="main">
+      <div class="toolbar">
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">ALL</button>
+          <button class="filter-btn" data-filter="unlabelled">UNLABELLED</button>
+          <button class="filter-btn" data-filter="triggered">TRIGGERED</button>
+          <button class="filter-btn" data-filter="not-triggered">NOT TRIGGERED</button>
+        </div>
+        <input type="text" id="search" placeholder="Search text..." />
+      </div>
+
+      <div id="entry-list"></div>
+
+      <div id="empty-state" class="hidden">
+        <p>No detections logged yet.</p>
+        <p class="empty-sub">Use PlanWise on WhatsApp or Discord and entries will appear here.</p>
+      </div>
+    </main>
+
+  </div>
+
+  <script src="../utils/logger.js"></script>
+  <script src="../vendor/anime.min.js"></script>
+  <script src="training.js"></script>
+</body>
+</html>

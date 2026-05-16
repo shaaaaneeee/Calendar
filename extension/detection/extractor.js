@@ -84,21 +84,26 @@ function extractDateTime(text) {
 }
 
 const ACTIVITY_LABELS = [
-  { pattern: /\bhang\s*out\b/i, label: "Hang out" },
-  { pattern: /\bcatch\s*up\b/i, label: "Catch up" },
-  { pattern: /\bbreakfast\b/i, label: "Breakfast" },
-  { pattern: /\bcoffee\b/i, label: "Coffee" },
-  { pattern: /\blunch\b/i, label: "Lunch" },
-  { pattern: /\bdinner\b/i, label: "Dinner" },
-  { pattern: /\bgym\b/i, label: "Gym" },
-  { pattern: /\bstudy\b/i, label: "Study" },
-  { pattern: /\bmovie\b/i, label: "Movie" },
-  { pattern: /\bwatch\b/i, label: "Watch" },
-  { pattern: /\bparty\b/i, label: "Party" },
-  { pattern: /\btrip\b/i, label: "Trip" },
-  { pattern: /\bvisit\b/i, label: "Visit" },
-  { pattern: /\bcall\b/i, label: "Call" },
-  { pattern: /\bmeet(ing)?\b/i, label: "Meeting" }
+  { pattern: /\bhang\s*out\b/i,           label: "Hang out" },
+  { pattern: /\bcatch\s*up\b/i,           label: "Catch up" },
+  { pattern: /\bbrunch\b/i,               label: "Brunch" },
+  { pattern: /\bbreakfast\b/i,            label: "Breakfast" },
+  { pattern: /\bcoffee\b/i,               label: "Coffee" },
+  { pattern: /\blunch\b/i,                label: "Lunch" },
+  { pattern: /\bdinner\b/i,               label: "Dinner" },
+  { pattern: /\bdrinks?\b/i,              label: "Drinks" },
+  { pattern: /\bgym\b/i,                  label: "Gym" },
+  { pattern: /\bworkout\b/i,              label: "Workout" },
+  { pattern: /\bhike\b/i,                 label: "Hike" },
+  { pattern: /\brun\b/i,                  label: "Run" },
+  { pattern: /\bstudy\b/i,               label: "Study" },
+  { pattern: /\bmovies?\b/i,             label: "Movie" },
+  { pattern: /\bwatch\b/i,               label: "Watch" },
+  { pattern: /\bparty\b/i,               label: "Party" },
+  { pattern: /\btrip\b/i,                label: "Trip" },
+  { pattern: /\bvisit\b/i,               label: "Visit" },
+  { pattern: /\bcall\b/i,                label: "Call" },
+  { pattern: /\bmeet(ing)?\b/i,          label: "Meeting" }
 ];
 
 function extractTitle(text) {
@@ -126,50 +131,48 @@ function extractParticipants(text, contacts = []) {
 
   if (found.size === 0) {
     const IGNORE = new Set([
-      "I",
-      "The",
-      "A",
-      "An",
-      "And",
-      "But",
-      "Or",
-      "So",
-      "We",
-      "You",
-      "He",
-      "She",
-      "They",
-      "It",
-      "This",
-      "That",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday",
-      "Tomorrow",
-      "Tonight",
-      "Today",
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December"
+      // Articles, conjunctions, pronouns
+      "I", "The", "A", "An", "And", "But", "Or", "So", "We", "You", "He", "She", "They", "It",
+      "This", "That", "My", "Your", "His", "Her", "Our", "Their", "Its",
+      // Days / months / time words
+      "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+      "Tomorrow", "Tonight", "Today",
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+      // Common action/instruction verbs that appear capitalized mid-sentence
+      "Bring", "Get", "Take", "Have", "Come", "Go", "See", "Tell", "Ask",
+      "Let", "Make", "Try", "Need", "Keep", "Put", "Give", "Call", "Meet",
+      "Be", "Know", "Think", "Feel", "Want", "Like", "Look", "Use", "Find",
+      "Work", "Remember", "Forget", "Please", "Wait", "Check", "Watch", "Send",
+      "Pick", "Drop", "Grab", "Buy", "Book", "Plan", "Stay", "Head", "Show",
+      // Common qualifiers / fillers
+      "Just", "Sure", "Still", "Also", "Even", "Only", "Really", "Actually",
+      "Probably", "Definitely", "Maybe", "Ok", "Okay", "Yeah", "Yes", "No",
+      "Oh", "Ah", "Hey", "Hi", "Lol", "Haha", "Sorry", "Thanks", "Thank",
+      "Cool", "Nice", "Good", "Great", "Wow", "Right", "Alright",
+      // Prepositions / connectors
+      "About", "After", "Before", "Around", "With", "For", "From", "By",
+      "Up", "Down", "Out", "On", "Off", "Away", "Near", "Into", "Over",
+      // Contractions (cleaned forms)
+      "Dont", "Wont", "Cant", "Didnt", "Doesnt", "Isnt", "Wasnt", "Havent",
+      "Wouldnt", "Couldnt", "Shouldnt", "Im", "Ill", "Ive", "Id", "Were", "Thats",
+      // Misc common chat words not likely to be names
+      "Its", "Hes", "Shes", "Theyre", "Weve", "Youre", "Youll", "Well"
     ]);
+
+    // Also exclude any word that starts a note-trigger phrase — those are instructions, not names.
+    const NOTE_TRIGGER_WORDS = new Set(["Bring", "Remember", "Forget", "Please", "Can", "Could"]);
 
     const words = text.split(/\s+/);
     for (let i = 1; i < words.length; i += 1) {
       const word = words[i].replace(/[^a-zA-Z]/g, "");
-      if (word.length > 1 && word[0] === word[0].toUpperCase() && !IGNORE.has(word)) {
+      if (
+        word.length > 1 &&
+        word[0] === word[0].toUpperCase() &&
+        word[0] !== word[0].toLowerCase() &&
+        !IGNORE.has(word) &&
+        !NOTE_TRIGGER_WORDS.has(word)
+      ) {
         found.add(word);
       }
     }
@@ -209,7 +212,7 @@ function extractEvent(text, contacts = []) {
     date,
     time,
     participants: extractParticipants(text, contacts),
-    notes: extractNotes(text),
+    notes: "",
     rawDate,
     rawTime,
     sourceText: text.trim()
@@ -249,5 +252,5 @@ function resolveNamedDay(qualifier, dayName) {
 }
 
 if (typeof window !== "undefined") {
-  window.PlanWiseExtractor = { extractEvent };
+  window.PlanWiseExtractor = { extractEvent, extractNotes };
 }

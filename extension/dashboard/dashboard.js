@@ -139,6 +139,17 @@ function renderMonth() {
   const container = el("calendar-grid");
   container.innerHTML = "";
   container.appendChild(grid);
+
+  if (typeof anime !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    anime({
+      targets: ".month-cell",
+      opacity: [0, 1],
+      translateY: [6, 0],
+      delay: anime.stagger(12, { start: 40 }),
+      duration: 280,
+      easing: "easeOutQuart"
+    });
+  }
 }
 
 
@@ -164,7 +175,7 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
   for (const event of visible) {
     const pill = document.createElement("div");
     pill.className = "event-pill";
-    pill.textContent = event.title || event.title || "Plan";
+    pill.textContent = event.title || "Plan";
     pill.addEventListener("click", (e) => {
       e.stopPropagation();
       openModal(event);

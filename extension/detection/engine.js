@@ -75,21 +75,14 @@ function scoreText(text, customRules = {}) {
   // Pass 1: proximity negation check.
   let proximityNegationHit = false;
   for (const negPattern of PROXIMITY_NEGATION_WORDS) {
-    const regex = new RegExp(negPattern.source, negPattern.flags);
-    const negMatch = regex.exec(text);
+    const negMatch = negPattern.exec(text);
     if (!negMatch) {
       continue;
     }
 
     const ahead = text.slice(negMatch.index, negMatch.index + PROXIMITY_WINDOW);
-    const nearAction = rules.action.patterns.some((pattern) => {
-      const localPattern = new RegExp(pattern.source, pattern.flags);
-      return localPattern.test(ahead);
-    });
-    const nearTemporal = rules.temporal.patterns.some((pattern) => {
-      const localPattern = new RegExp(pattern.source, pattern.flags);
-      return localPattern.test(ahead);
-    });
+    const nearAction   = rules.action.patterns.some(p => p.test(ahead));
+    const nearTemporal = rules.temporal.patterns.some(p => p.test(ahead));
 
     if (nearAction || nearTemporal) {
       proximityNegationHit = true;

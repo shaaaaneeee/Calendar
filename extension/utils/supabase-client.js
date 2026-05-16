@@ -140,24 +140,6 @@ const SupabaseEvents = {
     return data;
   },
 
-  /**
-   * Load events within a date range.
-   * @param {string} from — 'YYYY-MM-DD'
-   * @param {string} to   — 'YYYY-MM-DD'
-   */
-  async getRange(from, to) {
-    const { data, error } = await db
-      .from('events')
-      .select('*')
-      .gte('event_date', from)
-      .lte('event_date', to)
-      .order('event_date', { ascending: true })
-      .order('event_time', { ascending: true });
-
-    if (error) throw error;
-    return data;
-  },
-
   async update(id, updates) {
     const { data, error } = await db
       .from('events')

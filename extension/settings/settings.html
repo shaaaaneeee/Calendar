@@ -1,8 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>PlanWise — Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="settings.css" />
 </head>
 <body>
@@ -10,13 +13,23 @@
   <div id="app">
 
     <aside id="sidebar">
-      <div class="sidebar-logo">PlanWise</div>
+      <div class="sidebar-head">
+        <div class="sidebar-logo">PlanWise</div>
+        <div class="sidebar-sub">SETTINGS</div>
+      </div>
+
       <nav class="sidebar-nav">
         <a href="#" class="nav-item active" data-section="detection">Detection</a>
         <a href="#" class="nav-item"        data-section="contacts">Contacts</a>
         <a href="#" class="nav-item"        data-section="notifications">Notifications</a>
         <a href="#" class="nav-item"        data-section="account">Account</a>
       </nav>
+
+      <div class="sidebar-links">
+        <a href="../dashboard/dashboard.html" class="sidebar-ext-link">← Calendar</a>
+        <a href="../tasks/tasks.html"         class="sidebar-ext-link">Tasks</a>
+        <a href="../training/training.html"   class="sidebar-ext-link">Training</a>
+      </div>
     </aside>
 
     <main id="main">
@@ -97,7 +110,7 @@
 
         <div class="setting-group">
           <div class="account-info">
-            <div class="account-label">Signed in as</div>
+            <div class="account-label">SIGNED IN AS</div>
             <div class="account-email" id="account-email">—</div>
           </div>
           <button id="btn-signout" class="btn btn-danger">Sign out</button>

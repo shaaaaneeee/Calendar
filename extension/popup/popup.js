@@ -16,6 +16,7 @@ const Auth    = window.SupabaseClient.auth;
 const Events  = window.SupabaseClient.events;
 
 let currentEvent = null;
+let overrideOverlap = false;
 
 
 // ─────────────────────────────────────────────
@@ -132,8 +133,12 @@ function setAuthError(msg) {
 // ─────────────────────────────────────────────
 
 async function showQueue() {
-  show("btn-settings");
+  show("btn-tasks");
   show("footer-sep");
+  show("btn-settings");
+  show("footer-sep-settings");
+  show("footer-sep-training");
+  show("btn-training");
 
   const pending = await PlanStorage.getPendingEvents();
 
@@ -183,6 +188,17 @@ async function handleYes() {
     notes:        el("field-notes").value.trim(),
   };
 
+  if (!overrideOverlap) {
+    const conflict = await checkOverlap(confirmed);
+    if (conflict) {
+      showOverlapWarning(conflict);
+      overrideOverlap = true;
+      return;
+    }
+  }
+  overrideOverlap = false;
+  hideOverlapWarning();
+
   try {
     await Events.save(confirmed);
   } catch (err) {
@@ -195,8 +211,51 @@ async function handleYes() {
   await reloadOrClose();
 }
 
+async function checkOverlap(newEvent) {
+  if (!newEvent.date || !newEvent.time) return null;
+
+  const newStart = new Date(`${newEvent.date}T${newEvent.time}`);
+  const ONE_HOUR = 60 * 60 * 1000;
+
+  let allEvents = [];
+  try {
+    allEvents = await Events.getAll();
+  } catch (e) {
+    allEvents = await PlanStorage.getConfirmedEvents();
+  }
+
+  for (const existing of allEvents) {
+    const existDate = existing.event_date || existing.date;
+    const existTime = existing.event_time || existing.time;
+    if (!existDate || !existTime) continue;
+    const existStart = new Date(`${existDate}T${existTime}`);
+    if (Math.abs(newStart - existStart) < ONE_HOUR) {
+      return existing;
+    }
+  }
+  return null;
+}
+
+function showOverlapWarning(conflict) {
+  const title = conflict.title || "another plan";
+  const date  = conflict.event_date || conflict.date || "";
+  const time  = conflict.event_time || conflict.time || "";
+  const when  = date && time ? ` on ${date} at ${time}` : date ? ` on ${date}` : "";
+  el("overlap-warning").textContent =
+    `You already have "${title}"${when} within the hour. Add anyway?`;
+  show("overlap-warning");
+  el("btn-yes").textContent = "Add anyway";
+}
+
+function hideOverlapWarning() {
+  hide("overlap-warning");
+  el("btn-yes").textContent = "Add";
+}
+
 async function handleNo() {
   if (!currentEvent) return;
+  overrideOverlap = false;
+  hideOverlapWarning();
   await PlanStorage.removePendingEvent(currentEvent.id);
   await reloadOrClose();
 }
@@ -243,6 +302,14 @@ el("btn-dashboard").addEventListener("click", (e) => {
 el("btn-settings").addEventListener("click", (e) => {
   e.preventDefault();
   chrome.tabs.create({ url: chrome.runtime.getURL("settings/settings.html") });
+});
+el("btn-tasks").addEventListener("click", (e) => {
+  e.preventDefault();
+  chrome.tabs.create({ url: chrome.runtime.getURL("tasks/tasks.html") });
+});
+el("btn-training").addEventListener("click", (e) => {
+  e.preventDefault();
+  chrome.tabs.create({ url: chrome.runtime.getURL("training/training.html") });
 });
 
 init();

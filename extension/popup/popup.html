@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <title>PlanWise</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
@@ -17,7 +20,7 @@
       <div id="auth-screen" class="hidden">
         <div class="auth-form">
           <p class="auth-subtitle">Sign in to save your plans</p>
-          <input type="email" id="auth-email" placeholder="Email" autocomplete="email" />
+          <input type="email"    id="auth-email"    placeholder="Email"    autocomplete="email" />
           <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" />
           <div class="auth-actions">
             <button id="btn-signin" class="btn btn-yes">Sign in</button>
@@ -40,38 +43,44 @@
         <div class="source-text" id="source-text"></div>
         <div class="fields">
           <div class="field">
-            <label>Title</label>
-            <input type="text" id="field-title" />
+            <label>TITLE</label>
+            <input type="text"  id="field-title" />
           </div>
           <div class="field">
-            <label>Date</label>
-            <input type="date" id="field-date" />
+            <label>DATE</label>
+            <input type="date"  id="field-date" />
           </div>
           <div class="field">
-            <label>Time</label>
-            <input type="time" id="field-time" />
+            <label>TIME</label>
+            <input type="time"  id="field-time" />
           </div>
           <div class="field">
-            <label>People</label>
-            <input type="text" id="field-participants" placeholder="Names, comma separated" />
+            <label>PEOPLE</label>
+            <input type="text"  id="field-participants" placeholder="Names, comma separated" />
           </div>
           <div class="field">
-            <label>Notes</label>
-            <input type="text" id="field-notes" placeholder="Optional notes" />
+            <label>NOTES</label>
+            <input type="text"  id="field-notes" placeholder="Optional notes" />
           </div>
         </div>
 
+        <div id="overlap-warning" class="overlap-warning hidden"></div>
+
         <div class="actions">
           <button id="btn-yes" class="btn btn-yes">Add</button>
-          <button id="btn-no"  class="btn btn-no" >Dismiss</button>
+          <button id="btn-no"  class="btn btn-no">Dismiss</button>
         </div>
         <div class="queue-info" id="queue-info"></div>
       </div>
 
       <div class="footer-links">
-        <a id="btn-dashboard" href="#">View Calendar</a>
-        <span class="footer-sep" id="footer-sep">·</span>
+        <a id="btn-dashboard" href="#">Calendar</a>
+        <span class="footer-sep hidden" id="footer-sep">·</span>
+        <a id="btn-tasks" href="#" class="hidden">Tasks</a>
+        <span class="footer-sep hidden" id="footer-sep-settings">·</span>
         <a id="btn-settings" href="#" class="hidden">Settings</a>
+        <span class="footer-sep hidden" id="footer-sep-training">·</span>
+        <a id="btn-training" href="#" class="hidden">Training</a>
       </div>
     </div>
 

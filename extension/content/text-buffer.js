@@ -14,9 +14,7 @@ class TextBuffer {
   }
 
   push(text) {
-    if (!text || typeof text !== "string") {
-      return;
-    }
+    if (!text || typeof text !== "string") return;
 
     this.buffer = `${this.buffer} ${text}`.trim();
     if (this.buffer.length > this.maxLength) {
@@ -24,20 +22,30 @@ class TextBuffer {
     }
 
     clearTimeout(this.debounceTimer);
-    this.debounceTimer = setTimeout(() => {
-      this._flush();
-    }, this.debounceMs);
+    this.debounceTimer = setTimeout(() => this._flush(), this.debounceMs);
+  }
+
+  // Replace the outgoing (typed) portion of the buffer with the current input
+  // value. Unlike push(), this prevents partial keystroke states from
+  // accumulating when the full input value is pushed on every input event.
+  set(text) {
+    if (!text || typeof text !== "string") return;
+
+    this.buffer = text.trim().slice(-this.maxLength);
+
+    clearTimeout(this.debounceTimer);
+    this.debounceTimer = setTimeout(() => this._flush(), this.debounceMs);
   }
 
   flushNow() {
     clearTimeout(this.debounceTimer);
-    this._flush();
+    this._flush(true);
   }
 
-  _flush() {
+  _flush(fromSend = false) {
     const text = this.buffer.trim();
     if (text.length > 0) {
-      this.onFlush(text);
+      this.onFlush(text, fromSend);
     }
     this.clear();
   }
@@ -45,10 +53,6 @@ class TextBuffer {
   clear() {
     this.buffer = "";
     clearTimeout(this.debounceTimer);
-  }
-
-  getBuffer() {
-    return this.buffer;
   }
 }
 

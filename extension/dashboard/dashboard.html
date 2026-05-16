@@ -3,93 +3,129 @@
 <head>
   <meta charset="UTF-8" />
   <title>PlanWise — Calendar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" />
   <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
-
   <div id="app">
 
-    <!-- Sidebar -->
-    <aside id="sidebar">
-      <div class="sidebar-logo">PlanWise</div>
-
-      <div class="mini-today">
-        <div class="mini-today-label">Today</div>
-        <div class="mini-today-date" id="today-display"></div>
+    <!-- Top bar -->
+    <header id="topbar">
+      <div class="topbar-brand">
+        <span class="brand-name">PlanWise</span>
+        <span class="brand-badge">BETA</span>
       </div>
-
-      <div class="upcoming-label">Upcoming</div>
-      <div id="upcoming-list" class="upcoming-list"></div>
-    </aside>
-
-    <!-- Main calendar area -->
-    <main id="main">
-
-      <!-- Header -->
-      <div class="cal-header">
-        <button id="btn-prev" class="nav-btn">&#8592;</button>
-        <h1 id="cal-title"></h1>
-        <button id="btn-next" class="nav-btn">&#8594;</button>
-
+      <div class="topbar-center">
+        <button id="btn-prev" class="nav-arrow">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <h1 id="cal-title" class="cal-title"></h1>
+        <button id="btn-next" class="nav-arrow">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+      </div>
+      <div class="topbar-right">
+        <div id="today-display" class="today-chip"></div>
         <div class="view-switcher">
-          <button id="view-month" class="view-btn active">Month</button>
-          <button id="view-week" class="view-btn">Week</button>
+          <button id="view-month" class="view-btn active">MONTH</button>
+          <button id="view-week"  class="view-btn">WEEK</button>
         </div>
       </div>
+    </header>
 
-      <!-- Calendar grid — rendered by JS -->
-      <div id="calendar-grid"></div>
+    <!-- Body -->
+    <div id="body">
 
-      <!-- Day panel — shown when a day is clicked -->
-      <div id="day-panel" class="hidden">
-        <div class="day-panel-header">
-          <h2 id="day-panel-title"></h2>
-          <button id="day-panel-close">✕</button>
+      <!-- Left nav -->
+      <nav id="leftnav">
+        <a href="dashboard.html" class="leftnav-item active">
+          <span class="material-symbols-outlined">calendar_today</span>
+          <span>Calendar</span>
+        </a>
+        <a href="../tasks/tasks.html" class="leftnav-item">
+          <span class="material-symbols-outlined">task_alt</span>
+          <span>Tasks</span>
+        </a>
+        <a href="../settings/settings.html" class="leftnav-item">
+          <span class="material-symbols-outlined">settings</span>
+          <span>Settings</span>
+        </a>
+        <a href="../training/training.html" class="leftnav-item">
+          <span class="material-symbols-outlined">model_training</span>
+          <span>Training</span>
+        </a>
+      </nav>
+
+      <!-- Calendar grid -->
+      <main id="main">
+        <div id="calendar-grid"></div>
+      </main>
+
+      <!-- Right panel: upcoming + day events -->
+      <aside id="rightpanel">
+        <div id="upcoming-section" class="panel-block">
+          <div class="panel-label">UPCOMING</div>
+          <div id="upcoming-list"></div>
         </div>
-        <div id="day-panel-events"></div>
-      </div>
 
-    </main>
+        <!-- Day panel overlays upcoming when a day is clicked -->
+        <div id="day-panel" class="hidden">
+          <div class="day-panel-head">
+            <div id="day-panel-title" class="panel-label"></div>
+            <button id="day-panel-close" class="close-btn">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div id="day-panel-events"></div>
+        </div>
+      </aside>
 
-  </div>
+    </div><!-- /#body -->
+  </div><!-- /#app -->
 
   <!-- Event edit modal -->
   <div id="modal-overlay" class="hidden">
     <div id="modal">
-      <div class="modal-header">
-        <h2 id="modal-title">Edit Event</h2>
-        <button id="modal-close">✕</button>
+      <div class="modal-head">
+        <div class="modal-label">EDIT EVENT</div>
+        <button id="modal-close" class="close-btn">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
 
       <div class="modal-fields">
-        <div class="modal-field">
-          <label>Title</label>
-          <input type="text" id="modal-field-title" />
+        <div class="modal-row">
+          <label class="row-label">TITLE</label>
+          <input type="text"  id="modal-field-title"        class="row-input" />
         </div>
-        <div class="modal-field">
-          <label>Date</label>
-          <input type="date" id="modal-field-date" />
+        <div class="modal-row">
+          <label class="row-label">DATE</label>
+          <input type="date"  id="modal-field-date"         class="row-input" />
         </div>
-        <div class="modal-field">
-          <label>Time</label>
-          <input type="time" id="modal-field-time" />
+        <div class="modal-row">
+          <label class="row-label">TIME</label>
+          <input type="time"  id="modal-field-time"         class="row-input" />
         </div>
-        <div class="modal-field">
-          <label>People</label>
-          <input type="text" id="modal-field-participants" />
+        <div class="modal-row">
+          <label class="row-label">PEOPLE</label>
+          <input type="text"  id="modal-field-participants" class="row-input" placeholder="comma separated" />
         </div>
-        <div class="modal-field">
-          <label>Notes</label>
-          <input type="text" id="modal-field-notes" />
+        <div class="modal-row">
+          <label class="row-label">NOTES</label>
+          <input type="text"  id="modal-field-notes"        class="row-input" placeholder="optional" />
         </div>
       </div>
 
-      <div class="modal-source" id="modal-source"></div>
+      <!-- Uses .visible class (not .hidden) — controlled by dashboard.js -->
+      <div id="modal-source" class="modal-quote"></div>
 
-      <div class="modal-actions">
-        <button id="modal-save" class="btn btn-yes">Save</button>
-        <button id="modal-delete" class="btn btn-delete">Delete</button>
-        <button id="modal-cancel" class="btn btn-no">Cancel</button>
+      <div class="modal-foot">
+        <button id="modal-save"   class="btn btn-primary">Save</button>
+        <button id="modal-delete" class="btn btn-danger">Delete</button>
+        <button id="modal-cancel" class="btn btn-ghost">Cancel</button>
       </div>
     </div>
   </div>
@@ -97,7 +133,7 @@
   <script src="../vendor/supabase.js"></script>
   <script src="../utils/storage.js"></script>
   <script src="../utils/supabase-client.js"></script>
+  <script src="../vendor/anime.min.js"></script>
   <script src="dashboard.js"></script>
-
 </body>
 </html>

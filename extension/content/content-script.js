@@ -77,8 +77,8 @@ function attachBuffer(inputElement, platform) {
   const buffer = new window.TextBuffer({
     maxLength: 500,
     debounceMs: 1500,
-    onFlush: (text) => {
-      analyzeText(text, platform).catch((error) => {
+    onFlush: (text, fromSend) => {
+      analyzeText(text, platform, fromSend).catch((error) => {
         console.warn("[PlanWise] analyzeText failed:", error);
       });
     }
@@ -86,7 +86,7 @@ function attachBuffer(inputElement, platform) {
 
   inputElement.addEventListener("input", () => {
     const text = inputElement.textContent || inputElement.value || "";
-    buffer.push(text);
+    buffer.set(text);
   });
 
   inputElement.addEventListener("keydown", (event) => {
@@ -106,7 +106,7 @@ function attachBuffer(inputElement, platform) {
   console.log("[PlanWise] Monitoring active on", platform.name);
 }
 
-async function analyzeText(text, platform) {
+async function analyzeText(text, platform, fromSend = false) {
   const result = window.PlanWiseEngine.analyzeIntent(text);
 
   console.log(
@@ -114,10 +114,21 @@ async function analyzeText(text, platform) {
     result.votes
   );
 
-  if (result.triggered) {
+  if (fromSend) {
+    try {
+      await window.DetectionLogger.log(text, result);
+    } catch (err) {
+      console.warn('[PlanWise] Logger failed:', err.message);
+    }
+  }
+
+  if (result.triggered && fromSend) {
     const settings = await window.PlanWiseStorage.getSettings();
     const event = window.PlanWiseExtractor.extractEvent(text, settings.contacts);
+    // Secondary pass: scan for notes only after detection confirms a plan
+    event.notes = window.PlanWiseExtractor.extractNotes(text);
     const pending = await window.PlanWiseStorage.enqueuePendingEvent(event);
+    if (!pending) return;
 
     console.log("[PlanWise] Plan detected and queued:", pending);
 

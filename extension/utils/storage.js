@@ -6,21 +6,29 @@
 
 const Storage = {
   async enqueuePendingEvent(event) {
-    const existing = await this.getPendingEvents();
-    const entry = {
-      ...event,
-      id: crypto.randomUUID(),
-      detectedAt: Date.now(),
-      status: "pending"
-    };
-    existing.push(entry);
-    await chrome.storage.local.set({ pendingEvents: existing });
-    return entry;
+    try {
+      const existing = await this.getPendingEvents();
+      const entry = {
+        ...event,
+        id: crypto.randomUUID(),
+        detectedAt: Date.now(),
+        status: "pending"
+      };
+      existing.push(entry);
+      await chrome.storage.local.set({ pendingEvents: existing });
+      return entry;
+    } catch (err) {
+      return null;
+    }
   },
 
   async getPendingEvents() {
-    const result = await chrome.storage.local.get("pendingEvents");
-    return result.pendingEvents || [];
+    try {
+      const result = await chrome.storage.local.get("pendingEvents");
+      return result.pendingEvents || [];
+    } catch (err) {
+      return [];
+    }
   },
 
   async removePendingEvent(id) {
@@ -47,15 +55,24 @@ const Storage = {
   },
 
   async getSettings() {
-    const result = await chrome.storage.local.get("settings");
-    return (
-      result.settings || {
+    try {
+      const result = await chrome.storage.local.get("settings");
+      return (
+        result.settings || {
+          triggerWords: [],
+          contacts: [],
+          sensitivity: 2,
+          notificationsEnabled: true
+        }
+      );
+    } catch (err) {
+      return {
         triggerWords: [],
         contacts: [],
         sensitivity: 2,
         notificationsEnabled: true
-      }
-    );
+      };
+    }
   },
 
   async saveSettings(settings) {

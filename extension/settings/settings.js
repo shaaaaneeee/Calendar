@@ -10,6 +10,8 @@ const Auth         = window.SupabaseClient.auth;
 const SupaSettings = window.SupabaseClient.settings;
 const LocalStorage = window.PlanWiseStorage;
 
+let currentUser = null;
+
 let settings = {
   triggerWords:         [],
   contacts:             [],
@@ -23,10 +25,9 @@ let settings = {
 // ─────────────────────────────────────────────
 
 async function init() {
-  // Guard: close tab immediately if not logged in
   try {
-    const user = await Auth.getUser();
-    if (!user) {
+    currentUser = await Auth.getUser();
+    if (!currentUser) {
       window.close();
       return;
     }
@@ -39,7 +40,7 @@ async function init() {
   renderAll();
   wireNav();
   wireControls();
-  await loadAccountInfo();
+  loadAccountInfo();
 }
 
 
@@ -52,8 +53,7 @@ async function loadSettings() {
   settings = { ...settings, ...local };
 
   try {
-    const user = await Auth.getUser();
-    if (user) {
+    if (currentUser) {
       const remote = await SupaSettings.load();
       if (remote) {
         settings = {
@@ -199,13 +199,8 @@ function makeContactItem(contact) {
 // ACCOUNT
 // ─────────────────────────────────────────────
 
-async function loadAccountInfo() {
-  try {
-    const user = await Auth.getUser();
-    el('account-email').textContent = user?.email || 'Not signed in';
-  } catch {
-    el('account-email').textContent = 'Not signed in';
-  }
+function loadAccountInfo() {
+  el('account-email').textContent = currentUser?.email || 'Not signed in';
 }
 
 
