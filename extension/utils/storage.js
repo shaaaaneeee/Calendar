@@ -8,6 +8,7 @@ const Storage = {
   async enqueuePendingEvent(event) {
     try {
       const existing = await this.getPendingEvents();
+      if (existing.some(e => e.sourceText === event.sourceText)) return null;
       const entry = {
         ...event,
         id: crypto.randomUUID(),

@@ -114,15 +114,13 @@ async function analyzeText(text, platform, fromSend = false) {
     result.votes
   );
 
-  if (fromSend) {
-    try {
-      await window.DetectionLogger.log(text, result);
-    } catch (err) {
-      console.warn('[PlanWise] Logger failed:', err.message);
-    }
+  try {
+    await window.DetectionLogger.log(text, result);
+  } catch (err) {
+    console.warn('[PlanWise] Logger failed:', err.message);
   }
 
-  if (result.triggered && fromSend) {
+  if (result.triggered) {
     const settings = await window.PlanWiseStorage.getSettings();
     const event = window.PlanWiseExtractor.extractEvent(text, settings.contacts);
     // Secondary pass: scan for notes only after detection confirms a plan

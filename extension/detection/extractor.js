@@ -201,7 +201,14 @@ function extractNotes(text) {
     }
   }
 
-  return notes.join("; ");
+  // Exact dedup
+  const unique = [...new Set(notes)];
+  // Drop any note that contains a shorter note — keep the more precise capture
+  const deduped = unique.filter(note =>
+    !unique.some(other => other !== note && note.includes(other))
+  );
+
+  return deduped.join("; ");
 }
 
 function extractEvent(text, contacts = []) {
