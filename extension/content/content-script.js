@@ -107,7 +107,8 @@ function attachBuffer(inputElement, platform) {
 }
 
 async function analyzeText(text, platform, fromSend = false) {
-  const result = window.PlanWiseEngine.analyzeIntent(text);
+  const settings = await window.PlanWiseStorage.getSettings();
+  const result = window.PlanWiseEngine.analyzeIntent(text, settings);
 
   console.log(
     `[PlanWise] Score: ${result.score} | Intent: ${result.intent} | Reason: ${result.reason}`,
@@ -121,10 +122,10 @@ async function analyzeText(text, platform, fromSend = false) {
   }
 
   if (result.triggered) {
-    const settings = await window.PlanWiseStorage.getSettings();
-    const event = window.PlanWiseExtractor.extractEvent(text, settings.contacts);
-    // Secondary pass: scan for notes only after detection confirms a plan
-    event.notes = window.PlanWiseExtractor.extractNotes(text);
+    const event = window.PlanWiseExtractor.extractEvent(text, settings.contacts, settings.priorityNames || []);
+    // Merge priority-name note (set by extractEvent) with pattern-based notes
+    const patternNotes = window.PlanWiseExtractor.extractNotes(text);
+    event.notes = [event.notes, patternNotes].filter(Boolean).join("; ");
     const pending = await window.PlanWiseStorage.enqueuePendingEvent(event);
     if (!pending) return;
 

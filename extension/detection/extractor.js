@@ -84,26 +84,37 @@ function extractDateTime(text) {
 }
 
 const ACTIVITY_LABELS = [
-  { pattern: /\bhang\s*out\b/i,           label: "Hang out" },
-  { pattern: /\bcatch\s*up\b/i,           label: "Catch up" },
-  { pattern: /\bbrunch\b/i,               label: "Brunch" },
-  { pattern: /\bbreakfast\b/i,            label: "Breakfast" },
-  { pattern: /\bcoffee\b/i,               label: "Coffee" },
-  { pattern: /\blunch\b/i,                label: "Lunch" },
-  { pattern: /\bdinner\b/i,               label: "Dinner" },
-  { pattern: /\bdrinks?\b/i,              label: "Drinks" },
-  { pattern: /\bgym\b/i,                  label: "Gym" },
-  { pattern: /\bworkout\b/i,              label: "Workout" },
-  { pattern: /\bhike\b/i,                 label: "Hike" },
-  { pattern: /\brun\b/i,                  label: "Run" },
-  { pattern: /\bstudy\b/i,               label: "Study" },
-  { pattern: /\bmovies?\b/i,             label: "Movie" },
-  { pattern: /\bwatch\b/i,               label: "Watch" },
-  { pattern: /\bparty\b/i,               label: "Party" },
-  { pattern: /\btrip\b/i,                label: "Trip" },
-  { pattern: /\bvisit\b/i,               label: "Visit" },
-  { pattern: /\bcall\b/i,                label: "Call" },
-  { pattern: /\bmeet(ing)?\b/i,          label: "Meeting" }
+  { pattern: /\bhang\s*out\b/i,                                        label: "Hang out" },
+  { pattern: /\bcatch\s*up\b/i,                                        label: "Catch up" },
+  { pattern: /\bpick\s*up\b/i,                                         label: "Pickup" },
+  { pattern: /\bdrop\s*off\b/i,                                        label: "Drop off" },
+  { pattern: /\bbrunch\b/i,                                            label: "Brunch" },
+  { pattern: /\bbreakfast\b/i,                                         label: "Breakfast" },
+  { pattern: /\bcoffee\b/i,                                            label: "Coffee" },
+  { pattern: /\blunch\b/i,                                             label: "Lunch" },
+  { pattern: /\bdinner\b/i,                                            label: "Dinner" },
+  { pattern: /\bdrinks?\b/i,                                           label: "Drinks" },
+  { pattern: /\bgym\b/i,                                               label: "Gym" },
+  { pattern: /\bworkout\b/i,                                           label: "Workout" },
+  { pattern: /\bconcert\b/i,                                           label: "Concert" },
+  { pattern: /\bappointment\b/i,                                       label: "Appointment" },
+  { pattern: /\bhike\b/i,                                              label: "Hike" },
+  { pattern: /\brun\b/i,                                               label: "Run" },
+  { pattern: /\bwalk\b/i,                                              label: "Walk" },
+  { pattern: /\bstudy\b/i,                                             label: "Study" },
+  { pattern: /\bmovies?\b/i,                                           label: "Movie" },
+  { pattern: /\bwatch\b/i,                                             label: "Watch" },
+  { pattern: /\bgames?\b/i,                                            label: "Game" },
+  { pattern: /\bparty\b/i,                                             label: "Party" },
+  { pattern: /\bpicnic\b/i,                                            label: "Picnic" },
+  { pattern: /\bbarbecue\b|\bbbq\b/i,                                  label: "BBQ" },
+  { pattern: /\btrip\b/i,                                              label: "Trip" },
+  { pattern: /\bvisit\b/i,                                             label: "Visit" },
+  { pattern: /\berrands?\b/i,                                          label: "Errand" },
+  { pattern: /\bshopping\b/i,                                          label: "Shopping" },
+  { pattern: /\bcall\b/i,                                              label: "Call" },
+  { pattern: /\bmeet(ing)?\b/i,                                        label: "Meeting" },
+  { pattern: /\b(?:go\s+on\s+a\s+date|on\s+a\s+date|date\s+night|(?:dinner|coffee|lunch|romantic)\s+date)\b/i, label: "Date" }
 ];
 
 function extractTitle(text) {
@@ -211,15 +222,36 @@ function extractNotes(text) {
   return deduped.join("; ");
 }
 
-function extractEvent(text, contacts = []) {
+function extractMatchedPriorityNames(text, priorityNames) {
+  if (!Array.isArray(priorityNames)) return [];
+  const found = [];
+  for (const name of priorityNames) {
+    if (!name || typeof name !== "string") continue;
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) found.push(name);
+  }
+  return found;
+}
+
+function extractEvent(text, contacts = [], priorityNames = []) {
   const { date, time, rawDate, rawTime } = extractDateTime(text);
+  const baseTitle = extractTitle(text);
+  const matchedNames = extractMatchedPriorityNames(text, priorityNames);
+
+  const title = matchedNames.length > 0
+    ? (baseTitle === "Plan" ? matchedNames[0] : `${baseTitle} with ${matchedNames[0]}`)
+    : baseTitle;
+
+  const nameNote = matchedNames.length > 0
+    ? `With: ${matchedNames.join(", ")}`
+    : "";
 
   return {
-    title: extractTitle(text),
+    title,
     date,
     time,
     participants: extractParticipants(text, contacts),
-    notes: "",
+    notes: nameNote,
     rawDate,
     rawTime,
     sourceText: text.trim()

@@ -62,6 +62,10 @@ const Storage = {
         result.settings || {
           triggerWords: [],
           contacts: [],
+          priorityNames: [],
+          activityWords: [],
+          meetingWords: [],
+          items: [],
           sensitivity: 2,
           notificationsEnabled: true
         }
@@ -70,6 +74,10 @@ const Storage = {
       return {
         triggerWords: [],
         contacts: [],
+        priorityNames: [],
+        activityWords: [],
+        meetingWords: [],
+        items: [],
         sensitivity: 2,
         notificationsEnabled: true
       };

@@ -20,6 +20,7 @@
 
       <nav class="sidebar-nav">
         <a href="#" class="nav-item active" data-section="detection">Detection</a>
+        <a href="#" class="nav-item"        data-section="overview">Overview</a>
         <a href="#" class="nav-item"        data-section="contacts">Contacts</a>
         <a href="#" class="nav-item"        data-section="notifications">Notifications</a>
         <a href="#" class="nav-item"        data-section="account">Account</a>
@@ -56,13 +57,81 @@
         <div class="setting-group">
           <label class="setting-label">Custom Trigger Words</label>
           <p class="setting-hint">
-            Words that strongly suggest a plan. Each word adds +2 to the detection score.
+            Words that strongly suggest a plan. Each match adds +2 to the detection score.
           </p>
           <div class="tag-input-row">
             <input type="text" id="trigger-word-input" placeholder="e.g. rehearsal, training..." />
             <button id="btn-add-trigger" class="btn btn-add">Add</button>
           </div>
           <div id="trigger-tags" class="tag-list"></div>
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-label">Custom Names</label>
+          <p class="setting-hint">
+            People or places you frequently make plans with. When detected, the name is added to the event title and notes — it does not affect the detection score.
+          </p>
+          <div class="tag-input-row">
+            <input type="text" id="priority-name-input" placeholder="e.g. Coach Kim, Studio B..." />
+            <button id="btn-add-priority-name" class="btn btn-add">Add</button>
+          </div>
+          <div id="priority-name-tags" class="tag-list"></div>
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-label">Custom Activity Words</label>
+          <p class="setting-hint">
+            Activities PlanWise doesn't recognise by default. Each match adds +2 to the detection score.
+          </p>
+          <div class="tag-input-row">
+            <input type="text" id="activity-word-input" placeholder="e.g. rehearsal, sparring, recital..." />
+            <button id="btn-add-activity-word" class="btn btn-add">Add</button>
+          </div>
+          <div id="activity-word-tags" class="tag-list"></div>
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-label">Custom Meeting Words</label>
+          <p class="setting-hint">
+            Work or group meeting types specific to your context. Each match adds +2 to the detection score.
+          </p>
+          <div class="tag-input-row">
+            <input type="text" id="meeting-word-input" placeholder="e.g. standup, retrospective, sync..." />
+            <button id="btn-add-meeting-word" class="btn btn-add">Add</button>
+          </div>
+          <div id="meeting-word-tags" class="tag-list"></div>
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-label">Plan Items</label>
+          <p class="setting-hint">
+            Things that appear in plans — items to bring, supplies, gear. Each match adds +1 to the detection score.
+          </p>
+          <div class="tag-input-row">
+            <input type="text" id="item-input" placeholder="e.g. cleats, racket, passport..." />
+            <button id="btn-add-item" class="btn btn-add">Add</button>
+          </div>
+          <div id="item-tags" class="tag-list"></div>
+        </div>
+      </section>
+
+      <!-- Overview -->
+      <section id="section-overview" class="section hidden">
+        <h1 class="section-title">Overview</h1>
+        <p class="section-desc">All custom detection words at a glance. Add or remove them from the Detection section.</p>
+
+        <div class="setting-group">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Entries</th>
+                <th>Score</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody id="summary-tbody"></tbody>
+          </table>
         </div>
       </section>
 

@@ -29,6 +29,34 @@ const INTENT = {
   AMBIGUOUS: "AMBIGUOUS"
 };
 
+function isWordAlreadyScored(word, matches) {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const wordPattern = new RegExp(`\\b${escaped}\\b`, "i");
+  for (const matchList of Object.values(matches)) {
+    if (!Array.isArray(matchList)) continue;
+    for (const matchedText of matchList) {
+      if (typeof matchedText === "string" && wordPattern.test(matchedText)) return true;
+    }
+  }
+  return false;
+}
+
+function applyCustomWords(text, words, weight, matches, label) {
+  if (!Array.isArray(words)) return 0;
+  let added = 0;
+  for (const word of words) {
+    if (!word || typeof word !== "string") continue;
+    if (isWordAlreadyScored(word, matches)) continue;
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) {
+      added += weight;
+      matches[label] = matches[label] || [];
+      matches[label].push(word);
+    }
+  }
+  return added;
+}
+
 function scoreText(text, customRules = {}) {
   if (!text || typeof text !== "string" || text.trim().length < 3) {
     return { score: 0, triggered: false, matches: {}, text: "" };
@@ -59,18 +87,10 @@ function scoreText(text, customRules = {}) {
     }
   }
 
-  // Apply any user-defined custom trigger words.
-  if (customRules.triggerWords && Array.isArray(customRules.triggerWords)) {
-    for (const word of customRules.triggerWords) {
-      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const pattern = new RegExp(`\\b${escaped}\\b`, "i");
-      if (pattern.test(text)) {
-        totalScore += 2;
-        matches.custom = matches.custom || [];
-        matches.custom.push(word);
-      }
-    }
-  }
+  totalScore += applyCustomWords(text, customRules.triggerWords,  2, matches, "custom");
+  totalScore += applyCustomWords(text, customRules.activityWords, 2, matches, "activityWords");
+  totalScore += applyCustomWords(text, customRules.meetingWords,  2, matches, "meetingWords");
+  totalScore += applyCustomWords(text, customRules.items,         1, matches, "items");
 
   // Pass 1: proximity negation check.
   let proximityNegationHit = false;

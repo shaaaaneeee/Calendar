@@ -199,6 +199,10 @@ const SupabaseSettings = {
         contacts:              settings.contacts             || [],
         sensitivity:           settings.sensitivity          ?? 2,
         notifications_enabled: settings.notificationsEnabled ?? true,
+        priority_names:        settings.priorityNames        || [],
+        activity_words:        settings.activityWords        || [],
+        meeting_words:         settings.meetingWords         || [],
+        items:                 settings.items                || [],
       });
 
     if (error) throw error;
