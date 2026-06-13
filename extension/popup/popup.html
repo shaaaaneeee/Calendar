@@ -1,93 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>PlanWise</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="popup.css" />
-  </head>
-  <body>
-    <div id="app">
+<head>
+  <meta charset="UTF-8" />
+  <title>PlanWise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="../vendor/tailwind.js"></script>
+  <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'background':'#f9f9f9','surface':'#f9f9f9','surface-low':'#f4f3f3',
+          'surface-mid':'#eeeeee','on-surface':'#1a1c1c','on-muted':'#4c4546',
+          'primary':'#000000','on-primary':'#ffffff','outline':'#1a1c1c',
+          'outline-soft':'#cfc4c5','error':'#ba1a1a','error-bg':'#ffdad6',
+        },
+        borderRadius:{ DEFAULT:'0px',none:'0px',sm:'0px',md:'0px',lg:'0px',xl:'0px',full:'9999px' },
+        fontFamily:{ sans:['Geist','sans-serif'], mono:['JetBrains Mono','monospace'] },
+        boxShadow:{ 'neo':'4px 4px 0px 0px rgba(0,0,0,1)', 'neo-xs':'1px 1px 0px 0px rgba(0,0,0,1)' },
+      },
+    },
+  }
+  </script>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body class="bg-background font-sans text-on-surface w-80 min-h-48">
+<div id="app" class="flex flex-col min-h-48">
 
-      <div class="header">
-        <span class="logo">PlanWise</span>
-        <span class="subtitle" id="header-subtitle">Plan detected</span>
+  <!-- Header -->
+  <div class="header flex items-center justify-between px-4 py-3 border-b border-outline bg-surface">
+    <div>
+      <div class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted leading-none mb-0.5">Plan</div>
+      <div class="font-sans text-lg font-black uppercase tracking-tighter text-on-surface leading-none">Wise</div>
+    </div>
+    <span id="header-subtitle" class="font-mono text-[9px] font-bold tracking-[0.12em] uppercase text-on-muted">Plan detected</span>
+  </div>
+
+  <!-- Auth screen — shown when not logged in -->
+  <div id="auth-screen" class="hidden px-4 py-5 flex-col gap-3">
+    <p class="text-sm text-on-muted">Sign in to save your plans.</p>
+    <input type="email"    id="auth-email"    placeholder="Email"    autocomplete="email"            class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+    <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+    <div class="flex gap-2">
+      <button id="btn-signin" class="flex-1 py-2 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Sign in</button>
+      <button id="btn-signup" class="flex-1 py-2 border border-outline font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted hover:bg-surface-mid">Sign up</button>
+    </div>
+    <p id="auth-error" class="hidden text-xs text-error font-mono"></p>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" class="state px-4 py-6 flex items-center justify-center">
+    <span class="font-mono text-xs text-on-muted tracking-wider">Loading...</span>
+  </div>
+
+  <!-- Empty state -->
+  <div id="empty" class="state hidden px-4 py-8 flex-col items-center gap-2 text-center">
+    <div class="font-bold text-sm">No pending plans.</div>
+    <div class="text-xs text-on-muted font-mono tracking-wide">PlanWise is watching your conversations.</div>
+  </div>
+
+  <!-- Event card -->
+  <div id="event-card" class="hidden">
+    <!-- Source text quote -->
+    <div id="source-text" class="px-4 py-3 bg-surface-mid border-b border-outline font-mono text-[11px] text-on-muted italic leading-relaxed"></div>
+
+    <!-- Editable fields -->
+    <div class="fields px-4 py-3 flex flex-col gap-2.5">
+      <div class="flex flex-col gap-0.5">
+        <label class="font-mono text-[8px] font-bold tracking-[0.18em] uppercase text-on-muted">TITLE</label>
+        <input type="text" id="field-title" class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
       </div>
-
-      <!-- Auth screen — shown when not logged in -->
-      <div id="auth-screen" class="hidden">
-        <div class="auth-form">
-          <p class="auth-subtitle">Sign in to save your plans</p>
-          <input type="email"    id="auth-email"    placeholder="Email"    autocomplete="email" />
-          <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" />
-          <div class="auth-actions">
-            <button id="btn-signin" class="btn btn-yes">Sign in</button>
-            <button id="btn-signup" class="btn btn-no">Sign up</button>
-          </div>
-          <p class="auth-error hidden" id="auth-error"></p>
+      <div class="flex gap-2">
+        <div class="flex flex-col gap-0.5 flex-1">
+          <label class="font-mono text-[8px] font-bold tracking-[0.18em] uppercase text-on-muted">DATE</label>
+          <input type="date" id="field-date" class="border border-outline px-2 py-1.5 text-sm bg-surface focus:outline-none w-full" />
+        </div>
+        <div class="flex flex-col gap-0.5 flex-1">
+          <label class="font-mono text-[8px] font-bold tracking-[0.18em] uppercase text-on-muted">TIME</label>
+          <input type="time" id="field-time" class="border border-outline px-2 py-1.5 text-sm bg-surface focus:outline-none w-full" />
         </div>
       </div>
-
-      <div id="loading" class="state">
-        <p>Loading...</p>
+      <div class="flex flex-col gap-0.5">
+        <label class="font-mono text-[8px] font-bold tracking-[0.18em] uppercase text-on-muted">PEOPLE</label>
+        <input type="text" id="field-participants" placeholder="Names, comma separated" class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
       </div>
-
-      <div id="empty" class="state hidden">
-        <p class="empty-text">No pending plans.</p>
-        <p class="empty-sub">PlanWise is watching your conversations.</p>
-      </div>
-
-      <div id="event-card" class="hidden">
-        <div class="source-text" id="source-text"></div>
-        <div class="fields">
-          <div class="field">
-            <label>TITLE</label>
-            <input type="text"  id="field-title" />
-          </div>
-          <div class="field">
-            <label>DATE</label>
-            <input type="date"  id="field-date" />
-          </div>
-          <div class="field">
-            <label>TIME</label>
-            <input type="time"  id="field-time" />
-          </div>
-          <div class="field">
-            <label>PEOPLE</label>
-            <input type="text"  id="field-participants" placeholder="Names, comma separated" />
-          </div>
-          <div class="field">
-            <label>NOTES</label>
-            <input type="text"  id="field-notes" placeholder="Optional notes" />
-          </div>
-        </div>
-
-        <div id="overlap-warning" class="overlap-warning hidden"></div>
-
-        <div class="actions">
-          <button id="btn-yes" class="btn btn-yes">Add</button>
-          <button id="btn-no"  class="btn btn-no">Dismiss</button>
-        </div>
-        <div class="queue-info" id="queue-info"></div>
-      </div>
-
-      <div class="footer-links">
-        <a id="btn-dashboard" href="#">Calendar</a>
-        <span class="footer-sep hidden" id="footer-sep">·</span>
-        <a id="btn-tasks" href="#" class="hidden">Tasks</a>
-        <span class="footer-sep hidden" id="footer-sep-settings">·</span>
-        <a id="btn-settings" href="#" class="hidden">Settings</a>
-        <span class="footer-sep hidden" id="footer-sep-training">·</span>
-        <a id="btn-training" href="#" class="hidden">Training</a>
+      <div class="flex flex-col gap-0.5">
+        <label class="font-mono text-[8px] font-bold tracking-[0.18em] uppercase text-on-muted">NOTES</label>
+        <input type="text" id="field-notes" placeholder="Optional notes" class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
       </div>
     </div>
 
-    <!-- Load order matters: vendor → storage → supabase client → popup logic -->
-    <script src="../vendor/supabase.js"></script>
-    <script src="../utils/storage.js"></script>
-    <script src="../utils/supabase-client.js"></script>
-    <script src="popup.js"></script>
-  </body>
+    <div id="overlap-warning" class="overlap-warning hidden px-4 py-2 bg-error-bg font-mono text-[10px] text-error border-t border-error/30"></div>
+
+    <div class="flex gap-2 px-4 py-3 border-t border-outline">
+      <button id="btn-yes" class="flex-1 py-2 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Add</button>
+      <button id="btn-no"  class="flex-1 py-2 border border-outline font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted hover:bg-surface-mid">Dismiss</button>
+    </div>
+    <div id="queue-info" class="px-4 pb-2 font-mono text-[9px] text-on-muted tracking-wide text-center"></div>
+  </div>
+
+  <!-- Footer links -->
+  <div class="footer-links flex items-center justify-center gap-2 px-4 py-2 border-t border-outline mt-auto">
+    <a id="btn-dashboard" href="#" class="font-mono text-[9px] text-on-muted hover:text-on-surface tracking-wider uppercase">Calendar</a>
+    <span id="footer-sep"          class="hidden text-on-muted font-mono text-[9px]">·</span>
+    <a    id="btn-tasks"   href="#" class="hidden font-mono text-[9px] text-on-muted hover:text-on-surface tracking-wider uppercase">Tasks</a>
+    <span id="footer-sep-settings" class="hidden text-on-muted font-mono text-[9px]">·</span>
+    <a    id="btn-settings" href="#" class="hidden font-mono text-[9px] text-on-muted hover:text-on-surface tracking-wider uppercase">Settings</a>
+    <span id="footer-sep-training" class="hidden text-on-muted font-mono text-[9px]">·</span>
+    <a    id="btn-training" href="#" class="hidden font-mono text-[9px] text-on-muted hover:text-on-surface tracking-wider uppercase">Training</a>
+  </div>
+</div>
+
+<script src="../vendor/supabase.js"></script>
+<script src="../utils/storage.js"></script>
+<script src="../utils/supabase-client.js"></script>
+<script src="popup.js"></script>
+</body>
 </html>
