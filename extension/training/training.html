@@ -5,62 +5,143 @@
   <title>PlanWise — Training Data</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="../vendor/tailwind.js"></script>
+  <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'background':   '#f9f9f9',
+          'surface':      '#f9f9f9',
+          'surface-low':  '#f4f3f3',
+          'surface-mid':  '#eeeeee',
+          'on-surface':   '#1a1c1c',
+          'on-muted':     '#4c4546',
+          'primary':      '#000000',
+          'on-primary':   '#ffffff',
+          'outline':      '#1a1c1c',
+          'outline-soft': '#cfc4c5',
+          'error':        '#ba1a1a',
+          'status-active':'#00D1FF',
+          'status-ok':    '#7EFF00',
+          'status-crit':  '#FF4D00',
+        },
+        borderRadius: {
+          DEFAULT: '0px', none: '0px', sm: '0px',
+          md: '0px', lg: '0px', xl: '0px', full: '9999px',
+        },
+        fontFamily: {
+          sans: ['Geist', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+        boxShadow: {
+          'neo':    '4px 4px 0px 0px rgba(0,0,0,1)',
+          'neo-xs': '1px 1px 0px 0px rgba(0,0,0,1)',
+        },
+      },
+    },
+  }
+  </script>
   <link rel="stylesheet" href="training.css" />
 </head>
-<body>
-  <div id="app">
+<body class="bg-background font-sans text-on-surface h-screen overflow-hidden">
+<div id="app" class="flex h-screen overflow-hidden">
 
-    <aside id="sidebar">
-      <div class="sidebar-head">
-        <div class="sidebar-logo">PlanWise</div>
-        <div class="sidebar-sub">TRAINING DATA</div>
-      </div>
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-56 border-r border-outline flex flex-col shrink-0 bg-surface">
 
-      <div class="stats-block">
-        <div class="block-label">STATS</div>
-        <div class="stat-row"><span>Total logged</span><strong id="stat-total">—</strong></div>
-        <div class="stat-row"><span>Labelled</span><strong id="stat-labelled">—</strong></div>
-        <div class="stat-row"><span>Correct</span><strong id="stat-correct">—</strong></div>
-        <div class="stat-row"><span>False positives</span><strong id="stat-fp">—</strong></div>
-        <div class="stat-row"><span>False negatives</span><strong id="stat-fn">—</strong></div>
-      </div>
+    <!-- Logo -->
+    <div class="px-5 pt-5 pb-4 border-b border-outline shrink-0">
+      <div class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-on-muted mb-0.5">Plan</div>
+      <div class="font-sans text-2xl font-black uppercase tracking-tighter text-on-surface leading-none">Wise</div>
+      <div class="font-mono text-[9px] font-bold tracking-[0.14em] uppercase text-on-muted mt-1">Training Data</div>
+    </div>
 
-      <div class="sidebar-nav">
-        <a href="../dashboard/dashboard.html" class="sidebar-link">← Calendar</a>
-        <a href="../tasks/tasks.html"         class="sidebar-link">Tasks</a>
-        <a href="../settings/settings.html"   class="sidebar-link">Settings</a>
-      </div>
-
-      <div class="sidebar-actions">
-        <button id="btn-export" class="btn btn-accent">Export JSON</button>
-        <button id="btn-clear"  class="btn btn-danger">Clear Log</button>
-      </div>
-    </aside>
-
-    <main id="main">
-      <div class="toolbar">
-        <div class="filter-group">
-          <button class="filter-btn active" data-filter="all">ALL</button>
-          <button class="filter-btn" data-filter="unlabelled">UNLABELLED</button>
-          <button class="filter-btn" data-filter="triggered">TRIGGERED</button>
-          <button class="filter-btn" data-filter="not-triggered">NOT TRIGGERED</button>
+    <!-- Stats -->
+    <div class="px-5 py-4 border-b border-outline shrink-0">
+      <div class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted mb-3">Stats</div>
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-on-muted">Total logged</span>
+          <strong id="stat-total"   class="font-mono text-xs">—</strong>
         </div>
-        <input type="text" id="search" placeholder="Search text..." />
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-on-muted">Labelled</span>
+          <strong id="stat-labelled" class="font-mono text-xs">—</strong>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-on-muted">Correct</span>
+          <strong id="stat-correct"  class="font-mono text-xs">—</strong>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-on-muted">False pos.</span>
+          <strong id="stat-fp"       class="font-mono text-xs">—</strong>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-on-muted">False neg.</span>
+          <strong id="stat-fn"       class="font-mono text-xs">—</strong>
+        </div>
       </div>
+    </div>
 
-      <div id="entry-list"></div>
+    <!-- Cross-page links -->
+    <div class="flex flex-col mt-auto border-t border-outline shrink-0">
+      <a href="../dashboard/dashboard.html" class="px-5 py-2.5 text-sm text-on-muted hover:bg-surface-low transition-colors">← Calendar</a>
+      <a href="../tasks/tasks.html"         class="px-5 py-2.5 text-sm text-on-muted hover:bg-surface-low transition-colors">Tasks</a>
+      <a href="../settings/settings.html"   class="px-5 py-2.5 text-sm text-on-muted hover:bg-surface-low transition-colors">Settings</a>
+    </div>
 
-      <div id="empty-state" class="hidden">
-        <p>No detections logged yet.</p>
-        <p class="empty-sub">Use PlanWise on WhatsApp or Discord and entries will appear here.</p>
+    <!-- Actions -->
+    <div class="flex flex-col gap-2 p-4 border-t border-outline shrink-0">
+      <button id="btn-export"
+              class="py-2 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all">
+        Export JSON
+      </button>
+      <button id="btn-clear"
+              class="py-2 border border-error text-error font-mono text-[10px] font-bold tracking-wider uppercase hover:bg-error hover:text-on-primary transition-colors">
+        Clear Log
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main id="main" class="flex-1 min-w-0 flex flex-col overflow-hidden">
+
+    <!-- Toolbar -->
+    <div class="flex items-center gap-3 px-5 py-3 border-b border-outline bg-surface shrink-0">
+      <div class="flex border border-outline overflow-hidden">
+        <button class="filter-btn active px-3 py-1.5 font-mono text-[9px] font-bold tracking-wider uppercase"
+                data-filter="all">All</button>
+        <button class="filter-btn px-3 py-1.5 font-mono text-[9px] font-bold tracking-wider uppercase"
+                data-filter="unlabelled">Unlabelled</button>
+        <button class="filter-btn px-3 py-1.5 font-mono text-[9px] font-bold tracking-wider uppercase"
+                data-filter="triggered">Triggered</button>
+        <button class="filter-btn px-3 py-1.5 font-mono text-[9px] font-bold tracking-wider uppercase"
+                data-filter="not-triggered">Not triggered</button>
       </div>
-    </main>
+      <input type="text" id="search"
+             placeholder="Search text..."
+             class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low font-sans" />
+    </div>
 
-  </div>
+    <!-- Entry list -->
+    <div id="entry-list" class="flex-1 overflow-y-auto"></div>
 
-  <script src="../utils/logger.js"></script>
-  <script src="../vendor/anime.min.js"></script>
-  <script src="training.js"></script>
+    <!-- Empty state — JS toggles .hidden -->
+    <div id="empty-state" class="hidden flex-col items-center justify-center gap-2 text-center p-12">
+      <div class="font-bold text-base">No detections logged yet.</div>
+      <div class="text-sm text-on-muted max-w-xs leading-relaxed">
+        Use PlanWise on WhatsApp or Discord and entries will appear here.
+      </div>
+    </div>
+
+  </main>
+
+</div>
+
+<script src="../utils/logger.js"></script>
+<script src="../vendor/anime.min.js"></script>
+<script src="training.js"></script>
 </body>
 </html>
