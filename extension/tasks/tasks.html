@@ -83,10 +83,10 @@
     <!-- Body -->
     <div id="body" class="flex flex-1 min-h-0 overflow-hidden">
       <main id="main" class="flex-1 overflow-auto p-5">
-        <div id="board" class="flex gap-4 h-full">
+        <div id="board" class="grid grid-cols-3 gap-4 h-full min-w-0">
 
           <!-- TODO column -->
-          <div class="column flex flex-col w-72 shrink-0" id="col-todo">
+          <div class="column flex flex-col min-w-0" id="col-todo">
             <div class="col-head flex items-center justify-between px-3 py-2 border border-outline border-b-0 bg-surface-mid">
               <span class="font-mono text-[10px] font-bold tracking-wider uppercase">TODO</span>
               <div class="flex items-center gap-2">
@@ -100,9 +100,9 @@
           </div>
 
           <!-- IN PROGRESS column -->
-          <div class="column flex flex-col w-72 shrink-0" id="col-inprogress">
+          <div class="column flex flex-col min-w-0" id="col-inprogress">
             <div class="col-head flex items-center justify-between px-3 py-2 border border-outline border-b-0 bg-surface-mid">
-              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">In Progress</span>
+              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">IN PROGRESS</span>
               <div class="flex items-center gap-2">
                 <span id="count-inprogress" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
                 <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="inprogress">
@@ -114,9 +114,9 @@
           </div>
 
           <!-- DONE column -->
-          <div class="column flex flex-col w-72 shrink-0" id="col-done">
+          <div class="column flex flex-col min-w-0" id="col-done">
             <div class="col-head flex items-center justify-between px-3 py-2 border border-outline border-b-0 bg-surface-mid">
-              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">Done</span>
+              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">DONE</span>
               <div class="flex items-center gap-2">
                 <span id="count-done" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
                 <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="done">
