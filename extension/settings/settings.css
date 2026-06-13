@@ -9,6 +9,8 @@
    - Scrollbar styling
 */
 
+:root { --text-muted: #4c4546; }
+
 /* ─── Section visibility ──────────────────────────────────────────── */
 
 .section        { display: none; padding-bottom: 80px; }
