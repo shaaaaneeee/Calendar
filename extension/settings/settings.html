@@ -6,6 +6,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=block" />
   <script src="../vendor/tailwind.js"></script>
   <script>
   tailwind.config = {
@@ -51,9 +52,18 @@
 
     <!-- Cross-page links -->
     <div class="flex flex-col gap-0 border-t border-outline shrink-0">
-      <a href="../dashboard/dashboard.html" class="flex items-center px-5 py-2.5 text-sm text-on-muted hover:bg-surface-low hover:text-on-surface">← Calendar</a>
-      <a href="../tasks/tasks.html"         class="flex items-center px-5 py-2.5 text-sm text-on-muted hover:bg-surface-low hover:text-on-surface">Tasks</a>
-      <a href="../training/training.html"   class="flex items-center px-5 py-2.5 text-sm text-on-muted hover:bg-surface-low hover:text-on-surface">Training</a>
+      <a href="../dashboard/dashboard.html" class="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[18px]">calendar_today</span>Calendar
+      </a>
+      <a href="../tasks/tasks.html" class="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[18px]">task_alt</span>Tasks
+      </a>
+      <a href="settings.html" class="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-surface border-l-2 border-primary bg-surface-mid">
+        <span class="material-symbols-outlined text-[18px]">settings</span>Settings
+      </a>
+      <a href="../training/training.html" class="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[18px]">model_training</span>Training
+      </a>
     </div>
   </aside>
 
@@ -205,7 +215,7 @@
         </div>
         <label class="toggle relative inline-flex items-center cursor-pointer">
           <input type="checkbox" id="toggle-notifications" class="sr-only peer" />
-          <div class="w-9 h-5 bg-surface-top border border-outline peer-checked:bg-primary peer-checked:border-primary after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:w-4 after:h-4 after:border after:border-outline after:transition-all peer-checked:after:translate-x-4 peer-checked:after:border-white"></div>
+          <div class="w-9 h-5 bg-surface-top border border-outline peer-checked:bg-primary peer-checked:border-primary after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-on-primary after:w-4 after:h-4 after:border after:border-outline after:transition-all peer-checked:after:translate-x-4 peer-checked:after:border-on-primary"></div>
         </label>
       </div>
     </section>
