@@ -120,7 +120,7 @@
         </div>
 
         <!-- Day panel — shown on day click, overlays upcoming -->
-        <div id="day-panel" class="hidden absolute inset-0 bg-surface flex flex-col z-10">
+        <div id="day-panel" class="hidden absolute inset-0 bg-surface flex-col z-10">
           <div class="day-panel-head flex items-center justify-between px-4 py-3 border-b border-outline shrink-0">
             <div id="day-panel-title" class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-on-muted"></div>
             <button id="day-panel-close" class="w-6 h-6 flex items-center justify-center hover:bg-surface-mid">
@@ -141,7 +141,7 @@
 </div><!-- /#app -->
 
 <!-- Event edit modal -->
-<div id="modal-overlay" class="hidden fixed inset-0 bg-on-surface/30 flex items-center justify-center z-30">
+<div id="modal-overlay" class="hidden fixed inset-0 bg-on-surface/30 items-center justify-center z-30">
   <div id="modal" class="w-96 bg-surface border border-outline shadow-neo">
     <div class="modal-head flex items-center justify-between px-5 py-3 border-b border-outline">
       <div class="modal-label font-mono text-[10px] font-bold tracking-[0.15em] uppercase">EDIT EVENT</div>
@@ -173,7 +173,7 @@
     </div>
     <div id="modal-source" class="modal-quote px-5 py-3 border-t border-outline font-mono text-[11px] text-on-muted bg-surface-low italic hidden"></div>
     <div class="modal-foot flex gap-2 px-5 py-3 border-t border-outline">
-      <button id="modal-save"   class="flex-1 py-2 font-mono text-[10px] font-bold tracking-wider uppercase bg-primary text-on-primary shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Save</button>
+      <button id="modal-save"   class="flex-1 py-2 font-mono text-[10px] font-bold tracking-wider uppercase bg-primary text-on-primary border border-primary shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Save</button>
       <button id="modal-delete" class="px-4 py-2 font-mono text-[10px] font-bold tracking-wider uppercase border border-error text-error hover:bg-error hover:text-on-primary">Delete</button>
       <button id="modal-cancel" class="px-4 py-2 font-mono text-[10px] font-bold tracking-wider uppercase border border-outline text-on-muted hover:bg-surface-mid">Cancel</button>
     </div>
@@ -181,7 +181,7 @@
 </div>
 
 <!-- Notification feed panel — Phase D populates this -->
-<div id="notif-panel" class="hidden fixed right-0 top-12 bottom-0 w-80 bg-surface border-l border-outline z-20 flex flex-col shadow-neo">
+<div id="notif-panel" class="hidden fixed right-0 top-12 bottom-0 w-80 bg-surface border-l border-outline z-20 flex-col shadow-neo">
   <div class="flex items-center justify-between px-4 py-3 border-b border-outline shrink-0">
     <div class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Notifications</div>
     <button id="notif-mark-all" class="font-mono text-[9px] tracking-wider text-on-muted hover:text-on-surface underline">Mark all read</button>

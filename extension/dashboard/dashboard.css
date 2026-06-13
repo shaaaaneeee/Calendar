@@ -197,3 +197,11 @@
 #day-panel:not(.hidden) {
   display: flex;
 }
+
+#modal-overlay:not(.hidden) {
+  display: flex;
+}
+
+#notif-panel:not(.hidden) {
+  display: flex;
+}
