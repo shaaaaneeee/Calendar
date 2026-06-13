@@ -5,138 +5,193 @@
   <title>PlanWise — Tasks</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=block" />
+  <script src="../vendor/tailwind.js"></script>
+  <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'background':   '#f9f9f9',
+          'surface':      '#f9f9f9',
+          'surface-low':  '#f4f3f3',
+          'surface-mid':  '#eeeeee',
+          'surface-high': '#e8e8e8',
+          'surface-top':  '#e2e2e2',
+          'on-surface':   '#1a1c1c',
+          'on-muted':     '#4c4546',
+          'primary':      '#000000',
+          'on-primary':   '#ffffff',
+          'secondary':    '#5d5f5f',
+          'outline':      '#1a1c1c',
+          'outline-soft': '#cfc4c5',
+          'error':        '#ba1a1a',
+          'status-active':'#00D1FF',
+          'status-ok':    '#7EFF00',
+          'status-crit':  '#FF4D00',
+        },
+        borderRadius: { DEFAULT:'0px', none:'0px', sm:'0px', md:'0px', lg:'0px', xl:'0px', full:'9999px' },
+        fontFamily: { sans:['Geist','sans-serif'], mono:['JetBrains Mono','monospace'] },
+        boxShadow: {
+          'neo':    '4px 4px 0px 0px rgba(0,0,0,1)',
+          'neo-sm': '2px 2px 0px 0px rgba(0,0,0,1)',
+          'neo-xs': '1px 1px 0px 0px rgba(0,0,0,1)',
+        },
+      },
+    },
+  }
+  </script>
   <link rel="stylesheet" href="tasks.css" />
 </head>
-<body>
-  <div id="app">
+<body class="bg-background font-sans text-on-surface h-screen overflow-hidden">
+<div id="app" class="flex h-screen overflow-hidden">
+
+  <!-- Sidebar -->
+  <nav id="leftnav" class="w-56 border-r border-outline flex flex-col shrink-0 bg-surface">
+    <div class="px-5 pt-5 pb-4 border-b border-outline shrink-0">
+      <div class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-on-muted mb-0.5">Plan</div>
+      <div class="font-sans text-2xl font-black uppercase tracking-tighter text-on-surface leading-none">Wise</div>
+    </div>
+    <div class="flex flex-col pt-2">
+      <a href="../dashboard/dashboard.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[18px]">calendar_today</span>Calendar
+      </a>
+      <a href="tasks.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-surface border-l-2 border-primary bg-surface-mid">
+        <span class="material-symbols-outlined text-[18px]">task_alt</span>Tasks
+      </a>
+      <a href="../settings/settings.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[18px]">settings</span>Settings
+      </a>
+      <a href="../training/training.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[18px]">model_training</span>Training
+      </a>
+    </div>
+  </nav>
+
+  <!-- Right column -->
+  <div class="flex flex-col flex-1 min-w-0">
 
     <!-- Top bar -->
-    <header id="topbar">
-      <div class="topbar-brand">
-        <span class="brand-name">PlanWise</span>
-        <span class="brand-badge">BETA</span>
-      </div>
-      <div class="topbar-center">
-        <h1 class="page-title">Tasks</h1>
-      </div>
-      <div class="topbar-right">
-        <button id="btn-add-task" class="add-task-btn">
-          <span class="material-symbols-outlined">add</span>
-          NEW TASK
-        </button>
-      </div>
+    <header id="topbar" class="flex items-center justify-between h-12 px-5 border-b border-outline bg-surface shrink-0">
+      <div class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-on-muted">Tasks</div>
+      <button id="btn-add-task" class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all">
+        <span class="material-symbols-outlined text-[14px]">add</span>NEW TASK
+      </button>
     </header>
 
     <!-- Body -->
-    <div id="body">
+    <div id="body" class="flex flex-1 min-h-0 overflow-hidden">
+      <main id="main" class="flex-1 overflow-auto p-5">
+        <div id="board" class="flex gap-4 h-full">
 
-      <!-- Left nav (same structure as dashboard) -->
-      <nav id="leftnav">
-        <a href="../dashboard/dashboard.html" class="leftnav-item">
-          <span class="material-symbols-outlined">calendar_today</span>
-          <span>Calendar</span>
-        </a>
-        <a href="tasks.html" class="leftnav-item active">
-          <span class="material-symbols-outlined">task_alt</span>
-          <span>Tasks</span>
-        </a>
-        <a href="../settings/settings.html" class="leftnav-item">
-          <span class="material-symbols-outlined">settings</span>
-          <span>Settings</span>
-        </a>
-        <a href="../training/training.html" class="leftnav-item">
-          <span class="material-symbols-outlined">model_training</span>
-          <span>Training</span>
-        </a>
-      </nav>
-
-      <!-- Kanban board -->
-      <main id="main">
-        <div id="board">
-
-          <div class="column" id="col-todo">
-            <div class="col-head">
-              <span class="col-title">TODO</span>
-              <span class="col-count" id="count-todo">0</span>
-              <button class="col-add-btn" data-col="todo">
-                <span class="material-symbols-outlined">add</span>
-              </button>
+          <!-- TODO column -->
+          <div class="column flex flex-col w-72 shrink-0" id="col-todo">
+            <div class="col-head flex items-center justify-between px-3 py-2 border border-outline border-b-0 bg-surface-mid">
+              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">TODO</span>
+              <div class="flex items-center gap-2">
+                <span id="count-todo" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
+                <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="todo">
+                  <span class="material-symbols-outlined text-[14px]">add</span>
+                </button>
+              </div>
             </div>
-            <div class="cards" id="cards-todo"></div>
+            <div id="cards-todo" class="cards flex flex-col gap-2 p-2 border border-outline flex-1 overflow-y-auto bg-surface-low"></div>
           </div>
 
-          <div class="column" id="col-inprogress">
-            <div class="col-head">
-              <span class="col-title">IN PROGRESS</span>
-              <span class="col-count" id="count-inprogress">0</span>
-              <button class="col-add-btn" data-col="inprogress">
-                <span class="material-symbols-outlined">add</span>
-              </button>
+          <!-- IN PROGRESS column -->
+          <div class="column flex flex-col w-72 shrink-0" id="col-inprogress">
+            <div class="col-head flex items-center justify-between px-3 py-2 border border-outline border-b-0 bg-surface-mid">
+              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">In Progress</span>
+              <div class="flex items-center gap-2">
+                <span id="count-inprogress" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
+                <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="inprogress">
+                  <span class="material-symbols-outlined text-[14px]">add</span>
+                </button>
+              </div>
             </div>
-            <div class="cards" id="cards-inprogress"></div>
+            <div id="cards-inprogress" class="cards flex flex-col gap-2 p-2 border border-outline flex-1 overflow-y-auto bg-surface-low"></div>
           </div>
 
-          <div class="column" id="col-done">
-            <div class="col-head">
-              <span class="col-title">DONE</span>
-              <span class="col-count" id="count-done">0</span>
-              <button class="col-add-btn" data-col="done">
-                <span class="material-symbols-outlined">add</span>
-              </button>
+          <!-- DONE column -->
+          <div class="column flex flex-col w-72 shrink-0" id="col-done">
+            <div class="col-head flex items-center justify-between px-3 py-2 border border-outline border-b-0 bg-surface-mid">
+              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">Done</span>
+              <div class="flex items-center gap-2">
+                <span id="count-done" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
+                <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="done">
+                  <span class="material-symbols-outlined text-[14px]">add</span>
+                </button>
+              </div>
             </div>
-            <div class="cards" id="cards-done"></div>
+            <div id="cards-done" class="cards flex flex-col gap-2 p-2 border border-outline flex-1 overflow-y-auto bg-surface-low"></div>
           </div>
 
         </div>
       </main>
-
-    </div><!-- /#body -->
-  </div><!-- /#app -->
-
-  <!-- Add / Edit task modal -->
-  <div id="modal-overlay" class="hidden">
-    <div id="modal">
-      <div class="modal-head">
-        <div class="modal-label" id="modal-title">ADD TASK</div>
-        <button id="modal-close" class="close-btn">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-
-      <div class="modal-fields">
-        <div class="modal-row">
-          <label class="row-label">TITLE</label>
-          <input type="text" id="task-title" class="row-input" placeholder="What needs doing?" />
-        </div>
-        <div class="modal-row">
-          <label class="row-label">DUE DATE</label>
-          <input type="date" id="task-date" class="row-input" />
-        </div>
-        <div class="modal-row">
-          <label class="row-label">PRIORITY</label>
-          <select id="task-priority" class="row-input">
-            <option value="">None</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-        </div>
-        <div class="modal-row modal-row-notes">
-          <label class="row-label">NOTES</label>
-          <textarea id="task-notes" class="row-input row-textarea" rows="2" placeholder="Optional notes..."></textarea>
-        </div>
-      </div>
-
-      <div class="modal-foot">
-        <button id="modal-save"   class="btn btn-primary">Save</button>
-        <button id="modal-delete" class="btn btn-danger hidden">Delete</button>
-        <button id="modal-cancel" class="btn btn-ghost">Cancel</button>
-      </div>
     </div>
   </div>
+</div><!-- /#app -->
 
-  <script src="tasks.js"></script>
+<!-- Task add/edit — right-side drawer -->
+<div id="modal-overlay" class="hidden fixed inset-0 bg-on-surface/20 z-30">
+  <div id="modal" class="absolute right-0 inset-y-0 w-80 bg-surface border-l border-outline shadow-neo flex flex-col">
+
+    <div class="modal-head flex items-center justify-between px-5 py-3 border-b border-outline shrink-0">
+      <div id="modal-title" class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">ADD TASK</div>
+      <button id="modal-close" class="w-6 h-6 flex items-center justify-center hover:bg-surface-mid transition-colors">
+        <span class="material-symbols-outlined text-[16px]">close</span>
+      </button>
+    </div>
+
+    <div class="modal-fields px-5 py-4 flex flex-col gap-3 flex-1 overflow-y-auto">
+      <div class="flex flex-col gap-1">
+        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">TITLE</label>
+        <input type="text" id="task-title"
+          class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low"
+          placeholder="What needs doing?" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">DUE DATE</label>
+        <input type="date" id="task-date"
+          class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">PRIORITY</label>
+        <select id="task-priority"
+          class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none appearance-none cursor-pointer">
+          <option value="">None</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-1">
+        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">NOTES</label>
+        <textarea id="task-notes"
+          class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low resize-none"
+          rows="4" placeholder="Optional notes..."></textarea>
+      </div>
+    </div>
+
+    <div class="modal-foot flex gap-2 px-5 py-3 border-t border-outline shrink-0">
+      <button id="modal-save"
+        class="flex-1 py-2 font-mono text-[10px] font-bold tracking-wider uppercase bg-primary text-on-primary border border-primary shadow-neo-xs hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all">
+        Save
+      </button>
+      <button id="modal-delete"
+        class="hidden px-4 py-2 font-mono text-[10px] font-bold tracking-wider uppercase border border-error text-error hover:bg-error hover:text-on-primary transition-colors">
+        Delete
+      </button>
+      <button id="modal-cancel"
+        class="px-4 py-2 font-mono text-[10px] font-bold tracking-wider uppercase border border-outline text-on-muted hover:bg-surface-mid transition-colors">
+        Cancel
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script src="tasks.js"></script>
 </body>
 </html>
