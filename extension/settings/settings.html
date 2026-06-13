@@ -5,200 +5,235 @@
   <title>PlanWise — Settings</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="../vendor/tailwind.js"></script>
+  <script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'background':'#f9f9f9','surface':'#f9f9f9','surface-low':'#f4f3f3',
+          'surface-mid':'#eeeeee','surface-high':'#e8e8e8','surface-top':'#e2e2e2',
+          'on-surface':'#1a1c1c','on-muted':'#4c4546','primary':'#000000',
+          'on-primary':'#ffffff','secondary':'#5d5f5f','outline':'#1a1c1c',
+          'outline-soft':'#cfc4c5','error':'#ba1a1a',
+          'status-active':'#00D1FF','status-ok':'#7EFF00','status-crit':'#FF4D00',
+        },
+        borderRadius:{ DEFAULT:'0px',none:'0px',sm:'0px',md:'0px',lg:'0px',xl:'0px',full:'9999px' },
+        fontFamily:{ sans:['Geist','sans-serif'], mono:['JetBrains Mono','monospace'] },
+        boxShadow:{ 'neo':'4px 4px 0px 0px rgba(0,0,0,1)', 'neo-sm':'2px 2px 0px 0px rgba(0,0,0,1)', 'neo-xs':'1px 1px 0px 0px rgba(0,0,0,1)' },
+      },
+    },
+  }
+  </script>
   <link rel="stylesheet" href="settings.css" />
 </head>
-<body>
+<body class="bg-background font-sans text-on-surface h-screen overflow-hidden">
 
-  <div id="app">
+<div id="app" class="flex h-screen overflow-hidden">
 
-    <aside id="sidebar">
-      <div class="sidebar-head">
-        <div class="sidebar-logo">PlanWise</div>
-        <div class="sidebar-sub">SETTINGS</div>
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-56 border-r border-outline flex flex-col shrink-0 bg-surface">
+    <div class="px-5 pt-5 pb-4 border-b border-outline shrink-0">
+      <div class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-on-muted mb-0.5">Plan</div>
+      <div class="font-sans text-2xl font-black uppercase tracking-tighter text-on-surface leading-none">Wise</div>
+    </div>
+
+    <!-- Section nav -->
+    <nav class="sidebar-nav flex flex-col pt-2 flex-1 overflow-y-auto">
+      <a href="#" class="nav-item active flex items-center px-5 py-2.5 text-sm font-medium text-on-surface border-l-2 border-primary bg-surface-mid" data-section="detection">Detection</a>
+      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="overview">Overview</a>
+      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="contacts">Contacts</a>
+      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="groups">Groups</a>
+      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="notifications">Notifications</a>
+      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="account">Account</a>
+    </nav>
+
+    <!-- Cross-page links -->
+    <div class="flex flex-col gap-0 border-t border-outline shrink-0">
+      <a href="../dashboard/dashboard.html" class="flex items-center px-5 py-2.5 text-sm text-on-muted hover:bg-surface-low hover:text-on-surface">← Calendar</a>
+      <a href="../tasks/tasks.html"         class="flex items-center px-5 py-2.5 text-sm text-on-muted hover:bg-surface-low hover:text-on-surface">Tasks</a>
+      <a href="../training/training.html"   class="flex items-center px-5 py-2.5 text-sm text-on-muted hover:bg-surface-low hover:text-on-surface">Training</a>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main id="main" class="flex-1 min-w-0 overflow-y-auto relative">
+
+    <!-- Detection -->
+    <section id="section-detection" class="section active p-8 max-w-2xl">
+      <h1 class="text-xl font-bold tracking-tight mb-1">Detection</h1>
+      <p class="text-sm text-on-muted mb-6">Control how PlanWise detects plans in your conversations.</p>
+
+      <div class="setting-group flex flex-col gap-4 mb-8 pb-8 border-b border-outline-soft">
+        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Detection Sensitivity</label>
+        <p class="text-sm text-on-muted -mt-2">Lower = catches more plans (more false positives). Higher = only catches obvious plans.</p>
+        <div class="flex items-center gap-4">
+          <span class="font-mono text-[10px] font-bold tracking-wider text-on-muted uppercase">Low</span>
+          <input type="range" id="sensitivity-slider" min="1" max="4" step="1" class="flex-1 accent-primary" />
+          <span class="font-mono text-[10px] font-bold tracking-wider text-on-muted uppercase">High</span>
+        </div>
+        <div class="font-mono text-xs text-on-muted">Threshold: <strong id="sensitivity-display" class="text-on-surface">2</strong></div>
       </div>
 
-      <nav class="sidebar-nav">
-        <a href="#" class="nav-item active" data-section="detection">Detection</a>
-        <a href="#" class="nav-item"        data-section="overview">Overview</a>
-        <a href="#" class="nav-item"        data-section="contacts">Contacts</a>
-        <a href="#" class="nav-item"        data-section="notifications">Notifications</a>
-        <a href="#" class="nav-item"        data-section="account">Account</a>
-      </nav>
-
-      <div class="sidebar-links">
-        <a href="../dashboard/dashboard.html" class="sidebar-ext-link">← Calendar</a>
-        <a href="../tasks/tasks.html"         class="sidebar-ext-link">Tasks</a>
-        <a href="../training/training.html"   class="sidebar-ext-link">Training</a>
-      </div>
-    </aside>
-
-    <main id="main">
-
-      <!-- Detection -->
-      <section id="section-detection" class="section active">
-        <h1 class="section-title">Detection</h1>
-        <p class="section-desc">Control how PlanWise detects plans in your conversations.</p>
-
-        <div class="setting-group">
-          <label class="setting-label">Detection Sensitivity</label>
-          <p class="setting-hint">
-            Lower = catches more plans (more false positives).<br>
-            Higher = only catches obvious plans (fewer false positives).
-          </p>
-          <div class="sensitivity-row">
-            <span class="sens-label">Low</span>
-            <input type="range" id="sensitivity-slider" min="1" max="4" step="1" />
-            <span class="sens-label">High</span>
-          </div>
-          <div class="sensitivity-value">Threshold: <strong id="sensitivity-display">2</strong></div>
+      <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
+        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Trigger Words</label>
+        <p class="text-sm text-on-muted -mt-1">Words that strongly suggest a plan. Each match adds +2 to detection score.</p>
+        <div class="flex gap-2">
+          <input type="text" id="trigger-word-input" placeholder="e.g. rehearsal, training..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+          <button id="btn-add-trigger" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
         </div>
-
-        <div class="setting-group">
-          <label class="setting-label">Custom Trigger Words</label>
-          <p class="setting-hint">
-            Words that strongly suggest a plan. Each match adds +2 to the detection score.
-          </p>
-          <div class="tag-input-row">
-            <input type="text" id="trigger-word-input" placeholder="e.g. rehearsal, training..." />
-            <button id="btn-add-trigger" class="btn btn-add">Add</button>
-          </div>
-          <div id="trigger-tags" class="tag-list"></div>
-        </div>
-
-        <div class="setting-group">
-          <label class="setting-label">Custom Names</label>
-          <p class="setting-hint">
-            People or places you frequently make plans with. When detected, the name is added to the event title and notes — it does not affect the detection score.
-          </p>
-          <div class="tag-input-row">
-            <input type="text" id="priority-name-input" placeholder="e.g. Coach Kim, Studio B..." />
-            <button id="btn-add-priority-name" class="btn btn-add">Add</button>
-          </div>
-          <div id="priority-name-tags" class="tag-list"></div>
-        </div>
-
-        <div class="setting-group">
-          <label class="setting-label">Custom Activity Words</label>
-          <p class="setting-hint">
-            Activities PlanWise doesn't recognise by default. Each match adds +2 to the detection score.
-          </p>
-          <div class="tag-input-row">
-            <input type="text" id="activity-word-input" placeholder="e.g. rehearsal, sparring, recital..." />
-            <button id="btn-add-activity-word" class="btn btn-add">Add</button>
-          </div>
-          <div id="activity-word-tags" class="tag-list"></div>
-        </div>
-
-        <div class="setting-group">
-          <label class="setting-label">Custom Meeting Words</label>
-          <p class="setting-hint">
-            Work or group meeting types specific to your context. Each match adds +2 to the detection score.
-          </p>
-          <div class="tag-input-row">
-            <input type="text" id="meeting-word-input" placeholder="e.g. standup, retrospective, sync..." />
-            <button id="btn-add-meeting-word" class="btn btn-add">Add</button>
-          </div>
-          <div id="meeting-word-tags" class="tag-list"></div>
-        </div>
-
-        <div class="setting-group">
-          <label class="setting-label">Plan Items</label>
-          <p class="setting-hint">
-            Things that appear in plans — items to bring, supplies, gear. Each match adds +1 to the detection score.
-          </p>
-          <div class="tag-input-row">
-            <input type="text" id="item-input" placeholder="e.g. cleats, racket, passport..." />
-            <button id="btn-add-item" class="btn btn-add">Add</button>
-          </div>
-          <div id="item-tags" class="tag-list"></div>
-        </div>
-      </section>
-
-      <!-- Overview -->
-      <section id="section-overview" class="section hidden">
-        <h1 class="section-title">Overview</h1>
-        <p class="section-desc">All custom detection words at a glance. Add or remove them from the Detection section.</p>
-
-        <div class="setting-group">
-          <table class="summary-table">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Entries</th>
-                <th>Score</th>
-                <th>Count</th>
-              </tr>
-            </thead>
-            <tbody id="summary-tbody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Contacts -->
-      <section id="section-contacts" class="section hidden">
-        <h1 class="section-title">Contacts</h1>
-        <p class="section-desc">
-          People PlanWise should recognise in conversations.
-          Add their name and any nicknames you use for them.
-        </p>
-
-        <div class="setting-group">
-          <div class="contact-add-row">
-            <input type="text" id="contact-name-input"     placeholder="Name (e.g. Alex)" />
-            <input type="text" id="contact-nickname-input" placeholder="Nicknames (comma separated)" />
-            <button id="btn-add-contact" class="btn btn-add">Add</button>
-          </div>
-          <div id="contact-list" class="contact-list"></div>
-        </div>
-      </section>
-
-      <!-- Notifications -->
-      <section id="section-notifications" class="section hidden">
-        <h1 class="section-title">Notifications</h1>
-        <p class="section-desc">Control how PlanWise alerts you when a plan is detected.</p>
-
-        <div class="setting-group">
-          <div class="toggle-row">
-            <div>
-              <div class="setting-label">Badge icon</div>
-              <div class="setting-hint">Show a ! badge on the extension icon when a plan is detected.</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="toggle-notifications" />
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <!-- Account -->
-      <section id="section-account" class="section hidden">
-        <h1 class="section-title">Account</h1>
-        <p class="section-desc">Manage your PlanWise account.</p>
-
-        <div class="setting-group">
-          <div class="account-info">
-            <div class="account-label">SIGNED IN AS</div>
-            <div class="account-email" id="account-email">—</div>
-          </div>
-          <button id="btn-signout" class="btn btn-danger">Sign out</button>
-        </div>
-      </section>
-
-      <!-- Save bar -->
-      <div id="save-bar">
-        <span id="save-status"></span>
-        <button id="btn-save" class="btn btn-save">Save Settings</button>
+        <div id="trigger-tags" class="tag-list flex flex-wrap gap-1.5"></div>
       </div>
 
-    </main>
-  </div>
+      <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
+        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Names</label>
+        <p class="text-sm text-on-muted -mt-1">People or places you frequently make plans with. Name is added to the event title and notes — does not affect detection score.</p>
+        <div class="flex gap-2">
+          <input type="text" id="priority-name-input" placeholder="e.g. Coach Kim, Studio B..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+          <button id="btn-add-priority-name" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
+        </div>
+        <div id="priority-name-tags" class="tag-list flex flex-wrap gap-1.5"></div>
+      </div>
 
-  <script src="../vendor/supabase.js"></script>
-  <script src="../utils/storage.js"></script>
-  <script src="../utils/supabase-client.js"></script>
-  <script src="settings.js"></script>
+      <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
+        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Activity Words</label>
+        <p class="text-sm text-on-muted -mt-1">Activities PlanWise doesn't recognise by default. Each match adds +2.</p>
+        <div class="flex gap-2">
+          <input type="text" id="activity-word-input" placeholder="e.g. rehearsal, sparring, recital..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+          <button id="btn-add-activity-word" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
+        </div>
+        <div id="activity-word-tags" class="tag-list flex flex-wrap gap-1.5"></div>
+      </div>
 
+      <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
+        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Meeting Words</label>
+        <p class="text-sm text-on-muted -mt-1">Work or group meeting types specific to your context. Each match adds +2.</p>
+        <div class="flex gap-2">
+          <input type="text" id="meeting-word-input" placeholder="e.g. standup, retrospective, sync..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+          <button id="btn-add-meeting-word" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
+        </div>
+        <div id="meeting-word-tags" class="tag-list flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <div class="setting-group flex flex-col gap-3">
+        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Plan Items</label>
+        <p class="text-sm text-on-muted -mt-1">Things that appear in plans — items to bring, gear, supplies. Each match adds +1.</p>
+        <div class="flex gap-2">
+          <input type="text" id="item-input" placeholder="e.g. cleats, racket, passport..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+          <button id="btn-add-item" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
+        </div>
+        <div id="item-tags" class="tag-list flex flex-wrap gap-1.5"></div>
+      </div>
+    </section>
+
+    <!-- Overview -->
+    <section id="section-overview" class="section hidden p-8 max-w-2xl">
+      <h1 class="text-xl font-bold tracking-tight mb-1">Overview</h1>
+      <p class="text-sm text-on-muted mb-6">All custom detection words at a glance.</p>
+      <div class="border border-outline">
+        <table class="summary-table w-full text-sm border-collapse">
+          <thead>
+            <tr class="bg-surface-mid border-b border-outline">
+              <th class="text-left px-4 py-2 font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted">Category</th>
+              <th class="text-left px-4 py-2 font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted">Entries</th>
+              <th class="text-left px-4 py-2 font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted">Score</th>
+              <th class="text-left px-4 py-2 font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted">Count</th>
+            </tr>
+          </thead>
+          <tbody id="summary-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Contacts -->
+    <section id="section-contacts" class="section hidden p-8 max-w-2xl">
+      <h1 class="text-xl font-bold tracking-tight mb-1">Contacts</h1>
+      <p class="text-sm text-on-muted mb-6">People PlanWise should recognise in conversations.</p>
+      <div class="flex gap-2 mb-4">
+        <input type="text" id="contact-name-input"     placeholder="Name (e.g. Alex)"              class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+        <input type="text" id="contact-nickname-input" placeholder="Nicknames (comma separated)"    class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+        <button id="btn-add-contact" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs">Add</button>
+      </div>
+      <div id="contact-list" class="contact-list flex flex-col gap-2"></div>
+    </section>
+
+    <!-- Groups — Phase B populates this section -->
+    <section id="section-groups" class="section hidden p-8 max-w-2xl">
+      <h1 class="text-xl font-bold tracking-tight mb-1">Groups</h1>
+      <p class="text-sm text-on-muted mb-6">Share events with people you plan with.</p>
+      <div id="groups-list" class="flex flex-col gap-3 mb-6"></div>
+      <button id="btn-new-group" class="flex items-center gap-2 px-4 py-2 border border-outline font-mono text-[10px] font-bold tracking-wider uppercase hover:bg-surface-mid hover:shadow-neo-xs">
+        <span>+ New Group</span>
+      </button>
+      <div id="new-group-form" class="hidden mt-4 border border-outline p-5 flex flex-col gap-4">
+        <div class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase border-b border-outline pb-3">Create Group</div>
+        <div class="flex flex-col gap-1">
+          <label class="font-mono text-[9px] font-bold tracking-wider uppercase text-on-muted">Name</label>
+          <input type="text" id="new-group-name" class="border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none" placeholder="e.g. Family, Football crew..." />
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="font-mono text-[9px] font-bold tracking-wider uppercase text-on-muted">Colour</label>
+          <div id="group-colour-picker" class="flex gap-2">
+            <button class="colour-opt w-7 h-7 border-2 border-outline selected" data-colour="#00D1FF" style="background:#00D1FF"></button>
+            <button class="colour-opt w-7 h-7 border-2 border-transparent hover:border-outline" data-colour="#7EFF00" style="background:#7EFF00"></button>
+            <button class="colour-opt w-7 h-7 border-2 border-transparent hover:border-outline" data-colour="#FF4D00" style="background:#FF4D00"></button>
+            <button class="colour-opt w-7 h-7 border-2 border-transparent hover:border-outline" data-colour="#A855F7" style="background:#A855F7"></button>
+            <button class="colour-opt w-7 h-7 border-2 border-transparent hover:border-outline" data-colour="#F59E0B" style="background:#F59E0B"></button>
+            <button class="colour-opt w-7 h-7 border-2 border-transparent hover:border-outline" data-colour="#EC4899" style="background:#EC4899"></button>
+          </div>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-mono text-[9px] font-bold tracking-wider uppercase text-on-muted">Invite by email</label>
+          <input type="email" id="new-group-invite" class="border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none" placeholder="friend@example.com" />
+        </div>
+        <div class="flex gap-2">
+          <button id="btn-create-group" class="flex-1 py-2 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Create Group</button>
+          <button id="btn-cancel-new-group" class="px-4 py-2 border border-outline font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted hover:bg-surface-mid">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notifications -->
+    <section id="section-notifications" class="section hidden p-8 max-w-2xl">
+      <h1 class="text-xl font-bold tracking-tight mb-1">Notifications</h1>
+      <p class="text-sm text-on-muted mb-6">Control how PlanWise alerts you when a plan is detected.</p>
+      <div class="flex items-center justify-between py-4 border-b border-outline-soft">
+        <div>
+          <div class="font-medium text-sm mb-0.5">Badge icon</div>
+          <div class="text-sm text-on-muted">Show a badge on the extension icon when a plan is detected.</div>
+        </div>
+        <label class="toggle relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="toggle-notifications" class="sr-only peer" />
+          <div class="w-9 h-5 bg-surface-top border border-outline peer-checked:bg-primary peer-checked:border-primary after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:w-4 after:h-4 after:border after:border-outline after:transition-all peer-checked:after:translate-x-4 after:peer-checked:border-white"></div>
+        </label>
+      </div>
+    </section>
+
+    <!-- Account -->
+    <section id="section-account" class="section hidden p-8 max-w-2xl">
+      <h1 class="text-xl font-bold tracking-tight mb-1">Account</h1>
+      <p class="text-sm text-on-muted mb-6">Manage your PlanWise account.</p>
+      <div class="border border-outline p-5 flex flex-col gap-4">
+        <div>
+          <div class="font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted mb-1">Signed in as</div>
+          <div id="account-email" class="text-sm font-medium">—</div>
+        </div>
+        <button id="btn-signout" class="self-start px-4 py-2 border border-error text-error font-mono text-[10px] font-bold tracking-wider uppercase hover:bg-error hover:text-on-primary">Sign out</button>
+      </div>
+    </section>
+
+    <!-- Save bar -->
+    <div id="save-bar" class="fixed bottom-0 left-56 right-0 flex items-center justify-between px-8 py-3 bg-surface border-t border-outline z-10">
+      <span id="save-status" class="font-mono text-xs text-on-muted"></span>
+      <button id="btn-save" class="px-5 py-2 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Save Settings</button>
+    </div>
+  </main>
+</div>
+
+<script src="../vendor/supabase.js"></script>
+<script src="../utils/storage.js"></script>
+<script src="../utils/supabase-client.js"></script>
+<script src="settings.js"></script>
 </body>
 </html>
