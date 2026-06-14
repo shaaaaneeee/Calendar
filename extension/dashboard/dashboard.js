@@ -417,6 +417,29 @@ function openModal(event) {
 
   const labelEl = document.querySelector("#modal .modal-label");
 
+  // Group selector: visible in create mode only (edit uses day-panel Share button)
+  const groupRow = el("modal-group-row");
+  const groupsContainer = el("modal-field-groups");
+  groupsContainer.innerHTML = "";
+
+  if (!event && calGroups.length > 0) {
+    for (const g of calGroups) {
+      const lbl = document.createElement("label");
+      lbl.className = "flex items-center gap-2 cursor-pointer text-sm py-0.5";
+      lbl.innerHTML = `
+        <input type="checkbox" data-group-id="${g.id}" class="modal-group-cb w-3 h-3 cursor-pointer" />
+        <span class="w-2 h-2 flex-shrink-0" style="background:${g.colour}"></span>
+        <span class="text-on-surface">${g.name}</span>
+      `;
+      groupsContainer.appendChild(lbl);
+    }
+    groupRow.classList.remove("hidden");
+    groupRow.classList.add("flex");
+  } else {
+    groupRow.classList.add("hidden");
+    groupRow.classList.remove("flex");
+  }
+
   if (!event) {
     // Create mode
     if (labelEl) labelEl.textContent = "ADD EVENT";
@@ -471,7 +494,13 @@ async function handleModalSave() {
     if (editingEvent) {
       await Events.update(editingEvent.id, payload);
     } else {
-      await Events.save(payload);
+      const newEvent = await Events.save(payload);
+      const selectedGroupIds = Array.from(
+        document.querySelectorAll(".modal-group-cb:checked")
+      ).map(cb => cb.dataset.groupId);
+      if (selectedGroupIds.length > 0 && newEvent?.id) {
+        await Social.shareEvent(newEvent.id, selectedGroupIds);
+      }
     }
   } catch (err) {
     console.warn("[PlanWise] Save failed:", err.message);

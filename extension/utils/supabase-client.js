@@ -132,12 +132,22 @@ const SupabaseEvents = {
   async getAll() {
     const { data, error } = await db
       .from('events')
-      .select('*')
+      .select('*, shared_events(group_id, groups(colour, name))')
       .order('event_date', { ascending: true })
       .order('event_time', { ascending: true });
 
     if (error) throw error;
-    return data;
+
+    // Flatten first group share into top-level fields for the calendar pill colouring
+    return (data || []).map(e => {
+      const firstShare = e.shared_events?.[0];
+      return {
+        ...e,
+        group_id:     firstShare?.group_id         ?? null,
+        group_colour: firstShare?.groups?.colour   ?? null,
+        group_name:   firstShare?.groups?.name     ?? null,
+      };
+    });
   },
 
   async update(id, updates) {
