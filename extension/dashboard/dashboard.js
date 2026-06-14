@@ -19,6 +19,7 @@ const Social = window.SupabaseClient.social;
 // ─────────────────────────────────────────────
 
 let allEvents = []; // All loaded events
+let deadlineEvents = []; // Deadline pseudo-events from tasks
 let currentDate = new Date(); // Drives which month/week is shown
 let currentView = "month"; // 'month' | 'week'
 let selectedDay = null; // Currently open day panel date string 'YYYY-MM-DD'
@@ -61,6 +62,25 @@ async function loadEvents() {
   } catch (err) {
     console.warn("[PlanWise] Failed to load events:", err.message);
     allEvents = [];
+  }
+
+  // Merge in task deadlines as pseudo-events
+  try {
+    const result = await chrome.storage.local.get("planwiseTasks");
+    const tasks = result.planwiseTasks || [];
+    deadlineEvents = tasks
+      .filter(t => t.date)
+      .map(t => ({
+        id:            `deadline-${t.id}`,
+        title:         t.title,
+        event_date:    t.date,
+        _isDeadline:   true,
+        group_id:      "deadlines",
+        group_colour:  "#FF4D00",
+      }));
+    allEvents = [...allEvents, ...deadlineEvents];
+  } catch (_) {
+    deadlineEvents = [];
   }
 }
 
@@ -190,7 +210,7 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
     }
     pill.addEventListener("click", (e) => {
       e.stopPropagation();
-      openModal(event);
+      if (!event._isDeadline) openModal(event);
     });
     cell.appendChild(pill);
   }
@@ -262,7 +282,7 @@ function renderWeek() {
       pill.textContent = formatTime(event.event_time || event.time)
         ? `${formatTime(event.event_time || event.time)} ${event.title}`
         : event.title;
-      pill.addEventListener("click", () => openModal(event));
+      pill.addEventListener("click", () => { if (!event._isDeadline) openModal(event); });
       cell.appendChild(pill);
     }
 
@@ -305,9 +325,19 @@ function openDayPanel(dateKey, events) {
       title.className = "day-event-title";
       title.textContent = event.title;
 
+      if (event._isDeadline) {
+        const badge = document.createElement("span");
+        badge.className = "ml-1 font-mono text-[8px] font-bold tracking-wider";
+        badge.style.color = "#FF4D00";
+        badge.textContent = " DEADLINE";
+        title.appendChild(badge);
+      }
+
       const time = document.createElement("div");
       time.className = "day-event-time";
-      time.textContent = formatTime(event.event_time || event.time) || "No time set";
+      time.textContent = event._isDeadline
+        ? "Task deadline"
+        : (formatTime(event.event_time || event.time) || "No time set");
 
       const people = document.createElement("div");
       people.className = "day-event-people";
@@ -322,11 +352,11 @@ function openDayPanel(dateKey, events) {
 
       card.addEventListener("click", (e) => {
         if (e.target.closest("button") || e.target.closest("input") || e.target.closest("label")) return;
-        openModal(event);
+        if (!event._isDeadline) openModal(event);
       });
 
-      // Share button + section (only if event has an id — Supabase events do)
-      if (event.id && calGroups.length > 0) {
+      // Share button + section (only for real Supabase events)
+      if (event.id && !event._isDeadline && calGroups.length > 0) {
         const shareBtn = document.createElement("button");
         shareBtn.className = "mt-2 font-mono text-[9px] tracking-wider uppercase text-on-muted hover:text-on-surface hover:underline";
         shareBtn.textContent = "Share →";
@@ -343,8 +373,8 @@ function openDayPanel(dateKey, events) {
         card.appendChild(shareSection);
       }
 
-      // RSVP & Comments button
-      if (event.id) {
+      // RSVP & Comments button (only for real Supabase events)
+      if (event.id && !event._isDeadline) {
         const detailsBtn = document.createElement("button");
         detailsBtn.className = "mt-2 font-mono text-[9px] tracking-wider uppercase text-on-muted hover:text-on-surface hover:underline";
         detailsBtn.textContent = "RSVP & Comments →";
@@ -385,18 +415,35 @@ function closeDayPanel() {
 function openModal(event) {
   editingEvent = event;
 
-  el("modal-field-title").value = event.title || "";
-  el("modal-field-date").value = event.event_date || event.date || "";
-  el("modal-field-time").value = event.event_time || event.time || "";
-  el("modal-field-participants").value = (event.participants || []).join(", ");
-  el("modal-field-notes").value = event.notes || "";
+  const labelEl = document.querySelector("#modal .modal-label");
 
-  const sourceText = event.source_text || event.sourceText || "";
-  if (sourceText) {
-    el("modal-source").textContent = `"${sourceText}"`;
-    el("modal-source").classList.add("visible");
-  } else {
+  if (!event) {
+    // Create mode
+    if (labelEl) labelEl.textContent = "ADD EVENT";
+    el("modal-field-title").value        = "";
+    el("modal-field-date").value         = selectedDay || "";
+    el("modal-field-time").value         = "";
+    el("modal-field-participants").value = "";
+    el("modal-field-notes").value        = "";
     el("modal-source").classList.remove("visible");
+    hide("modal-delete");
+  } else {
+    // Edit mode
+    if (labelEl) labelEl.textContent = "EDIT EVENT";
+    el("modal-field-title").value        = event.title || "";
+    el("modal-field-date").value         = event.event_date || event.date || "";
+    el("modal-field-time").value         = event.event_time || event.time || "";
+    el("modal-field-participants").value = (event.participants || []).join(", ");
+    el("modal-field-notes").value        = event.notes || "";
+
+    const sourceText = event.source_text || event.sourceText || "";
+    if (sourceText) {
+      el("modal-source").textContent = `"${sourceText}"`;
+      el("modal-source").classList.add("visible");
+    } else {
+      el("modal-source").classList.remove("visible");
+    }
+    show("modal-delete");
   }
 
   show("modal-overlay");
@@ -408,21 +455,26 @@ function closeModal() {
 }
 
 async function handleModalSave() {
-  if (!editingEvent) return;
+  const title = el("modal-field-title").value.trim();
+  if (!title) { el("modal-field-title").focus(); return; }
 
-  const updates = {
-    title: el("modal-field-title").value.trim(),
-    date: el("modal-field-date").value,
-    time: el("modal-field-time").value,
+  const payload = {
+    title,
+    date:         el("modal-field-date").value,
+    time:         el("modal-field-time").value,
     participants: el("modal-field-participants").value
       .split(",").map((s) => s.trim()).filter(Boolean),
-    notes: el("modal-field-notes").value.trim(),
+    notes:        el("modal-field-notes").value.trim(),
   };
 
   try {
-    await Events.update(editingEvent.id, updates);
+    if (editingEvent) {
+      await Events.update(editingEvent.id, payload);
+    } else {
+      await Events.save(payload);
+    }
   } catch (err) {
-    console.warn("[PlanWise] Update failed:", err.message);
+    console.warn("[PlanWise] Save failed:", err.message);
   }
 
   closeModal();
@@ -430,7 +482,6 @@ async function handleModalSave() {
   render();
   renderUpcoming();
 
-  // Refresh day panel if it's open
   if (selectedDay) {
     const dateMap = buildDateMap(allEvents);
     openDayPanel(selectedDay, dateMap[selectedDay] || []);
@@ -499,7 +550,7 @@ function renderUpcoming() {
 
     item.appendChild(title);
     item.appendChild(date);
-    item.addEventListener("click", () => openModal(event));
+    item.addEventListener("click", () => { if (!event._isDeadline) openModal(event); });
     container.appendChild(item);
   }
 }
@@ -529,6 +580,7 @@ function wireControls() {
   });
 
   el("view-month").addEventListener("click", () => {
+    if (currentView === "month") return;
     currentView = "month";
     el("view-month").classList.add("active");
     el("view-week").classList.remove("active");
@@ -536,11 +588,14 @@ function wireControls() {
   });
 
   el("view-week").addEventListener("click", () => {
+    if (currentView === "week") return;
     currentView = "week";
     el("view-week").classList.add("active");
     el("view-month").classList.remove("active");
     render();
   });
+
+  el("btn-add-event").addEventListener("click", () => openModal(null));
 
   el("day-panel-close").addEventListener("click", closeDayPanel);
   el("modal-close").addEventListener("click", closeModal);
@@ -614,7 +669,8 @@ function renderGroupsFilter() {
   const container = el("groups-filter");
   if (!container) return;
 
-  if (!calGroups.length) {
+  const hasDeadlines = deadlineEvents.length > 0;
+  if (!calGroups.length && !hasDeadlines) {
     container.classList.add("hidden");
     return;
   }
@@ -624,8 +680,36 @@ function renderGroupsFilter() {
 
   const label = document.createElement("div");
   label.className = "groups-filter-label";
-  label.textContent = "Groups";
+  label.textContent = "Categories";
   container.appendChild(label);
+
+  // Deadlines row
+  if (hasDeadlines) {
+    const row = document.createElement("label");
+    row.className = "group-filter-row";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = true;
+    cb.className = "accent-primary";
+    cb.addEventListener("change", () => {
+      if (cb.checked) hiddenGroups.delete("deadlines");
+      else hiddenGroups.add("deadlines");
+      applyGroupFilter();
+    });
+
+    const dot = document.createElement("span");
+    dot.className = "group-filter-dot";
+    dot.style.background = "#FF4D00";
+
+    const name = document.createElement("span");
+    name.textContent = "Deadlines";
+
+    row.appendChild(cb);
+    row.appendChild(dot);
+    row.appendChild(name);
+    container.appendChild(row);
+  }
 
   for (const g of calGroups) {
     const row = document.createElement("label");

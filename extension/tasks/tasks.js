@@ -164,12 +164,17 @@ async function handleDelete() {
 // MODAL
 // ─────────────────────────────────────────────
 
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
 function openAddModal(col) {
   addingToColumn = col;
   editingTask = null;
   el('modal-title').textContent = 'ADD TASK';
   el('task-title').value = '';
   el('task-date').value = '';
+  el('task-date').min   = todayStr();
   el('task-priority').value = '';
   el('task-notes').value = '';
   hide('modal-delete');
@@ -183,6 +188,7 @@ function openEditModal(task) {
   el('modal-title').textContent = 'EDIT TASK';
   el('task-title').value    = task.title    || '';
   el('task-date').value     = task.date     || '';
+  el('task-date').min       = todayStr();
   el('task-priority').value = task.priority || '';
   el('task-notes').value    = task.notes    || '';
   show('modal-delete');
