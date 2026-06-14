@@ -34,7 +34,7 @@
   overflow: hidden;
 }
 .month-cell:hover { background: #f4f3f3; }
-.month-cell.today  { background: #e8e8e8; color: #1a1c1c; border-top: 2px solid #1a1c1c; }
+.month-cell.today  { background: #c4c4c4; color: #1a1c1c; border-top: 2px solid #1a1c1c; }
 .month-cell.other-month { background: #eeeeee; color: #4c4546; }
 .month-cell.other-month .day-number { color: #4c4546; }
 
@@ -68,7 +68,7 @@
   gap: 3px;
 }
 .week-cell:hover  { background: #f4f3f3; }
-.week-cell.today  { background: #e8e8e8; color: #1a1c1c; border-top: 2px solid #1a1c1c; }
+.week-cell.today  { background: #c4c4c4; color: #1a1c1c; border-top: 2px solid #1a1c1c; }
 
 .week-cell-header {
   font-family: 'JetBrains Mono', monospace;
