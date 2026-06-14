@@ -264,17 +264,20 @@ const SupabaseGroups = {
     const session = await SupabaseAuth._restoreSession();
     if (!session) throw new Error('Not signed in');
 
-    const { data: membership } = await db
-      .from('group_members')
-      .select('role')
-      .eq('group_id', groupId)
-      .eq('user_id', session.user.id)
-      .single();
+    // Determine ownership via groups.created_by — authoritative and works even
+    // for orphaned groups where the group_members row was never inserted.
+    const { data: group } = await db
+      .from('groups')
+      .select('created_by')
+      .eq('id', groupId)
+      .maybeSingle();
 
-    if (membership?.role === 'owner') {
+    if (group?.created_by === session.user.id) {
+      // Owner: delete the group; CASCADE removes members, shared_events, etc.
       const { error } = await db.from('groups').delete().eq('id', groupId);
       if (error) throw error;
     } else {
+      // Non-owner: just remove self from group_members
       const { error } = await db
         .from('group_members')
         .delete()
