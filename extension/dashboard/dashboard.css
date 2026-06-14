@@ -34,7 +34,7 @@
   overflow: hidden;
 }
 .month-cell:hover { background: #f4f3f3; }
-.month-cell.today  { background: #000000; color: #ffffff; }
+.month-cell.today  { background: #e8e8e8; color: #1a1c1c; border-top: 2px solid #1a1c1c; }
 .month-cell.other-month { background: #eeeeee; color: #4c4546; }
 .month-cell.other-month .day-number { color: #4c4546; }
 
@@ -68,7 +68,7 @@
   gap: 3px;
 }
 .week-cell:hover  { background: #f4f3f3; }
-.week-cell.today  { background: #000000; color: #ffffff; }
+.week-cell.today  { background: #e8e8e8; color: #1a1c1c; border-top: 2px solid #1a1c1c; }
 
 .week-cell-header {
   font-family: 'JetBrains Mono', monospace;
@@ -79,7 +79,7 @@
   color: #4c4546;
 }
 
-.week-cell.today .week-cell-header { color: #eeeeee; }
+.week-cell.today .week-cell-header { color: #4c4546; }
 
 .week-cell-date {
   font-size: 22px;
@@ -89,7 +89,7 @@
   margin-bottom: 4px;
 }
 
-.week-cell.today .week-cell-date { color: #ffffff; }
+.week-cell.today .week-cell-date { color: #1a1c1c; }
 
 /* ── Event pills (created by makeMonthCell / renderWeek) ── */
 .event-pill {
@@ -100,16 +100,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: #1a1c1c;
-  color: #f9f9f9;
+  background: #ffffff;
+  color: #1a1c1c;
+  border: 1px solid #1a1c1c;
   cursor: pointer;
   display: block;
 }
-.event-pill:hover { background: #2e3131; }
-
-/* Today cell event pills need contrast */
-.month-cell.today .event-pill { background: #f9f9f9; color: #1a1c1c; }
-.week-cell.today  .event-pill { background: #f9f9f9; color: #1a1c1c; }
+.event-pill:hover { background: #f4f3f3; }
 
 /* ── Upcoming list items (created by renderUpcoming) ── */
 .upcoming-item {
