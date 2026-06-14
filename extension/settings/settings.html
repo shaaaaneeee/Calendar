@@ -40,18 +40,8 @@
       <div class="font-sans text-2xl font-black uppercase tracking-tighter text-on-surface leading-none">Wise</div>
     </div>
 
-    <!-- Section nav -->
-    <nav class="sidebar-nav flex flex-col pt-2 flex-1 overflow-y-auto">
-      <a href="#" class="nav-item active flex items-center px-5 py-2.5 text-sm font-medium text-on-surface border-l-2 border-primary bg-surface-mid" data-section="detection">Detection</a>
-      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="overview">Overview</a>
-      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="contacts">Contacts</a>
-      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="groups">Groups</a>
-      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="notifications">Notifications</a>
-      <a href="#" class="nav-item flex items-center px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface" data-section="account">Account</a>
-    </nav>
-
-    <!-- Cross-page links -->
-    <div class="flex flex-col gap-0 border-t border-outline shrink-0">
+    <!-- Cross-page nav (matches Dashboard/Tasks sidebar) -->
+    <div class="flex flex-col pt-2">
       <a href="../dashboard/dashboard.html" class="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
         <span class="material-symbols-outlined text-[18px]">calendar_today</span>Calendar
       </a>
@@ -67,8 +57,25 @@
     </div>
   </aside>
 
-  <!-- Main content -->
-  <main id="main" class="flex-1 min-w-0 overflow-y-auto relative">
+  <!-- Main content column -->
+  <div class="flex flex-col flex-1 min-w-0">
+
+    <!-- Topbar -->
+    <header id="topbar" class="flex items-center h-12 px-4 border-b border-outline bg-surface shrink-0">
+      <div class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-on-muted">Settings</div>
+    </header>
+
+    <!-- Horizontal section tab strip -->
+    <div class="flex border-b border-outline bg-surface shrink-0 overflow-x-auto">
+      <a href="#" class="nav-item active tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase whitespace-nowrap" data-section="detection">Detection</a>
+      <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="overview">Overview</a>
+      <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="contacts">Contacts</a>
+      <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="groups">Groups</a>
+      <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="notifications">Notifications</a>
+      <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="account">Account</a>
+    </div>
+
+    <main id="main" class="flex-1 min-w-0 overflow-y-auto relative">
 
     <!-- Detection -->
     <section id="section-detection" class="section active p-8 max-w-2xl">
@@ -238,7 +245,8 @@
       <span id="save-status" class="font-mono text-xs text-on-muted"></span>
       <button id="btn-save" class="px-5 py-2 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Save Settings</button>
     </div>
-  </main>
+    </main>
+  </div><!-- /main content column -->
 </div>
 
 <script src="../vendor/supabase.js"></script>

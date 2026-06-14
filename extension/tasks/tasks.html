@@ -134,8 +134,8 @@
 </div><!-- /#app -->
 
 <!-- Task add/edit — right-side drawer -->
-<div id="modal-overlay" class="hidden fixed inset-0 bg-on-surface/20 z-30">
-  <div id="modal" class="absolute right-0 inset-y-0 w-80 bg-surface border-l border-outline shadow-neo flex flex-col">
+<div id="modal-overlay" class="hidden fixed top-12 inset-x-0 bottom-0 bg-on-surface/20 z-30">
+  <div id="modal" class="absolute right-0 top-0 bottom-0 w-80 bg-surface border-l border-outline shadow-neo flex flex-col">
 
     <div class="modal-head flex items-center justify-between px-5 py-3 border-b border-outline shrink-0">
       <div id="modal-title" class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">ADD TASK</div>
@@ -159,7 +159,7 @@
       <div class="flex flex-col gap-1">
         <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">PRIORITY</label>
         <select id="task-priority"
-          class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none appearance-none cursor-pointer">
+          class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none cursor-pointer">
           <option value="">None</option>
           <option value="high">High</option>
           <option value="medium">Medium</option>

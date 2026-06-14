@@ -18,12 +18,12 @@
 .section.hidden { display: none !important; }
 
 
-/* ─── Nav active state ────────────────────────────────────────────── */
+/* ─── Tab strip active state (JS toggles .active on .nav-item) ───── */
 
 .nav-item.active {
   color: #1a1c1c !important;
-  border-left-color: #000000 !important;
-  background: #eeeeee !important;
+  border-bottom: 2px solid #000000;
+  background: transparent !important;
 }
 
 
