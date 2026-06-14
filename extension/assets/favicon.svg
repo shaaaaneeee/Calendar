@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" fill="#000000"/>
+  <!-- P stroke: vertical bar + top arm -->
+  <rect x="6"  y="7"  width="3" height="18" fill="#ffffff"/>
+  <rect x="6"  y="7"  width="11" height="3"  fill="#ffffff"/>
+  <rect x="6"  y="15" width="11" height="3"  fill="#ffffff"/>
+  <rect x="14" y="7"  width="3"  height="11" fill="#ffffff"/>
+  <!-- Cyan accent dot -->
+  <rect x="22" y="22" width="4" height="4" fill="#00D1FF"/>
+</svg>

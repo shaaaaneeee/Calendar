@@ -1,0 +1,10 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#000000"/>
+  <!-- P mark (geometric, pixel-grid aligned) -->
+  <rect x="96"  y="112" width="48"  height="288" fill="#ffffff"/>
+  <rect x="96"  y="112" width="176" height="48"  fill="#ffffff"/>
+  <rect x="96"  y="224" width="176" height="48"  fill="#ffffff"/>
+  <rect x="224" y="112" width="48"  height="160" fill="#ffffff"/>
+  <!-- Cyan accent square -->
+  <rect x="352" y="352" width="64" height="64" fill="#00D1FF"/>
+</svg>
