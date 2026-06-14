@@ -1,14 +1,70 @@
 -- 001_social_tables.sql
 -- Run in Supabase SQL editor (Dashboard → SQL Editor → New query)
+-- IMPORTANT: All tables are created first, then RLS policies are added.
+-- This avoids "relation does not exist" errors from cross-table policy references.
 
--- ── profiles ──────────────────────────────────────────────────────────────────
+-- ── TABLE DEFINITIONS ─────────────────────────────────────────────────────────
+
 create table if not exists profiles (
   id           uuid references auth.users on delete cascade primary key,
   display_name text not null,
   created_at   timestamptz default now()
 );
 
--- Auto-create profile on sign-up
+create table if not exists groups (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null,
+  type        text not null check (type in ('pair', 'group')),
+  colour      text not null,
+  created_by  uuid references auth.users on delete cascade not null,
+  created_at  timestamptz default now()
+);
+
+create table if not exists group_members (
+  group_id  uuid references groups on delete cascade not null,
+  user_id   uuid references auth.users on delete cascade not null,
+  role      text not null check (role in ('owner', 'member')),
+  joined_at timestamptz default now(),
+  primary key (group_id, user_id)
+);
+
+create table if not exists shared_events (
+  id         uuid primary key default gen_random_uuid(),
+  event_id   uuid references events on delete cascade not null,
+  group_id   uuid references groups on delete cascade not null,
+  shared_by  uuid references auth.users on delete cascade not null,
+  shared_at  timestamptz default now(),
+  unique (event_id, group_id)
+);
+
+create table if not exists rsvps (
+  event_id   uuid references events on delete cascade not null,
+  user_id    uuid references auth.users on delete cascade not null,
+  status     text not null check (status in ('going', 'maybe', 'cant')),
+  updated_at timestamptz default now(),
+  primary key (event_id, user_id)
+);
+
+create table if not exists comments (
+  id         uuid primary key default gen_random_uuid(),
+  event_id   uuid references events on delete cascade not null,
+  user_id    uuid references auth.users on delete cascade not null,
+  body       text not null,
+  created_at timestamptz default now()
+);
+
+create table if not exists notifications (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid references auth.users on delete cascade not null,
+  type       text not null check (type in ('event_shared', 'rsvp_updated', 'comment_added')),
+  payload    jsonb not null,
+  read       boolean default false,
+  created_at timestamptz default now()
+);
+
+
+-- ── PROFILE AUTO-CREATE TRIGGER ───────────────────────────────────────────────
+
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer as $$
 begin
@@ -24,23 +80,18 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function handle_new_user();
 
+
+-- ── RLS POLICIES ─────────────────────────────────────────────────────────────
+-- All tables exist at this point, so cross-table references are safe.
+
+-- profiles
 alter table profiles enable row level security;
 create policy "profiles: read by any authenticated user"
   on profiles for select using (auth.role() = 'authenticated');
 create policy "profiles: owner can update"
   on profiles for update using (auth.uid() = id);
 
-
--- ── groups ────────────────────────────────────────────────────────────────────
-create table if not exists groups (
-  id          uuid primary key default gen_random_uuid(),
-  name        text not null,
-  type        text not null check (type in ('pair', 'group')),
-  colour      text not null,
-  created_by  uuid references auth.users on delete cascade not null,
-  created_at  timestamptz default now()
-);
-
+-- groups (references group_members — safe now that group_members exists)
 alter table groups enable row level security;
 create policy "groups: readable by members"
   on groups for select using (
@@ -55,16 +106,7 @@ create policy "groups: insertable by authenticated"
 create policy "groups: deletable by owner"
   on groups for delete using (auth.uid() = created_by);
 
-
--- ── group_members ─────────────────────────────────────────────────────────────
-create table if not exists group_members (
-  group_id  uuid references groups on delete cascade not null,
-  user_id   uuid references auth.users on delete cascade not null,
-  role      text not null check (role in ('owner', 'member')),
-  joined_at timestamptz default now(),
-  primary key (group_id, user_id)
-);
-
+-- group_members
 alter table group_members enable row level security;
 create policy "group_members: readable by members of that group"
   on group_members for select using (
@@ -82,7 +124,7 @@ create policy "group_members: insertable by group owner"
         and gm.user_id  = auth.uid()
         and gm.role     = 'owner'
     )
-    or auth.uid() = user_id  -- owner inserts self when creating group
+    or auth.uid() = user_id
   );
 create policy "group_members: deletable by owner or self"
   on group_members for delete using (
@@ -95,17 +137,7 @@ create policy "group_members: deletable by owner or self"
     )
   );
 
-
--- ── shared_events ─────────────────────────────────────────────────────────────
-create table if not exists shared_events (
-  id         uuid primary key default gen_random_uuid(),
-  event_id   uuid references events on delete cascade not null,
-  group_id   uuid references groups on delete cascade not null,
-  shared_by  uuid references auth.users on delete cascade not null,
-  shared_at  timestamptz default now(),
-  unique (event_id, group_id)
-);
-
+-- shared_events
 alter table shared_events enable row level security;
 create policy "shared_events: readable by group members"
   on shared_events for select using (
@@ -127,16 +159,7 @@ create policy "shared_events: insertable by group members"
 create policy "shared_events: deletable by sharer"
   on shared_events for delete using (auth.uid() = shared_by);
 
-
--- ── rsvps ─────────────────────────────────────────────────────────────────────
-create table if not exists rsvps (
-  event_id   uuid references events on delete cascade not null,
-  user_id    uuid references auth.users on delete cascade not null,
-  status     text not null check (status in ('going', 'maybe', 'cant')),
-  updated_at timestamptz default now(),
-  primary key (event_id, user_id)
-);
-
+-- rsvps
 alter table rsvps enable row level security;
 create policy "rsvps: readable by members of event's group"
   on rsvps for select using (
@@ -151,16 +174,7 @@ create policy "rsvps: writable by own user"
   on rsvps for all using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
-
--- ── comments ──────────────────────────────────────────────────────────────────
-create table if not exists comments (
-  id         uuid primary key default gen_random_uuid(),
-  event_id   uuid references events on delete cascade not null,
-  user_id    uuid references auth.users on delete cascade not null,
-  body       text not null,
-  created_at timestamptz default now()
-);
-
+-- comments
 alter table comments enable row level security;
 create policy "comments: readable by members of event's group"
   on comments for select using (
@@ -182,22 +196,14 @@ create policy "comments: insertable by members"
     )
   );
 
-
--- ── notifications ─────────────────────────────────────────────────────────────
-create table if not exists notifications (
-  id         uuid primary key default gen_random_uuid(),
-  user_id    uuid references auth.users on delete cascade not null,
-  type       text not null check (type in ('event_shared', 'rsvp_updated', 'comment_added')),
-  payload    jsonb not null,
-  read       boolean default false,
-  created_at timestamptz default now()
-);
-
+-- notifications
 alter table notifications enable row level security;
 create policy "notifications: owner only"
   on notifications for all using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- Enable Realtime for notifications and comments
+
+-- ── REALTIME ──────────────────────────────────────────────────────────────────
+
 alter publication supabase_realtime add table notifications;
 alter publication supabase_realtime add table comments;
