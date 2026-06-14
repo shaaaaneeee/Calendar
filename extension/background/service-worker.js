@@ -10,6 +10,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.action.setBadgeText({ text: "" });
   }
 
+  // Dashboard page relays event_shared notifications here for OS alert
+  if (message.type === "SHOW_NOTIF") {
+    chrome.notifications.create({
+      type:    "basic",
+      iconUrl: "popup/icon48.png",
+      title:   message.title   || "PlanWise",
+      message: message.message || "",
+    });
+  }
+
   return true;
 });
 

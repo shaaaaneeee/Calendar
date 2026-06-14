@@ -176,6 +176,164 @@
   padding: 20px 12px;
 }
 
+/* ── Groups filter (created by renderGroupsFilter) ── */
+.groups-filter-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4c4546;
+  margin-bottom: 8px;
+}
+
+.group-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.group-filter-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Share section (shown inline within a day event card) ── */
+.share-section {
+  margin-top: 8px;
+  border-top: 1px solid #eeeeee;
+  padding-top: 8px;
+}
+
+.share-group-cb-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.share-group-dot {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.share-already-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #4c4546;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── RSVP bar ── */
+.rsvp-bar { display: flex; gap: 4px; margin-top: 10px; }
+.rsvp-btn {
+  flex: 1;
+  padding: 6px 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  border: 1px solid #1a1c1c;
+  cursor: pointer;
+  background: #f9f9f9;
+  color: #1a1c1c;
+}
+.rsvp-btn.selected { background: #000000; color: #ffffff; }
+.rsvp-btn:hover:not(.selected) { background: #eeeeee; }
+
+.rsvp-counts {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #4c4546;
+  margin-top: 5px;
+}
+
+/* ── Comments ── */
+.comments-section { margin-top: 14px; border-top: 1px solid #eeeeee; padding-top: 10px; }
+.comments-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4c4546;
+  margin-bottom: 8px;
+}
+.comment-row { margin-bottom: 10px; }
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #4c4546;
+  margin-bottom: 2px;
+}
+.comment-avatar {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #1a1c1c;
+  color: #f9f9f9;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.comment-body { font-size: 12px; color: #1a1c1c; line-height: 1.4; }
+.comment-input-row { display: flex; gap: 6px; margin-top: 8px; }
+.comment-input {
+  flex: 1;
+  border: 1px solid #1a1c1c;
+  padding: 5px 8px;
+  font-size: 12px;
+  background: #f9f9f9;
+  outline: none;
+}
+.comment-input:focus { background: #f4f3f3; }
+.comment-send {
+  padding: 5px 10px;
+  background: #000000;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+}
+.comment-send:hover { opacity: 0.85; }
+
+/* ── Member list ── */
+.member-list { margin-top: 10px; }
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.member-rsvp {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #4c4546;
+  margin-left: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar       { width: 3px; height: 3px; }
 ::-webkit-scrollbar-thumb { background: #1a1c1c; }

@@ -44,6 +44,7 @@ async function init() {
   renderAll();
   wireNav();
   wireControls();
+  wireGroupsSection();
   loadAccountInfo();
 }
 
@@ -465,8 +466,174 @@ function wireNav() {
       const targetSection = el(`section-${target}`);
       targetSection.classList.remove('hidden');
       targetSection.classList.add('active');
+      if (target === 'groups') loadAndRenderGroups();
     });
   }
+}
+
+
+// ─────────────────────────────────────────────
+// GROUPS
+// ─────────────────────────────────────────────
+
+const Groups = window.SupabaseClient.groups;
+
+async function loadAndRenderGroups() {
+  const container = el('groups-list');
+  container.innerHTML = '<p style="font-size:12px;color:var(--text-muted)">Loading groups...</p>';
+  try {
+    const groups = await Groups.listGroups();
+    renderGroupsList(groups);
+  } catch (err) {
+    container.innerHTML = `<p style="font-size:12px;color:#ba1a1a">Failed to load groups: ${err.message}</p>`;
+  }
+}
+
+function renderGroupsList(groups) {
+  const container = el('groups-list');
+  container.innerHTML = '';
+
+  if (!groups.length) {
+    const empty = document.createElement('p');
+    empty.style.cssText = 'font-size:12px;color:var(--text-muted)';
+    empty.textContent = 'No groups yet. Create one below.';
+    container.appendChild(empty);
+    return;
+  }
+
+  for (const group of groups) {
+    const memberCount = group.group_members?.length ?? 0;
+    const isOwner = group.created_by === currentUser?.id;
+
+    const card = document.createElement('div');
+    card.className = 'border border-outline p-4 flex items-center justify-between gap-4';
+
+    const left = document.createElement('div');
+    left.className = 'flex items-center gap-3 min-w-0';
+
+    const dot = document.createElement('span');
+    dot.className = 'w-3 h-3 shrink-0 border border-outline';
+    dot.style.background = group.colour;
+    left.appendChild(dot);
+
+    const info = document.createElement('div');
+    info.className = 'min-w-0';
+
+    const name = document.createElement('div');
+    name.className = 'text-sm font-medium truncate';
+    name.textContent = group.name;
+
+    const meta = document.createElement('div');
+    meta.className = 'font-mono text-[9px] text-on-muted uppercase tracking-wider mt-0.5';
+    meta.textContent = `${memberCount} member${memberCount !== 1 ? 's' : ''} · ${isOwner ? 'Owner' : 'Member'}`;
+
+    info.appendChild(name);
+    info.appendChild(meta);
+    left.appendChild(info);
+    card.appendChild(left);
+
+    // Invite form (owner only)
+    if (isOwner) {
+      const inviteWrap = document.createElement('div');
+      inviteWrap.className = 'flex gap-1 shrink-0';
+
+      const inviteInput = document.createElement('input');
+      inviteInput.type = 'email';
+      inviteInput.placeholder = 'Invite email';
+      inviteInput.className = 'border border-outline px-2 py-1 text-xs bg-surface focus:outline-none w-36';
+
+      const inviteBtn = document.createElement('button');
+      inviteBtn.className = 'px-3 py-1 border border-outline font-mono text-[9px] font-bold tracking-wider uppercase hover:bg-surface-mid';
+      inviteBtn.textContent = 'Invite';
+      inviteBtn.addEventListener('click', async () => {
+        const email = inviteInput.value.trim();
+        if (!email) return;
+        inviteBtn.textContent = '...';
+        try {
+          await Groups.inviteByEmail(group.id, email);
+          inviteInput.value = '';
+          inviteBtn.textContent = 'Sent!';
+          setTimeout(() => { inviteBtn.textContent = 'Invite'; }, 2000);
+          loadAndRenderGroups();
+        } catch (err) {
+          inviteBtn.textContent = 'Error';
+          alert(err.message);
+          setTimeout(() => { inviteBtn.textContent = 'Invite'; }, 2000);
+        }
+      });
+      inviteWrap.appendChild(inviteInput);
+      inviteWrap.appendChild(inviteBtn);
+      card.appendChild(inviteWrap);
+    }
+
+    const leaveBtn = document.createElement('button');
+    leaveBtn.className = 'shrink-0 px-3 py-1 border border-error text-error font-mono text-[9px] font-bold tracking-wider uppercase hover:bg-error hover:text-on-primary';
+    leaveBtn.textContent = isOwner ? 'Delete' : 'Leave';
+    leaveBtn.addEventListener('click', async () => {
+      const action = isOwner ? 'delete' : 'leave';
+      if (!confirm(`${isOwner ? 'Delete' : 'Leave'} group "${group.name}"?`)) return;
+      try {
+        await Groups.leaveOrDeleteGroup(group.id);
+        loadAndRenderGroups();
+      } catch (err) {
+        alert(`Failed to ${action} group: ${err.message}`);
+      }
+    });
+    card.appendChild(leaveBtn);
+
+    container.appendChild(card);
+  }
+}
+
+function wireGroupsSection() {
+  let selectedColour = '#00D1FF';
+
+  el('btn-new-group').addEventListener('click', () => {
+    el('new-group-form').classList.remove('hidden');
+  });
+
+  el('btn-cancel-new-group').addEventListener('click', () => {
+    el('new-group-form').classList.add('hidden');
+    el('new-group-name').value = '';
+    el('new-group-invite').value = '';
+  });
+
+  document.querySelectorAll('.colour-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.colour-opt').forEach(b => b.classList.remove('selected', 'border-outline'));
+      btn.classList.add('selected', 'border-outline');
+      selectedColour = btn.dataset.colour;
+    });
+  });
+
+  el('btn-create-group').addEventListener('click', async () => {
+    const name = el('new-group-name').value.trim();
+    if (!name) { alert('Group name is required.'); return; }
+
+    const createBtn = el('btn-create-group');
+    createBtn.textContent = 'Creating...';
+    try {
+      const group = await Groups.createGroup(name, selectedColour);
+
+      const email = el('new-group-invite').value.trim();
+      if (email) {
+        try {
+          await Groups.inviteByEmail(group.id, email);
+        } catch (err) {
+          alert(`Group created, but invite failed: ${err.message}`);
+        }
+      }
+
+      el('new-group-form').classList.add('hidden');
+      el('new-group-name').value = '';
+      el('new-group-invite').value = '';
+      createBtn.textContent = 'Create Group';
+      loadAndRenderGroups();
+    } catch (err) {
+      alert('Failed to create group: ' + err.message);
+      createBtn.textContent = 'Create Group';
+    }
+  });
 }
 
 

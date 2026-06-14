@@ -211,6 +211,257 @@ const SupabaseSettings = {
 
 
 // ─────────────────────────────────────────────
+// GROUPS
+// ─────────────────────────────────────────────
+
+const SupabaseGroups = {
+  async listGroups() {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) return [];
+
+    const { data, error } = await db
+      .from('groups')
+      .select('*, group_members(user_id, role)')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  async createGroup(name, colour) {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
+    const { data: group, error: groupErr } = await db
+      .from('groups')
+      .insert({ name, colour, type: 'group', created_by: session.user.id })
+      .select()
+      .single();
+    if (groupErr) throw groupErr;
+
+    const { error: memberErr } = await db
+      .from('group_members')
+      .insert({ group_id: group.id, user_id: session.user.id, role: 'owner' });
+    if (memberErr) throw memberErr;
+
+    return group;
+  },
+
+  async inviteByEmail(groupId, email) {
+    const { data: users, error: lookupErr } = await db
+      .rpc('get_user_id_by_email', { email_input: email });
+    if (lookupErr) throw lookupErr;
+    if (!users || users.length === 0) throw new Error('No PlanWise account found for that email.');
+
+    const inviteeId = users[0].id;
+    const { error } = await db
+      .from('group_members')
+      .insert({ group_id: groupId, user_id: inviteeId, role: 'member' });
+    if (error) throw error;
+  },
+
+  async leaveOrDeleteGroup(groupId) {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
+    const { data: membership } = await db
+      .from('group_members')
+      .select('role')
+      .eq('group_id', groupId)
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (membership?.role === 'owner') {
+      const { error } = await db.from('groups').delete().eq('id', groupId);
+      if (error) throw error;
+    } else {
+      const { error } = await db
+        .from('group_members')
+        .delete()
+        .eq('group_id', groupId)
+        .eq('user_id', session.user.id);
+      if (error) throw error;
+    }
+  },
+};
+
+
+// ─────────────────────────────────────────────
+// SOCIAL — shared events, RSVP, comments, notifications
+// ─────────────────────────────────────────────
+
+const SupabaseSocial = {
+  async shareEvent(eventId, groupIds) {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
+    const rows = groupIds.map(gid => ({
+      event_id:  eventId,
+      group_id:  gid,
+      shared_by: session.user.id,
+    }));
+
+    const { error } = await db
+      .from('shared_events')
+      .upsert(rows, { onConflict: 'event_id,group_id' });
+    if (error) throw error;
+  },
+
+  async getSharedGroups(eventId) {
+    const { data, error } = await db
+      .from('shared_events')
+      .select('group_id')
+      .eq('event_id', eventId);
+    if (error) throw error;
+    return (data || []).map(r => r.group_id);
+  },
+
+  async getRsvpDetails(eventId) {
+    const session = await SupabaseAuth._restoreSession();
+
+    const { data, error } = await db
+      .from('rsvps')
+      .select('user_id, status')
+      .eq('event_id', eventId);
+    if (error) throw error;
+
+    const counts = { going: 0, maybe: 0, cant: 0 };
+    let myStatus = null;
+    for (const r of data || []) {
+      counts[r.status] = (counts[r.status] || 0) + 1;
+      if (session && r.user_id === session.user.id) myStatus = r.status;
+    }
+    return { counts, myStatus };
+  },
+
+  async upsertRsvp(eventId, status) {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
+    const { error } = await db
+      .from('rsvps')
+      .upsert(
+        { event_id: eventId, user_id: session.user.id, status, updated_at: new Date().toISOString() },
+        { onConflict: 'event_id,user_id' }
+      );
+    if (error) throw error;
+  },
+
+  async getEventMembers(eventId) {
+    const { data: seRows } = await db
+      .from('shared_events')
+      .select('group_id')
+      .eq('event_id', eventId);
+    const groupIds = (seRows || []).map(r => r.group_id);
+    if (!groupIds.length) return [];
+
+    const { data: members } = await db
+      .from('group_members')
+      .select('user_id, profiles(display_name)')
+      .in('group_id', groupIds);
+
+    const { data: rsvps } = await db
+      .from('rsvps')
+      .select('user_id, status')
+      .eq('event_id', eventId);
+
+    const rsvpMap = {};
+    for (const r of rsvps || []) rsvpMap[r.user_id] = r.status;
+
+    const seen = new Set();
+    const result = [];
+    for (const m of members || []) {
+      if (seen.has(m.user_id)) continue;
+      seen.add(m.user_id);
+      result.push({
+        userId:      m.user_id,
+        displayName: m.profiles?.display_name || '?',
+        rsvpStatus:  rsvpMap[m.user_id] || null,
+      });
+    }
+    return result;
+  },
+
+  async getComments(eventId) {
+    const { data, error } = await db
+      .from('comments')
+      .select('id, body, created_at, user_id, profiles(display_name)')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  },
+
+  async addComment(eventId, body) {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
+    const { error } = await db
+      .from('comments')
+      .insert({ event_id: eventId, user_id: session.user.id, body });
+    if (error) throw error;
+  },
+
+  subscribeComments(eventId, onInsert) {
+    return db
+      .channel(`comments:${eventId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'comments', filter: `event_id=eq.${eventId}` },
+        (payload) => onInsert(payload.new)
+      )
+      .subscribe();
+  },
+
+  async getUnreadCount() {
+    const { count, error } = await db
+      .from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('read', false);
+    if (error) throw error;
+    return count || 0;
+  },
+
+  async getNotifications(limit = 30) {
+    const { data, error } = await db
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  },
+
+  async markRead(notifId) {
+    const { error } = await db
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', notifId);
+    if (error) throw error;
+  },
+
+  async markAllRead() {
+    const { error } = await db
+      .from('notifications')
+      .update({ read: true })
+      .eq('read', false);
+    if (error) throw error;
+  },
+
+  subscribeNotifications(userId, onInsert) {
+    return db
+      .channel(`notifications:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        (payload) => onInsert(payload.new)
+      )
+      .subscribe();
+  },
+};
+
+
+// ─────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────
 
@@ -220,5 +471,7 @@ if (typeof window !== 'undefined') {
     auth:     SupabaseAuth,
     events:   SupabaseEvents,
     settings: SupabaseSettings,
+    groups:   SupabaseGroups,
+    social:   SupabaseSocial,
   };
 }

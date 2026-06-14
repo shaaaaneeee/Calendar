@@ -11,6 +11,8 @@
 
 const Auth = window.SupabaseClient.auth;
 const Events = window.SupabaseClient.events;
+const Groups = window.SupabaseClient.groups;
+const Social = window.SupabaseClient.social;
 
 // ─────────────────────────────────────────────
 // STATE
@@ -21,6 +23,9 @@ let currentDate = new Date(); // Drives which month/week is shown
 let currentView = "month"; // 'month' | 'week'
 let selectedDay = null; // Currently open day panel date string 'YYYY-MM-DD'
 let editingEvent = null; // Event currently open in modal
+let calGroups = []; // Cached groups for filter + share UI
+let hiddenGroups = new Set(); // Group IDs currently filtered out
+let activeCommentsChannel = null; // Realtime channel for live comments
 
 
 // ─────────────────────────────────────────────
@@ -33,6 +38,9 @@ async function init() {
   render();
   renderUpcoming();
   wireControls();
+  loadGroupsFilter();
+  initNotifFeed();
+  loadUserInitials();
 }
 
 
@@ -176,6 +184,10 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
     const pill = document.createElement("div");
     pill.className = "event-pill";
     pill.textContent = event.title || "Plan";
+    if (event.group_id) {
+      pill.dataset.groupId = event.group_id;
+      pill.style.borderLeft = `3px solid ${event.group_colour || "transparent"}`;
+    }
     pill.addEventListener("click", (e) => {
       e.stopPropagation();
       openModal(event);
@@ -308,7 +320,50 @@ function openDayPanel(dateKey, events) {
       card.appendChild(time);
       if (participants.length > 0) card.appendChild(people);
 
-      card.addEventListener("click", () => openModal(event));
+      card.addEventListener("click", (e) => {
+        if (e.target.closest("button") || e.target.closest("input") || e.target.closest("label")) return;
+        openModal(event);
+      });
+
+      // Share button + section (only if event has an id — Supabase events do)
+      if (event.id && calGroups.length > 0) {
+        const shareBtn = document.createElement("button");
+        shareBtn.className = "mt-2 font-mono text-[9px] tracking-wider uppercase text-on-muted hover:text-on-surface hover:underline";
+        shareBtn.textContent = "Share →";
+
+        const shareSection = document.createElement("div");
+        shareSection.className = "share-section hidden";
+
+        shareBtn.addEventListener("click", async () => {
+          if (shareSection.classList.toggle("hidden")) return;
+          await renderShareSection(event, shareSection);
+        });
+
+        card.appendChild(shareBtn);
+        card.appendChild(shareSection);
+      }
+
+      // RSVP & Comments button
+      if (event.id) {
+        const detailsBtn = document.createElement("button");
+        detailsBtn.className = "mt-2 font-mono text-[9px] tracking-wider uppercase text-on-muted hover:text-on-surface hover:underline";
+        detailsBtn.textContent = "RSVP & Comments →";
+        const socialContainer = document.createElement("div");
+
+        detailsBtn.addEventListener("click", async () => {
+          const isOpen = socialContainer.children.length > 0;
+          if (isOpen) {
+            socialContainer.innerHTML = "";
+            if (activeCommentsChannel) { activeCommentsChannel.unsubscribe(); activeCommentsChannel = null; }
+            return;
+          }
+          await renderSharedEventPanel(event, socialContainer);
+        });
+
+        card.appendChild(detailsBtn);
+        card.appendChild(socialContainer);
+      }
+
       container.appendChild(card);
     }
   }
@@ -317,6 +372,7 @@ function openDayPanel(dateKey, events) {
 }
 
 function closeDayPanel() {
+  if (activeCommentsChannel) { activeCommentsChannel.unsubscribe(); activeCommentsChannel = null; }
   hide("day-panel");
   selectedDay = null;
 }
@@ -523,6 +579,416 @@ function formatTime(timeStr) {
 function el(id) { return document.getElementById(id); }
 function show(id) { el(id).classList.remove("hidden"); }
 function hide(id) { el(id).classList.add("hidden"); }
+
+
+// ─────────────────────────────────────────────
+// USER INITIALS
+// ─────────────────────────────────────────────
+
+async function loadUserInitials() {
+  try {
+    const user = await Auth.getUser();
+    if (!user) return;
+    const email = user.email || "";
+    const initials = email.split("@")[0].slice(0, 2).toUpperCase();
+    const el2 = el("user-initials");
+    if (el2) el2.textContent = initials;
+  } catch (_) {}
+}
+
+
+// ─────────────────────────────────────────────
+// GROUPS FILTER
+// ─────────────────────────────────────────────
+
+async function loadGroupsFilter() {
+  try {
+    calGroups = await Groups.listGroups();
+  } catch (_) {
+    calGroups = [];
+  }
+  renderGroupsFilter();
+}
+
+function renderGroupsFilter() {
+  const container = el("groups-filter");
+  if (!container) return;
+
+  if (!calGroups.length) {
+    container.classList.add("hidden");
+    return;
+  }
+
+  container.classList.remove("hidden");
+  container.innerHTML = "";
+
+  const label = document.createElement("div");
+  label.className = "groups-filter-label";
+  label.textContent = "Groups";
+  container.appendChild(label);
+
+  for (const g of calGroups) {
+    const row = document.createElement("label");
+    row.className = "group-filter-row";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = true;
+    cb.className = "accent-primary";
+    cb.addEventListener("change", () => {
+      if (cb.checked) hiddenGroups.delete(g.id);
+      else hiddenGroups.add(g.id);
+      applyGroupFilter();
+    });
+
+    const dot = document.createElement("span");
+    dot.className = "group-filter-dot";
+    dot.style.background = g.colour;
+
+    const name = document.createElement("span");
+    name.textContent = g.name;
+
+    row.appendChild(cb);
+    row.appendChild(dot);
+    row.appendChild(name);
+    container.appendChild(row);
+  }
+}
+
+function applyGroupFilter() {
+  document.querySelectorAll(".event-pill[data-group-id]").forEach(pill => {
+    const gid = pill.dataset.groupId;
+    pill.style.opacity = hiddenGroups.has(gid) ? "0.15" : "1";
+    pill.style.pointerEvents = hiddenGroups.has(gid) ? "none" : "";
+  });
+}
+
+
+// ─────────────────────────────────────────────
+// SHARE EVENT FLOW
+// ─────────────────────────────────────────────
+
+async function renderShareSection(event, container) {
+  container.innerHTML = '<div class="text-xs text-on-muted font-mono">Loading groups...</div>';
+
+  let sharedGroupIds = [];
+  try {
+    sharedGroupIds = await Social.getSharedGroups(event.id);
+  } catch (_) {}
+
+  if (!calGroups.length) {
+    container.innerHTML = '<div class="text-xs text-on-muted">No groups yet — create one in Settings.</div>';
+    return;
+  }
+
+  container.innerHTML = "";
+
+  for (const g of calGroups) {
+    const alreadyShared = sharedGroupIds.includes(g.id);
+    const row = document.createElement("label");
+    row.className = "share-group-cb-row";
+    row.innerHTML = `
+      <input type="checkbox" data-group-id="${g.id}" ${alreadyShared ? "checked disabled" : ""} class="share-cb accent-primary w-3 h-3" />
+      <span class="share-group-dot" style="background:${g.colour}"></span>
+      <span>${g.name}</span>
+      ${alreadyShared ? '<span class="share-already-label">Shared</span>' : ""}
+    `;
+    container.appendChild(row);
+  }
+
+  const confirmBtn = document.createElement("button");
+  confirmBtn.className = "mt-3 px-3 py-1.5 bg-primary text-on-primary font-mono text-[9px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none";
+  confirmBtn.textContent = "Share";
+  confirmBtn.addEventListener("click", () => confirmShare(event, container));
+  container.appendChild(confirmBtn);
+}
+
+async function confirmShare(event, container) {
+  const cbs = container.querySelectorAll(".share-cb:not([disabled]):checked");
+  const groupIds = Array.from(cbs).map(cb => cb.dataset.groupId);
+  if (!groupIds.length) { alert("Select at least one group."); return; }
+
+  try {
+    await Social.shareEvent(event.id, groupIds);
+    await renderShareSection(event, container);
+    render();
+  } catch (e) {
+    alert("Share failed: " + e.message);
+  }
+}
+
+
+// ─────────────────────────────────────────────
+// SHARED EVENT PANEL — RSVP + MEMBERS + COMMENTS
+// ─────────────────────────────────────────────
+
+async function renderSharedEventPanel(event, container) {
+  container.innerHTML = '<div class="text-xs text-on-muted font-mono mt-3">Loading...</div>';
+
+  if (activeCommentsChannel) { activeCommentsChannel.unsubscribe(); activeCommentsChannel = null; }
+
+  let rsvpData, members, comments;
+  try {
+    [rsvpData, members, comments] = await Promise.all([
+      Social.getRsvpDetails(event.id),
+      Social.getEventMembers(event.id),
+      Social.getComments(event.id),
+    ]);
+  } catch (e) {
+    container.innerHTML = '<div class="text-xs text-error font-mono mt-3">Failed to load social data.</div>';
+    return;
+  }
+
+  container.innerHTML = "";
+
+  // ── RSVP bar ──
+  const rsvpBar = document.createElement("div");
+  rsvpBar.className = "rsvp-bar";
+  const statuses = [
+    { key: "going", label: "Going" },
+    { key: "maybe", label: "Maybe" },
+    { key: "cant",  label: "Can't" },
+  ];
+  const countsEl = document.createElement("div");
+  countsEl.className = "rsvp-counts";
+  countsEl.textContent = `${rsvpData.counts.going} Going · ${rsvpData.counts.maybe} Maybe · ${rsvpData.counts.cant} Can't`;
+
+  for (const s of statuses) {
+    const btn = document.createElement("button");
+    btn.className = "rsvp-btn" + (rsvpData.myStatus === s.key ? " selected" : "");
+    btn.textContent = s.label;
+    btn.addEventListener("click", async () => {
+      try {
+        await Social.upsertRsvp(event.id, s.key);
+        rsvpData.myStatus = s.key;
+        rsvpBar.querySelectorAll(".rsvp-btn").forEach((b, i) => {
+          b.classList.toggle("selected", statuses[i].key === s.key);
+        });
+        const fresh = await Social.getRsvpDetails(event.id);
+        countsEl.textContent = `${fresh.counts.going} Going · ${fresh.counts.maybe} Maybe · ${fresh.counts.cant} Can't`;
+      } catch (err) {
+        alert("Could not save RSVP: " + err.message);
+      }
+    });
+    rsvpBar.appendChild(btn);
+  }
+  container.appendChild(rsvpBar);
+  container.appendChild(countsEl);
+
+  // ── Members list ──
+  if (members.length) {
+    const memberList = document.createElement("div");
+    memberList.className = "member-list";
+    const memberLabel = document.createElement("div");
+    memberLabel.className = "comments-label";
+    memberLabel.textContent = "Members";
+    memberList.appendChild(memberLabel);
+
+    for (const m of members) {
+      const row = document.createElement("div");
+      row.className = "member-row";
+      const initials2 = m.displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+      const rsvpLabel = m.rsvpStatus ? m.rsvpStatus.charAt(0).toUpperCase() + m.rsvpStatus.slice(1) : "—";
+      row.innerHTML = `
+        <div class="comment-avatar">${initials2}</div>
+        <span>${m.displayName}</span>
+        <span class="member-rsvp">${rsvpLabel}</span>
+      `;
+      memberList.appendChild(row);
+    }
+    container.appendChild(memberList);
+  }
+
+  // ── Comments ──
+  const commentsSection = document.createElement("div");
+  commentsSection.className = "comments-section";
+
+  const commentsLabel = document.createElement("div");
+  commentsLabel.className = "comments-label";
+  commentsLabel.textContent = "Comments";
+  commentsSection.appendChild(commentsLabel);
+
+  const commentsList = document.createElement("div");
+  commentsList.id = `comments-list-${event.id}`;
+  commentsSection.appendChild(commentsList);
+
+  function appendComment(c) {
+    const initials3 = (c.profiles?.display_name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+    const time = new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const row = document.createElement("div");
+    row.className = "comment-row";
+    row.innerHTML = `
+      <div class="comment-meta">
+        <div class="comment-avatar">${initials3}</div>
+        <span>${c.profiles?.display_name || "?"}</span>
+        <span>${time}</span>
+      </div>
+      <div class="comment-body">${c.body.replace(/</g, "&lt;")}</div>
+    `;
+    commentsList.appendChild(row);
+  }
+
+  if (!comments.length) {
+    commentsList.innerHTML = '<div class="text-xs text-on-muted font-mono">No comments yet — be the first.</div>';
+  } else {
+    comments.forEach(appendComment);
+  }
+
+  const inputRow = document.createElement("div");
+  inputRow.className = "comment-input-row";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "comment-input";
+  input.placeholder = "Add a comment...";
+  const sendBtn = document.createElement("button");
+  sendBtn.className = "comment-send";
+  sendBtn.textContent = "Send";
+  inputRow.appendChild(input);
+  inputRow.appendChild(sendBtn);
+  commentsSection.appendChild(inputRow);
+
+  async function sendComment() {
+    const body = input.value.trim();
+    if (!body) return;
+    input.value = "";
+    try {
+      await Social.addComment(event.id, body);
+    } catch (e) {
+      alert("Could not post comment: " + e.message);
+    }
+  }
+  sendBtn.addEventListener("click", sendComment);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") sendComment(); });
+
+  container.appendChild(commentsSection);
+
+  activeCommentsChannel = Social.subscribeComments(event.id, (newComment) => {
+    const placeholder = commentsList.querySelector(".text-xs.text-on-muted");
+    if (placeholder) placeholder.remove();
+    appendComment(newComment);
+  });
+}
+
+
+// ─────────────────────────────────────────────
+// IN-APP NOTIFICATION FEED
+// ─────────────────────────────────────────────
+
+async function initNotifFeed() {
+  const session = await Auth.getSession().catch(() => null);
+  if (!session) return;
+
+  updateNotifBadge();
+
+  Social.subscribeNotifications(session.user.id, (notif) => {
+    updateNotifBadge();
+    if (notif.type === "event_shared") {
+      const p = notif.payload || {};
+      chrome.runtime.sendMessage({
+        type:    "SHOW_NOTIF",
+        title:   "New shared plan",
+        message: `${p.actor_name || "Someone"} shared "${p.preview || "an event"}" to ${p.group_name || "a group"}`,
+      }).catch(() => {});
+    }
+  });
+
+  const bell = el("btn-notifications");
+  const panel = el("notif-panel");
+  if (bell && panel) {
+    bell.addEventListener("click", async () => {
+      const isOpen = !panel.classList.contains("hidden");
+      if (isOpen) {
+        panel.classList.add("hidden");
+      } else {
+        panel.classList.remove("hidden");
+        await renderNotifFeed();
+      }
+    });
+  }
+
+  const markAllBtn = el("notif-mark-all");
+  if (markAllBtn) {
+    markAllBtn.addEventListener("click", async () => {
+      await Social.markAllRead();
+      updateNotifBadge();
+      await renderNotifFeed();
+    });
+  }
+}
+
+async function updateNotifBadge() {
+  const badge = el("notif-badge");
+  if (!badge) return;
+  try {
+    const count = await Social.getUnreadCount();
+    if (count > 0) {
+      badge.textContent = count > 9 ? "9+" : String(count);
+      badge.classList.remove("hidden");
+    } else {
+      badge.classList.add("hidden");
+    }
+  } catch (_) {
+    badge.classList.add("hidden");
+  }
+}
+
+async function renderNotifFeed() {
+  const list = el("notif-list");
+  if (!list) return;
+
+  list.innerHTML = '<div class="px-4 py-3 font-mono text-xs text-on-muted">Loading...</div>';
+
+  let notifs;
+  try {
+    notifs = await Social.getNotifications();
+  } catch (_) {
+    list.innerHTML = '<div class="px-4 py-3 font-mono text-xs text-error">Failed to load.</div>';
+    return;
+  }
+
+  if (!notifs.length) {
+    list.innerHTML = '<div class="px-4 py-8 text-center font-mono text-xs text-on-muted tracking-wider">No notifications yet.</div>';
+    return;
+  }
+
+  list.innerHTML = "";
+  for (const n of notifs) {
+    const p = n.payload || {};
+    let description = "";
+    if (n.type === "event_shared") {
+      description = `${p.actor_name || "Someone"} shared "${p.preview || "an event"}" to ${p.group_name || "a group"}`;
+    } else if (n.type === "rsvp_updated") {
+      description = `${p.actor_name || "Someone"} is ${p.status || "going"} to "${p.preview || "an event"}"`;
+    } else if (n.type === "comment_added") {
+      description = `${p.actor_name || "Someone"} commented on "${p.preview || "an event"}": "${p.comment || ""}"`;
+    }
+
+    const time = new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    const item = document.createElement("div");
+    item.className = `flex items-start gap-3 px-4 py-3 border-b border-outline-soft cursor-pointer hover:bg-surface-low ${n.read ? "opacity-60" : ""}`;
+    item.innerHTML = `
+      <div class="w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-transparent" : "bg-primary"}"></div>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs leading-relaxed">${description}</div>
+        <div class="font-mono text-[9px] text-on-muted mt-0.5">${time}</div>
+      </div>
+    `;
+    item.addEventListener("click", async () => {
+      if (!n.read) {
+        await Social.markRead(n.id);
+        n.read = true;
+        item.classList.add("opacity-60");
+        item.querySelector(".rounded-full").className = "w-2 h-2 rounded-full mt-1.5 shrink-0 bg-transparent";
+        updateNotifBadge();
+      }
+      if (p.event_id) {
+        el("notif-panel")?.classList.add("hidden");
+      }
+    });
+    list.appendChild(item);
+  }
+}
 
 
 // ─────────────────────────────────────────────
