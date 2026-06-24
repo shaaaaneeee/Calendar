@@ -68,13 +68,11 @@ const DETECTION_RULES = {
       /\bnot\b/i,
       /\bcan'?t\b/i,
       /\bwon'?t\b/i,
-      /\bmaybe\b/i,
       /\bprobably\s+not\b/i,
       /\bnever\b/i,
       /\bno\s+way\b/i,
       /\bjust\s+kidding\b/i,
-      /\bjk\b/i,
-      /\blol\b/i
+      /\bjk\b/i
     ]
   }
 };

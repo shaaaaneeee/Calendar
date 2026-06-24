@@ -174,8 +174,8 @@ describe('Sarcasm and edge cases — should NOT trigger', () => {
     expect(r.triggered).toBe(false);
   });
 
-  test('lol as sarcasm signal', () => {
-    const r = detect("lol that movie was so bad");
+  test('past-tense movie comment — not a plan', () => {
+    const r = detect("lol we saw a movie last night");
     expect(r.triggered).toBe(false);
   });
 
@@ -189,8 +189,8 @@ describe('Sarcasm and edge cases — should NOT trigger', () => {
     expect(r.triggered).toBe(false);
   });
 
-  test('hypothetical — maybe', () => {
-    const r = detect("maybe we could grab dinner sometime");
+  test('explicit rejection — won\'t make it', () => {
+    const r = detect("won't make it to dinner tomorrow");
     expect(r.triggered).toBe(false);
   });
 
@@ -219,7 +219,7 @@ describe('Score values', () => {
   });
 
   test('negation should reduce score', () => {
-    const withNeg    = scoreText("lol dinner tomorrow");
+    const withNeg    = scoreText("jk dinner tomorrow");
     const withoutNeg = scoreText("dinner tomorrow");
     expect(withNeg.score).toBeLessThan(withoutNeg.score);
   });

@@ -4,10 +4,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.action.setBadgeText({ text: "!" });
     chrome.action.setBadgeBackgroundColor({ color: "#a29bfe" });
     sendResponse({ received: true });
+    return;
   }
 
   if (message.type === "BADGE_CLEAR") {
     chrome.action.setBadgeText({ text: "" });
+    sendResponse({ received: true });
+    return;
   }
 
   // Dashboard page relays event_shared notifications here for OS alert
@@ -18,9 +21,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       title:   message.title   || "PlanWise",
       message: message.message || "",
     });
+    sendResponse({ received: true });
   }
-
-  return true;
 });
 
 console.log("[PlanWise] Service worker started.");

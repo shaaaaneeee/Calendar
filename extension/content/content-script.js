@@ -123,9 +123,6 @@ async function analyzeText(text, platform, fromSend = false) {
 
   if (result.triggered) {
     const event = window.PlanWiseExtractor.extractEvent(text, settings.contacts, settings.priorityNames || []);
-    // Merge priority-name note (set by extractEvent) with pattern-based notes
-    const patternNotes = window.PlanWiseExtractor.extractNotes(text);
-    event.notes = [event.notes, patternNotes].filter(Boolean).join("; ");
     const pending = await window.PlanWiseStorage.enqueuePendingEvent(event);
     if (!pending) return;
 
@@ -154,7 +151,12 @@ async function waitForSendButton(selector, buffer) {
 }
 
 function watchIncomingMessages(platform, buffer) {
+  let lastIncomingCheck = 0;
+
   const observer = new MutationObserver((mutations) => {
+    const now = Date.now();
+    if (now - lastIncomingCheck < 5000) return;
+
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (node.nodeType !== Node.ELEMENT_NODE) {
@@ -168,6 +170,7 @@ function watchIncomingMessages(platform, buffer) {
         if (messageElement) {
           const text = messageElement.textContent?.trim();
           if (text) {
+            lastIncomingCheck = now;
             buffer.push(text);
           }
         }

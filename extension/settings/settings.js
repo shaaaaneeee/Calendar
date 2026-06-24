@@ -28,15 +28,20 @@ let settings = {
 // INIT
 // ─────────────────────────────────────────────
 
+function showUnauthMessage() {
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:monospace;font-size:12px;color:#4c4546;letter-spacing:0.1em;text-transform:uppercase;">Sign in via the extension icon.</div>';
+  setTimeout(() => window.close(), 1500);
+}
+
 async function init() {
   try {
     currentUser = await Auth.getUser();
     if (!currentUser) {
-      window.close();
+      showUnauthMessage();
       return;
     }
   } catch {
-    window.close();
+    showUnauthMessage();
     return;
   }
 

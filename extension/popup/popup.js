@@ -31,7 +31,7 @@ async function init() {
     const user = await Promise.race([
       Auth.getUser(),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("timeout")), 3000)
+        setTimeout(() => reject(new Error("timeout")), 8000)
       )
     ]);
 
@@ -113,7 +113,7 @@ async function handleSignUp() {
     el("btn-signup").disabled    = true;
 
     await Auth.signUp(email, password);
-    setAuthError("✓ Check your email to confirm your account, then sign in.");
+    setAuthSuccess("✓ Check your email to confirm your account, then sign in.");
   } catch (err) {
     setAuthError(err.message);
   } finally {
@@ -123,8 +123,19 @@ async function handleSignUp() {
 }
 
 function setAuthError(msg) {
-  el("auth-error").textContent = msg;
+  const p = el("auth-error");
+  p.classList.add("text-error");
+  p.classList.remove("text-status-ok");
+  p.textContent = msg;
   msg ? show("auth-error") : hide("auth-error");
+}
+
+function setAuthSuccess(msg) {
+  const p = el("auth-error");
+  p.classList.remove("text-error");
+  p.classList.add("text-status-ok");
+  p.textContent = msg;
+  show("auth-error");
 }
 
 
@@ -189,9 +200,9 @@ async function handleYes() {
   };
 
   if (!overrideOverlap) {
-    const conflict = await checkOverlap(confirmed);
-    if (conflict) {
-      showOverlapWarning(conflict);
+    const conflicts = await checkOverlap(confirmed);
+    if (conflicts.length) {
+      showOverlapWarning(conflicts);
       overrideOverlap = true;
       return;
     }
@@ -212,10 +223,10 @@ async function handleYes() {
 }
 
 async function checkOverlap(newEvent) {
-  if (!newEvent.date || !newEvent.time) return null;
+  if (!newEvent.date) return [];
 
-  const newStart = new Date(`${newEvent.date}T${newEvent.time}`);
   const ONE_HOUR = 60 * 60 * 1000;
+  const newStart = newEvent.time ? new Date(`${newEvent.date}T${newEvent.time}`) : null;
 
   let allEvents = [];
   try {
@@ -224,25 +235,38 @@ async function checkOverlap(newEvent) {
     allEvents = await PlanStorage.getConfirmedEvents();
   }
 
+  const conflicts = [];
   for (const existing of allEvents) {
     const existDate = existing.event_date || existing.date;
     const existTime = existing.event_time || existing.time;
-    if (!existDate || !existTime) continue;
-    const existStart = new Date(`${existDate}T${existTime}`);
-    if (Math.abs(newStart - existStart) < ONE_HOUR) {
-      return existing;
+    if (!existDate) continue;
+
+    if (newStart && existTime) {
+      // Both events have times — check within-hour overlap
+      const existStart = new Date(`${existDate}T${existTime}`);
+      if (Math.abs(newStart - existStart) < ONE_HOUR) {
+        conflicts.push(existing);
+      }
+    } else if (!newStart && !existTime && existDate === newEvent.date) {
+      // Neither event has a time — same date = conflict
+      conflicts.push(existing);
     }
   }
-  return null;
+  return conflicts;
 }
 
-function showOverlapWarning(conflict) {
-  const title = conflict.title || "another plan";
-  const date  = conflict.event_date || conflict.date || "";
-  const time  = conflict.event_time || conflict.time || "";
-  const when  = date && time ? ` on ${date} at ${time}` : date ? ` on ${date}` : "";
-  el("overlap-warning").textContent =
-    `You already have "${title}"${when} within the hour. Add anyway?`;
+function showOverlapWarning(conflicts) {
+  const lines = conflicts.map((conflict) => {
+    const title = conflict.title || "another plan";
+    const date  = conflict.event_date || conflict.date || "";
+    const time  = conflict.event_time || conflict.time || "";
+    const when  = date && time ? ` on ${date} at ${time}` : date ? ` on ${date}` : "";
+    return `"${title}"${when}`;
+  });
+  const summary = lines.length === 1
+    ? `You already have ${lines[0]} within the hour.`
+    : `Conflicts with: ${lines.join(", ")}.`;
+  el("overlap-warning").textContent = `${summary} Add anyway?`;
   show("overlap-warning");
   el("btn-yes").textContent = "Add anyway";
 }

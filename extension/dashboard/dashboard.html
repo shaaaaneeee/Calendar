@@ -40,7 +40,6 @@
       </a>
     </div>
 
-    <!-- Groups filter — populated by Phase B -->
     <div id="groups-filter" class="mt-auto border-t border-outline p-4 hidden"></div>
   </nav>
 
@@ -70,13 +69,11 @@
           <button id="view-week"  class="view-btn px-3 py-1 font-mono text-[10px] font-bold tracking-wider bg-surface text-on-surface hover:bg-surface-mid">WEEK</button>
         </div>
 
-        <!-- Bell — Phase D wires this -->
         <button id="btn-notifications" class="w-8 h-8 flex items-center justify-center hover:bg-surface-mid relative">
           <span class="material-symbols-outlined text-[18px]">notifications</span>
           <span id="notif-badge" class="absolute top-1 right-1 min-w-[14px] h-3.5 bg-primary text-on-primary font-mono text-[8px] font-bold rounded-full flex items-center justify-center px-0.5 hidden">0</span>
         </button>
 
-        <!-- User avatar — Phase B fills initials -->
         <button id="btn-user-avatar" class="w-7 h-7 rounded-full bg-on-surface text-on-primary flex items-center justify-center font-mono text-[10px] font-bold hover:opacity-80">
           <span id="user-initials">?</span>
         </button>
@@ -159,6 +156,7 @@
       </div>
     </div>
     <div id="modal-source" class="modal-quote px-5 py-3 border-t border-outline font-mono text-[11px] text-on-muted bg-surface-low italic hidden"></div>
+    <p id="modal-error" class="hidden px-5 py-2 font-mono text-[10px] text-error bg-error-bg border-t border-error/30"></p>
     <div class="modal-foot flex gap-2 px-5 py-3 border-t border-outline">
       <button id="modal-save"   class="flex-1 py-2 font-mono text-[10px] font-bold tracking-wider uppercase bg-primary text-on-primary border border-primary shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Save</button>
       <button id="modal-delete" class="px-4 py-2 font-mono text-[10px] font-bold tracking-wider uppercase border border-error text-error hover:bg-error hover:text-on-primary">Delete</button>
@@ -167,7 +165,6 @@
   </div>
 </div>
 
-<!-- Notification feed panel — Phase D populates this -->
 <div id="notif-panel" class="hidden fixed right-0 top-12 bottom-0 w-80 bg-surface border-l border-outline z-20 flex-col shadow-neo">
   <div class="flex items-center justify-between px-4 py-3 border-b border-outline shrink-0">
     <div class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Notifications</div>

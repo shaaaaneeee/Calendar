@@ -246,12 +246,15 @@ function extractEvent(text, contacts = [], priorityNames = []) {
     ? `With: ${matchedNames.join(", ")}`
     : "";
 
+  const patternNotes = extractNotes(text);
+  const mergedNotes = [nameNote, patternNotes].filter(Boolean).join("; ");
+
   return {
     title,
     date,
     time,
     participants: extractParticipants(text, contacts),
-    notes: nameNote,
+    notes: mergedNotes,
     rawDate,
     rawTime,
     sourceText: text.trim()

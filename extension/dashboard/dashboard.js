@@ -108,6 +108,7 @@ function buildDateMap(events) {
 function render() {
   if (currentView === "month") renderMonth();
   else renderWeek();
+  applyGroupFilter();
 }
 
 
@@ -282,7 +283,14 @@ function renderWeek() {
       pill.textContent = formatTime(event.event_time || event.time)
         ? `${formatTime(event.event_time || event.time)} ${event.title}`
         : event.title;
-      pill.addEventListener("click", () => { if (!event._isDeadline) openModal(event); });
+      if (event.group_id) {
+        pill.dataset.groupId = event.group_id;
+        pill.style.borderLeft = `3px solid ${event.group_colour || "transparent"}`;
+      }
+      pill.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!event._isDeadline) openModal(event);
+      });
       cell.appendChild(pill);
     }
 
@@ -474,7 +482,15 @@ function openModal(event) {
 
 function closeModal() {
   hide("modal-overlay");
+  showModalError("");
   editingEvent = null;
+}
+
+function showModalError(msg) {
+  const errEl = el("modal-error");
+  if (!errEl) return;
+  errEl.textContent = msg;
+  msg ? errEl.classList.remove("hidden") : errEl.classList.add("hidden");
 }
 
 async function handleModalSave() {
@@ -502,18 +518,17 @@ async function handleModalSave() {
         await Social.shareEvent(newEvent.id, selectedGroupIds);
       }
     }
+    closeModal();
+    await loadEvents();
+    render();
+    renderUpcoming();
+    if (selectedDay) {
+      const dateMap = buildDateMap(allEvents);
+      openDayPanel(selectedDay, dateMap[selectedDay] || []);
+    }
   } catch (err) {
     console.warn("[PlanWise] Save failed:", err.message);
-  }
-
-  closeModal();
-  await loadEvents();
-  render();
-  renderUpcoming();
-
-  if (selectedDay) {
-    const dateMap = buildDateMap(allEvents);
-    openDayPanel(selectedDay, dateMap[selectedDay] || []);
+    showModalError("Save failed — " + err.message);
   }
 }
 
@@ -527,15 +542,15 @@ async function handleModalDelete() {
 
   try {
     await Events.delete(editingEvent.id);
+    closeModal();
+    closeDayPanel();
+    await loadEvents();
+    render();
+    renderUpcoming();
   } catch (err) {
     console.warn("[PlanWise] Delete failed:", err.message);
+    alert("Delete failed: " + err.message);
   }
-
-  closeModal();
-  closeDayPanel();
-  await loadEvents();
-  render();
-  renderUpcoming();
 }
 
 
@@ -988,6 +1003,37 @@ async function renderSharedEventPanel(event, container) {
 // ─────────────────────────────────────────────
 
 async function initNotifFeed() {
+  // Wire the bell unconditionally — it must never be a dead button.
+  const bell = el("btn-notifications");
+  const panel = el("notif-panel");
+  if (bell && panel) {
+    bell.addEventListener("click", async () => {
+      const isOpen = !panel.classList.contains("hidden");
+      if (isOpen) {
+        panel.classList.add("hidden");
+        return;
+      }
+      panel.classList.remove("hidden");
+      const s = await Auth.getSession().catch(() => null);
+      if (!s) {
+        el("notif-list").innerHTML =
+          '<div class="px-4 py-8 text-center font-mono text-xs text-on-muted tracking-wider">Sign in to view notifications.</div>';
+        return;
+      }
+      await renderNotifFeed();
+    });
+  }
+
+  const markAllBtn = el("notif-mark-all");
+  if (markAllBtn) {
+    markAllBtn.addEventListener("click", async () => {
+      await Social.markAllRead();
+      updateNotifBadge();
+      await renderNotifFeed();
+    });
+  }
+
+  // Subscriptions and badge require an active session.
   const session = await Auth.getSession().catch(() => null);
   if (!session) return;
 
@@ -1004,29 +1050,6 @@ async function initNotifFeed() {
       }).catch(() => {});
     }
   });
-
-  const bell = el("btn-notifications");
-  const panel = el("notif-panel");
-  if (bell && panel) {
-    bell.addEventListener("click", async () => {
-      const isOpen = !panel.classList.contains("hidden");
-      if (isOpen) {
-        panel.classList.add("hidden");
-      } else {
-        panel.classList.remove("hidden");
-        await renderNotifFeed();
-      }
-    });
-  }
-
-  const markAllBtn = el("notif-mark-all");
-  if (markAllBtn) {
-    markAllBtn.addEventListener("click", async () => {
-      await Social.markAllRead();
-      updateNotifBadge();
-      await renderNotifFeed();
-    });
-  }
 }
 
 async function updateNotifBadge() {
@@ -1043,6 +1066,15 @@ async function updateNotifBadge() {
   } catch (_) {
     badge.classList.add("hidden");
   }
+}
+
+function formatNotifTime(isoString) {
+  const d = new Date(isoString);
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (sameDay) return timeStr;
+  return d.toLocaleDateString([], { month: "short", day: "numeric" }) + " · " + timeStr;
 }
 
 async function renderNotifFeed() {
@@ -1076,7 +1108,7 @@ async function renderNotifFeed() {
       description = `${p.actor_name || "Someone"} commented on "${p.preview || "an event"}": "${p.comment || ""}"`;
     }
 
-    const time = new Date(n.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const time = formatNotifTime(n.created_at);
 
     const item = document.createElement("div");
     item.className = `flex items-start gap-3 px-4 py-3 border-b border-outline-soft cursor-pointer hover:bg-surface-low ${n.read ? "opacity-60" : ""}`;
