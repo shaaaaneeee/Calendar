@@ -135,8 +135,8 @@
         <input type="text"  id="modal-field-title"        class="row-input border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
       </div>
       <div class="modal-row flex flex-col gap-1">
-        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">DATE</label>
-        <input type="date"  id="modal-field-date"         class="row-input border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none" />
+        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">DATE <span class="text-error">*</span></label>
+        <input type="date"  id="modal-field-date"         class="row-input border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none" required />
       </div>
       <div class="modal-row flex flex-col gap-1">
         <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">TIME</label>
@@ -151,7 +151,7 @@
         <input type="text"  id="modal-field-notes"        class="row-input border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none" placeholder="optional" />
       </div>
       <div id="modal-group-row" class="modal-row flex-col gap-1.5 hidden">
-        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">ADD TO GROUP</label>
+        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">GROUP <span class="font-normal normal-case text-[8px]">(optional)</span></label>
         <div id="modal-field-groups" class="flex flex-col gap-1"></div>
       </div>
     </div>
@@ -171,6 +171,12 @@
     <button id="notif-mark-all" class="font-mono text-[9px] tracking-wider text-on-muted hover:text-on-surface underline">Mark all read</button>
   </div>
   <div id="notif-list" class="flex-1 overflow-y-auto"></div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="hidden fixed top-14 right-4 z-50 flex items-start gap-3 px-4 py-3 max-w-xs border shadow-neo-xs">
+  <span id="toast-msg" class="font-mono text-[11px] leading-relaxed flex-1"></span>
+  <button id="toast-close" class="shrink-0 font-mono text-[10px] text-on-muted hover:text-on-surface leading-none mt-px">✕</button>
 </div>
 
 <script src="../vendor/supabase.js"></script>

@@ -257,17 +257,64 @@ const SupabaseGroups = {
     return group;
   },
 
-  async inviteByEmail(groupId, email) {
+  async sendGroupInvite(groupId, email) {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
     const { data: users, error: lookupErr } = await db
       .rpc('get_user_id_by_email', { email_input: email });
     if (lookupErr) throw lookupErr;
     if (!users || users.length === 0) throw new Error('No PlanWise account found for that email.');
 
     const inviteeId = users[0].id;
-    const { error } = await db
+    if (inviteeId === session.user.id) throw new Error("You can't invite yourself.");
+
+    // Reject if already a member
+    const { data: existing } = await db
       .from('group_members')
-      .insert({ group_id: groupId, user_id: inviteeId, role: 'member' });
+      .select('user_id')
+      .eq('group_id', groupId)
+      .eq('user_id', inviteeId)
+      .maybeSingle();
+    if (existing) throw new Error('That person is already in this group.');
+
+    // Fetch group info and inviter display name for the notification payload
+    const [groupRes, profileRes] = await Promise.all([
+      db.from('groups').select('name, colour').eq('id', groupId).single(),
+      db.from('profiles').select('display_name').eq('id', session.user.id).single(),
+    ]);
+
+    const { error } = await db.from('notifications').insert({
+      user_id: inviteeId,
+      type:    'group_invite',
+      payload: {
+        group_id:     groupId,
+        group_name:   groupRes.data?.name           || 'a group',
+        group_colour: groupRes.data?.colour         || '#000000',
+        inviter_id:   session.user.id,
+        inviter_name: profileRes.data?.display_name || 'Someone',
+      },
+    });
     if (error) throw error;
+  },
+
+  async acceptGroupInvite(notifId, groupId) {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
+    const { error: memberErr } = await db
+      .from('group_members')
+      .insert({ group_id: groupId, user_id: session.user.id, role: 'member' });
+    if (memberErr) {
+      if (memberErr.code === '23505') throw new Error('You are already a member of this group.');
+      throw memberErr;
+    }
+
+    await db.from('notifications').update({ read: true }).eq('id', notifId);
+  },
+
+  async declineGroupInvite(notifId) {
+    await db.from('notifications').delete().eq('id', notifId);
   },
 
   async leaveOrDeleteGroup(groupId) {
@@ -370,7 +417,7 @@ const SupabaseSocial = {
 
     const { data: members } = await db
       .from('group_members')
-      .select('user_id, profiles(display_name)')
+      .select('user_id')
       .in('group_id', groupIds);
 
     const { data: rsvps } = await db
@@ -382,27 +429,59 @@ const SupabaseSocial = {
     for (const r of rsvps || []) rsvpMap[r.user_id] = r.status;
 
     const seen = new Set();
-    const result = [];
+    const userIds = [];
     for (const m of members || []) {
       if (seen.has(m.user_id)) continue;
       seen.add(m.user_id);
-      result.push({
-        userId:      m.user_id,
-        displayName: m.profiles?.display_name || '?',
-        rsvpStatus:  rsvpMap[m.user_id] || null,
-      });
+      userIds.push(m.user_id);
     }
-    return result;
+
+    const { data: profiles } = await db
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', userIds);
+    const profileMap = {};
+    for (const p of profiles || []) profileMap[p.id] = p.display_name;
+
+    return userIds.map(uid => ({
+      userId:      uid,
+      displayName: profileMap[uid] || '?',
+      rsvpStatus:  rsvpMap[uid] || null,
+    }));
   },
 
   async getComments(eventId) {
     const { data, error } = await db
       .from('comments')
-      .select('id, body, created_at, user_id, profiles(display_name)')
+      .select('id, body, created_at, user_id')
       .eq('event_id', eventId)
       .order('created_at', { ascending: true });
     if (error) throw error;
-    return data || [];
+
+    const rows = data || [];
+    if (!rows.length) return [];
+
+    const userIds = [...new Set(rows.map(c => c.user_id))];
+    const { data: profiles } = await db
+      .from('profiles')
+      .select('id, display_name')
+      .in('id', userIds);
+    const profileMap = {};
+    for (const p of profiles || []) profileMap[p.id] = p.display_name;
+
+    return rows.map(c => ({
+      ...c,
+      profiles: { display_name: profileMap[c.user_id] || '?' },
+    }));
+  },
+
+  async getDisplayName(userId) {
+    const { data } = await db
+      .from('profiles')
+      .select('display_name')
+      .eq('id', userId)
+      .single();
+    return data?.display_name || '?';
   },
 
   async addComment(eventId, body) {

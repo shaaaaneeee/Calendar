@@ -555,14 +555,13 @@ function renderGroupsList(groups) {
         if (!email) return;
         inviteBtn.textContent = '...';
         try {
-          await Groups.inviteByEmail(group.id, email);
+          await Groups.sendGroupInvite(group.id, email);
           inviteInput.value = '';
-          inviteBtn.textContent = 'Sent!';
+          inviteBtn.textContent = 'Invited!';
           setTimeout(() => { inviteBtn.textContent = 'Invite'; }, 2000);
-          loadAndRenderGroups();
         } catch (err) {
           inviteBtn.textContent = 'Error';
-          alert(err.message);
+          showToast(friendlyError(err.message));
           setTimeout(() => { inviteBtn.textContent = 'Invite'; }, 2000);
         }
       });
@@ -581,7 +580,7 @@ function renderGroupsList(groups) {
         await Groups.leaveOrDeleteGroup(group.id);
         loadAndRenderGroups();
       } catch (err) {
-        alert(`Failed to ${action} group: ${err.message}`);
+        showToast(`Failed to ${action} group: ${friendlyError(err.message)}`);
       }
     });
     card.appendChild(leaveBtn);
@@ -613,7 +612,7 @@ function wireGroupsSection() {
 
   el('btn-create-group').addEventListener('click', async () => {
     const name = el('new-group-name').value.trim();
-    if (!name) { alert('Group name is required.'); return; }
+    if (!name) { showToast('Group name is required.'); return; }
 
     const createBtn = el('btn-create-group');
     createBtn.textContent = 'Creating...';
@@ -623,9 +622,9 @@ function wireGroupsSection() {
       const email = el('new-group-invite').value.trim();
       if (email) {
         try {
-          await Groups.inviteByEmail(group.id, email);
+          await Groups.sendGroupInvite(group.id, email);
         } catch (err) {
-          alert(`Group created, but invite failed: ${err.message}`);
+          showToast(`Group created, but invite failed: ${friendlyError(err.message)}`);
         }
       }
 
@@ -647,6 +646,40 @@ function wireGroupsSection() {
 // ─────────────────────────────────────────────
 
 function el(id) { return document.getElementById(id); }
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+
+let _toastTimer = null;
+
+function showToast(msg, type = 'error') {
+  const toast  = el('toast');
+  const msgEl  = el('toast-msg');
+  msgEl.textContent = msg;
+  toast.classList.toggle('bg-error-bg',    type === 'error');
+  toast.classList.toggle('border-error',   type === 'error');
+  toast.classList.toggle('bg-surface',     type !== 'error');
+  toast.classList.toggle('border-outline', type !== 'error');
+  msgEl.classList.toggle('text-error',      type === 'error');
+  msgEl.classList.toggle('text-on-surface', type !== 'error');
+  toast.classList.remove('hidden');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => toast.classList.add('hidden'), 4000);
+}
+
+el('toast-close').addEventListener('click', () => {
+  clearTimeout(_toastTimer);
+  el('toast').classList.add('hidden');
+});
+
+function friendlyError(msg) {
+  if (!msg) return 'Something went wrong.';
+  if (msg.includes('duplicate key') || msg.includes('unique constraint')) return 'That person is already in this group.';
+  if (msg.includes('violates foreign key')) return 'Invalid group or user.';
+  if (msg.includes('not-null') || msg.includes('null value')) return 'Missing required information.';
+  return msg;
+}
 
 
 // ─────────────────────────────────────────────

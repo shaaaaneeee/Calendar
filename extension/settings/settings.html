@@ -58,7 +58,7 @@
       <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="account">Account</a>
     </div>
 
-    <main id="main" class="flex-1 min-w-0 overflow-y-auto relative">
+    <main id="main" class="flex-1 min-w-0 overflow-y-auto relative pb-20">
 
     <!-- Detection -->
     <section id="section-detection" class="section active p-8 max-w-2xl">
@@ -229,6 +229,12 @@
     </div>
     </main>
   </div><!-- /main content column -->
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="hidden fixed top-14 right-4 z-50 flex items-start gap-3 px-4 py-3 max-w-xs border shadow-neo-xs">
+  <span id="toast-msg" class="font-mono text-[11px] leading-relaxed flex-1"></span>
+  <button id="toast-close" class="shrink-0 font-mono text-[10px] text-on-muted hover:text-on-surface leading-none mt-px">✕</button>
 </div>
 
 <script src="../vendor/supabase.js"></script>

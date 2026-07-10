@@ -363,28 +363,30 @@ function openDayPanel(dateKey, events) {
         if (!event._isDeadline) openModal(event);
       });
 
-      // Share button + section (only for real Supabase events)
-      if (event.id && !event._isDeadline && calGroups.length > 0) {
-        const shareBtn = document.createElement("button");
-        shareBtn.className = "mt-2 font-mono text-[9px] tracking-wider uppercase text-on-muted hover:text-on-surface hover:underline";
-        shareBtn.textContent = "Share →";
-
-        const shareSection = document.createElement("div");
-        shareSection.className = "share-section hidden";
-
-        shareBtn.addEventListener("click", async () => {
-          if (shareSection.classList.toggle("hidden")) return;
-          await renderShareSection(event, shareSection);
-        });
-
-        card.appendChild(shareBtn);
-        card.appendChild(shareSection);
-      }
-
-      // RSVP & Comments button (only for real Supabase events)
+      // Action buttons — indented below event details
       if (event.id && !event._isDeadline) {
+        const actionsWrap = document.createElement("div");
+        actionsWrap.className = "mt-3 pl-3 border-l-2 border-outline flex flex-col gap-1.5";
+
+        if (calGroups.length > 0) {
+          const shareBtn = document.createElement("button");
+          shareBtn.className = "block font-mono text-[9px] tracking-wider uppercase text-on-muted hover:text-on-surface hover:underline text-left";
+          shareBtn.textContent = "Share →";
+
+          const shareSection = document.createElement("div");
+          shareSection.className = "share-section hidden";
+
+          shareBtn.addEventListener("click", async () => {
+            if (shareSection.classList.toggle("hidden")) return;
+            await renderShareSection(event, shareSection);
+          });
+
+          actionsWrap.appendChild(shareBtn);
+          actionsWrap.appendChild(shareSection);
+        }
+
         const detailsBtn = document.createElement("button");
-        detailsBtn.className = "mt-2 font-mono text-[9px] tracking-wider uppercase text-on-muted hover:text-on-surface hover:underline";
+        detailsBtn.className = "block font-mono text-[9px] tracking-wider uppercase text-on-muted hover:text-on-surface hover:underline text-left";
         detailsBtn.textContent = "RSVP & Comments →";
         const socialContainer = document.createElement("div");
 
@@ -398,8 +400,9 @@ function openDayPanel(dateKey, events) {
           await renderSharedEventPanel(event, socialContainer);
         });
 
-        card.appendChild(detailsBtn);
-        card.appendChild(socialContainer);
+        actionsWrap.appendChild(detailsBtn);
+        actionsWrap.appendChild(socialContainer);
+        card.appendChild(actionsWrap);
       }
 
       container.appendChild(card);
@@ -425,24 +428,48 @@ function openModal(event) {
 
   const labelEl = document.querySelector("#modal .modal-label");
 
-  // Group selector: visible in create mode only (edit uses day-panel Share button)
+  // Group selector: shown in both create and edit mode
   const groupRow = el("modal-group-row");
   const groupsContainer = el("modal-field-groups");
   groupsContainer.innerHTML = "";
 
-  if (!event && calGroups.length > 0) {
-    for (const g of calGroups) {
-      const lbl = document.createElement("label");
-      lbl.className = "flex items-center gap-2 cursor-pointer text-sm py-0.5";
-      lbl.innerHTML = `
-        <input type="checkbox" data-group-id="${g.id}" class="modal-group-cb w-3 h-3 cursor-pointer" />
-        <span class="w-2 h-2 flex-shrink-0" style="background:${g.colour}"></span>
-        <span class="text-on-surface">${g.name}</span>
-      `;
-      groupsContainer.appendChild(lbl);
-    }
+  if (calGroups.length > 0) {
     groupRow.classList.remove("hidden");
     groupRow.classList.add("flex");
+
+    if (event?.id) {
+      // Edit mode: async-load existing shares, then mark already-shared rows
+      groupsContainer.innerHTML = '<div class="font-mono text-[9px] text-on-muted tracking-wider">Loading...</div>';
+      Social.getSharedGroups(event.id).then(sharedIds => {
+        groupsContainer.innerHTML = "";
+        for (const g of calGroups) {
+          const alreadyShared = sharedIds.includes(g.id);
+          const lbl = document.createElement("label");
+          lbl.className = "flex items-center gap-2 cursor-pointer text-sm py-0.5";
+          lbl.innerHTML = `
+            <input type="checkbox" data-group-id="${g.id}" ${alreadyShared ? "checked disabled" : ""} class="modal-group-cb w-3 h-3 cursor-pointer" />
+            <span class="w-2 h-2 flex-shrink-0" style="background:${g.colour}"></span>
+            <span class="text-on-surface">${g.name}</span>
+            ${alreadyShared ? '<span class="font-mono text-[8px] text-on-muted ml-auto">Shared</span>' : ""}
+          `;
+          groupsContainer.appendChild(lbl);
+        }
+      }).catch(() => {
+        groupsContainer.innerHTML = '<div class="font-mono text-[9px] text-on-muted">Could not load groups.</div>';
+      });
+    } else {
+      // Create mode: all unchecked
+      for (const g of calGroups) {
+        const lbl = document.createElement("label");
+        lbl.className = "flex items-center gap-2 cursor-pointer text-sm py-0.5";
+        lbl.innerHTML = `
+          <input type="checkbox" data-group-id="${g.id}" class="modal-group-cb w-3 h-3 cursor-pointer" />
+          <span class="w-2 h-2 flex-shrink-0" style="background:${g.colour}"></span>
+          <span class="text-on-surface">${g.name}</span>
+        `;
+        groupsContainer.appendChild(lbl);
+      }
+    }
   } else {
     groupRow.classList.add("hidden");
     groupRow.classList.remove("flex");
@@ -495,28 +522,44 @@ function showModalError(msg) {
 
 async function handleModalSave() {
   const title = el("modal-field-title").value.trim();
-  if (!title) { el("modal-field-title").focus(); return; }
+  const date  = el("modal-field-date").value;
+
+  if (!title) {
+    showModalError("Title is required.");
+    el("modal-field-title").focus();
+    return;
+  }
+  if (!date || isNaN(new Date(date + "T00:00:00").getTime())) {
+    showModalError("A valid date is required.");
+    el("modal-field-date").focus();
+    return;
+  }
 
   const payload = {
     title,
-    date:         el("modal-field-date").value,
+    date,
     time:         el("modal-field-time").value,
     participants: el("modal-field-participants").value
       .split(",").map((s) => s.trim()).filter(Boolean),
     notes:        el("modal-field-notes").value.trim(),
   };
 
+  // Collect newly-checked groups (skip disabled = already shared)
+  const selectedGroupIds = Array.from(
+    document.querySelectorAll(".modal-group-cb:checked:not([disabled])")
+  ).map(cb => cb.dataset.groupId);
+
   try {
+    let savedId;
     if (editingEvent) {
       await Events.update(editingEvent.id, payload);
+      savedId = editingEvent.id;
     } else {
       const newEvent = await Events.save(payload);
-      const selectedGroupIds = Array.from(
-        document.querySelectorAll(".modal-group-cb:checked")
-      ).map(cb => cb.dataset.groupId);
-      if (selectedGroupIds.length > 0 && newEvent?.id) {
-        await Social.shareEvent(newEvent.id, selectedGroupIds);
-      }
+      savedId = newEvent?.id;
+    }
+    if (selectedGroupIds.length > 0 && savedId) {
+      await Social.shareEvent(savedId, selectedGroupIds);
     }
     closeModal();
     await loadEvents();
@@ -549,7 +592,7 @@ async function handleModalDelete() {
     renderUpcoming();
   } catch (err) {
     console.warn("[PlanWise] Delete failed:", err.message);
-    alert("Delete failed: " + err.message);
+    showToast("Delete failed: " + err.message);
   }
 }
 
@@ -678,6 +721,32 @@ function formatTime(timeStr) {
 function el(id) { return document.getElementById(id); }
 function show(id) { el(id).classList.remove("hidden"); }
 function hide(id) { el(id).classList.add("hidden"); }
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+
+let _toastTimer = null;
+
+function showToast(msg, type = "error") {
+  const toast = el("toast");
+  const msgEl = el("toast-msg");
+  msgEl.textContent = msg;
+  toast.classList.toggle("bg-error-bg",    type === "error");
+  toast.classList.toggle("border-error",   type === "error");
+  toast.classList.toggle("bg-surface",     type !== "error");
+  toast.classList.toggle("border-outline", type !== "error");
+  msgEl.classList.toggle("text-error",      type === "error");
+  msgEl.classList.toggle("text-on-surface", type !== "error");
+  toast.classList.remove("hidden");
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => toast.classList.add("hidden"), 4000);
+}
+
+el("toast-close").addEventListener("click", () => {
+  clearTimeout(_toastTimer);
+  el("toast").classList.add("hidden");
+});
 
 
 // ─────────────────────────────────────────────
@@ -834,14 +903,14 @@ async function renderShareSection(event, container) {
 async function confirmShare(event, container) {
   const cbs = container.querySelectorAll(".share-cb:not([disabled]):checked");
   const groupIds = Array.from(cbs).map(cb => cb.dataset.groupId);
-  if (!groupIds.length) { alert("Select at least one group."); return; }
+  if (!groupIds.length) { showToast("Select at least one group."); return; }
 
   try {
     await Social.shareEvent(event.id, groupIds);
     await renderShareSection(event, container);
     render();
   } catch (e) {
-    alert("Share failed: " + e.message);
+    showToast("Share failed: " + e.message);
   }
 }
 
@@ -855,17 +924,20 @@ async function renderSharedEventPanel(event, container) {
 
   if (activeCommentsChannel) { activeCommentsChannel.unsubscribe(); activeCommentsChannel = null; }
 
-  let rsvpData, members, comments;
+  let rsvpData, members, comments, sharedGroupIds;
   try {
-    [rsvpData, members, comments] = await Promise.all([
+    [rsvpData, members, comments, sharedGroupIds] = await Promise.all([
       Social.getRsvpDetails(event.id),
       Social.getEventMembers(event.id),
       Social.getComments(event.id),
+      Social.getSharedGroups(event.id),
     ]);
   } catch (e) {
-    container.innerHTML = '<div class="text-xs text-error font-mono mt-3">Failed to load social data.</div>';
+    container.innerHTML = `<div class="text-xs text-error font-mono mt-3">Failed to load: ${e.message}</div>`;
     return;
   }
+
+  const isShared = sharedGroupIds.length > 0;
 
   container.innerHTML = "";
 
@@ -895,7 +967,7 @@ async function renderSharedEventPanel(event, container) {
         const fresh = await Social.getRsvpDetails(event.id);
         countsEl.textContent = `${fresh.counts.going} Going · ${fresh.counts.maybe} Maybe · ${fresh.counts.cant} Can't`;
       } catch (err) {
-        alert("Could not save RSVP: " + err.message);
+        showToast("Could not save RSVP: " + err.message);
       }
     });
     rsvpBar.appendChild(btn);
@@ -967,10 +1039,22 @@ async function renderSharedEventPanel(event, container) {
   const input = document.createElement("input");
   input.type = "text";
   input.className = "comment-input";
-  input.placeholder = "Add a comment...";
+
+  if (!isShared) {
+    input.placeholder = "Share this event with a group to comment...";
+    input.disabled = true;
+    input.style.opacity = "0.5";
+  } else {
+    input.placeholder = "Add a comment...";
+  }
+
   const sendBtn = document.createElement("button");
   sendBtn.className = "comment-send";
   sendBtn.textContent = "Send";
+  if (!isShared) {
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = "0.5";
+  }
   inputRow.appendChild(input);
   inputRow.appendChild(sendBtn);
   commentsSection.appendChild(inputRow);
@@ -982,7 +1066,7 @@ async function renderSharedEventPanel(event, container) {
     try {
       await Social.addComment(event.id, body);
     } catch (e) {
-      alert("Could not post comment: " + e.message);
+      showToast("Could not post comment: " + e.message);
     }
   }
   sendBtn.addEventListener("click", sendComment);
@@ -990,10 +1074,12 @@ async function renderSharedEventPanel(event, container) {
 
   container.appendChild(commentsSection);
 
-  activeCommentsChannel = Social.subscribeComments(event.id, (newComment) => {
+  activeCommentsChannel = Social.subscribeComments(event.id, async (newComment) => {
     const placeholder = commentsList.querySelector(".text-xs.text-on-muted");
     if (placeholder) placeholder.remove();
-    appendComment(newComment);
+    // Realtime payload has no profiles join — fetch the name
+    const name = await Social.getDisplayName(newComment.user_id);
+    appendComment({ ...newComment, profiles: { display_name: name } });
   });
 }
 
@@ -1041,12 +1127,18 @@ async function initNotifFeed() {
 
   Social.subscribeNotifications(session.user.id, (notif) => {
     updateNotifBadge();
+    const p = notif.payload || {};
     if (notif.type === "event_shared") {
-      const p = notif.payload || {};
       chrome.runtime.sendMessage({
         type:    "SHOW_NOTIF",
         title:   "New shared plan",
         message: `${p.actor_name || "Someone"} shared "${p.preview || "an event"}" to ${p.group_name || "a group"}`,
+      }).catch(() => {});
+    } else if (notif.type === "group_invite") {
+      chrome.runtime.sendMessage({
+        type:    "SHOW_NOTIF",
+        title:   "Group invite",
+        message: `${p.inviter_name || "Someone"} invited you to join "${p.group_name || "a group"}"`,
       }).catch(() => {});
     }
   });
@@ -1099,6 +1191,93 @@ async function renderNotifFeed() {
   list.innerHTML = "";
   for (const n of notifs) {
     const p = n.payload || {};
+    const time = formatNotifTime(n.created_at);
+
+    // ── Group invite — dedicated item with Accept / Decline buttons ────────────
+    if (n.type === "group_invite") {
+      const description = `${p.inviter_name || "Someone"} invited you to join "${p.group_name || "a group"}"`;
+
+      const item = document.createElement("div");
+      item.className = `flex items-start gap-3 px-4 py-3 border-b border-outline-soft ${n.read ? "opacity-60" : ""}`;
+
+      const dot = document.createElement("div");
+      dot.className = `w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-transparent" : "bg-primary"}`;
+
+      const content = document.createElement("div");
+      content.className = "flex-1 min-w-0";
+
+      const descEl = document.createElement("div");
+      descEl.className = "text-xs leading-relaxed flex items-center gap-1.5";
+      if (p.group_colour) {
+        const swatch = document.createElement("span");
+        swatch.className = "inline-block w-2 h-2 shrink-0";
+        swatch.style.background = p.group_colour;
+        descEl.appendChild(swatch);
+      }
+      descEl.appendChild(document.createTextNode(description));
+
+      const timeEl = document.createElement("div");
+      timeEl.className = "font-mono text-[9px] text-on-muted mt-0.5";
+      timeEl.textContent = time;
+
+      content.appendChild(descEl);
+      content.appendChild(timeEl);
+
+      if (!n.read) {
+        const btnRow = document.createElement("div");
+        btnRow.className = "flex gap-2 mt-2";
+
+        const acceptBtn = document.createElement("button");
+        acceptBtn.className = "px-2 py-1 bg-primary text-on-primary font-mono text-[9px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none";
+        acceptBtn.textContent = "Accept";
+
+        const declineBtn = document.createElement("button");
+        declineBtn.className = "px-2 py-1 border border-outline font-mono text-[9px] font-bold tracking-wider uppercase text-on-muted hover:bg-surface-mid";
+        declineBtn.textContent = "Decline";
+
+        acceptBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          acceptBtn.textContent = "...";
+          acceptBtn.disabled = true;
+          try {
+            await Groups.acceptGroupInvite(n.id, p.group_id);
+            btnRow.remove();
+            item.classList.add("opacity-60");
+            dot.className = "w-2 h-2 rounded-full mt-1.5 shrink-0 bg-transparent";
+            n.read = true;
+            updateNotifBadge();
+            loadGroupsFilter();
+          } catch (err) {
+            acceptBtn.textContent = "Accept";
+            acceptBtn.disabled = false;
+            showToast(err.message.includes("already") ? err.message : "Could not accept invite — try again.");
+          }
+        });
+
+        declineBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          declineBtn.textContent = "...";
+          declineBtn.disabled = true;
+          try {
+            await Groups.declineGroupInvite(n.id);
+          } finally {
+            item.remove();
+            updateNotifBadge();
+          }
+        });
+
+        btnRow.appendChild(acceptBtn);
+        btnRow.appendChild(declineBtn);
+        content.appendChild(btnRow);
+      }
+
+      item.appendChild(dot);
+      item.appendChild(content);
+      list.appendChild(item);
+      continue;
+    }
+
+    // ── Standard notifications ─────────────────────────────────────────────────
     let description = "";
     if (n.type === "event_shared") {
       description = `${p.actor_name || "Someone"} shared "${p.preview || "an event"}" to ${p.group_name || "a group"}`;
@@ -1107,8 +1286,6 @@ async function renderNotifFeed() {
     } else if (n.type === "comment_added") {
       description = `${p.actor_name || "Someone"} commented on "${p.preview || "an event"}": "${p.comment || ""}"`;
     }
-
-    const time = formatNotifTime(n.created_at);
 
     const item = document.createElement("div");
     item.className = `flex items-start gap-3 px-4 py-3 border-b border-outline-soft cursor-pointer hover:bg-surface-low ${n.read ? "opacity-60" : ""}`;

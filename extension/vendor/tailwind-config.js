@@ -18,7 +18,7 @@ tailwind.config = {
         'error':        '#ba1a1a',
         'error-bg':     '#ffdad6',
         'status-active':'#00D1FF',
-        'status-ok':    '#7EFF00',
+        'status-ok':    '#1f6e35',
         'status-crit':  '#FF4D00',
       },
       borderRadius: {
