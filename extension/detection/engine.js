@@ -205,18 +205,29 @@ function analyzeIntent(text, customRules = {}) {
 
   const intentResult = classifyIntent(text);
 
-  // If classifyIntent found no signals but score passed threshold,
-  // default to CONFIRM (no rejection evidence = assume intent).
   let intent = intentResult.intent;
   let reason = intentResult.reason;
+
+  // No creation or cancellation signals found — drop rather than default-confirm.
   if (intentResult.intent === INTENT.AMBIGUOUS &&
       intentResult.reason === "no_intent_signal") {
-    intent = INTENT.CONFIRM;
-    reason = "default_confirm_no_signals";
+    return {
+      triggered: false,
+      score: scoreResult.score,
+      intent: INTENT.AMBIGUOUS,
+      reason: "no_intent_signal_drop",
+      matches: scoreResult.matches,
+      votes: intentResult.votes,
+      text: scoreResult.text
+    };
   }
 
+  // classifyIntent voted CONFIRM via tie-breaking but found zero actual creation
+  // phrases — treat as not triggered.
+  const triggered = intent === INTENT.CONFIRM && intentResult.votes.confirm >= 1;
+
   return {
-    triggered: intent === INTENT.CONFIRM,
+    triggered,
     score: scoreResult.score,
     intent: intent,
     reason: reason,

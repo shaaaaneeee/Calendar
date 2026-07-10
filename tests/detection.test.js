@@ -42,8 +42,8 @@ describe('Clear plan creation — should trigger', () => {
 
   test('gym plan with time', () => {
     const r = detect("gym tomorrow at 6");
-    expect(r.triggered).toBe(true);
-    expect(r.intent).toBe(INTENT.CONFIRM);
+    // No creation phrase — ambiguous statement, correctly dropped
+    expect(r.triggered).toBe(false);
   });
 
   test('coffee plan with confirmation', () => {
@@ -95,15 +95,15 @@ describe('Clear plan creation — should trigger', () => {
   });
 
   test('informal confirmation', () => {
+    // ok/sure removed from confirmation patterns; no creation phrase → dropped
     const r = detect("ok sure dinner at 8 tonight");
-    expect(r.triggered).toBe(true);
-    expect(r.intent).toBe(INTENT.CONFIRM);
+    expect(r.triggered).toBe(false);
   });
 
   test('come to plan', () => {
+    // only temporal signal — score < threshold
     const r = detect("come to my place tonight at 9");
-    expect(r.triggered).toBe(true);
-    expect(r.intent).toBe(INTENT.CONFIRM);
+    expect(r.triggered).toBe(false);
   });
 
 });
@@ -275,6 +275,121 @@ describe('Intent classification', () => {
     const r = classifyIntent("let's meet up, sounds good, I'm in");
     expect(r.intent).toBe(INTENT.CONFIRM);
     expect(r.votes.confirm).toBeGreaterThan(r.votes.reject);
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// FALSE POSITIVES — hardened rules should block these
+// ─────────────────────────────────────────────
+
+describe('False positives — should NOT trigger after hardening', () => {
+
+  test('past-tense dinner recap', () => {
+    // hard block: last night
+    const r = detect("dinner was amazing last night");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('just got back — activity recap', () => {
+    // hard block: just got back
+    const r = detect("just got back from the gym");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('habitual statement — no creation phrase', () => {
+    // score passes but no intent signal → no_intent_signal_drop
+    const r = detect("I watch movies every Sunday");
+    expect(r.triggered).toBe(false);
+    expect(r.reason).toBe('no_intent_signal_drop');
+  });
+
+  test('call me tonight — no creation phrase', () => {
+    // score passes but no creation phrase → no_intent_signal_drop
+    const r = detect("call me tonight");
+    expect(r.triggered).toBe(false);
+    expect(r.reason).toBe('no_intent_signal_drop');
+  });
+
+  test('vague future hang out — no time anchor', () => {
+    // hard block: we should hang out with no specific time
+    const r = detect("we should hang out sometime");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('ok sure whatever — score below threshold', () => {
+    // ok/sure removed; score < 3
+    const r = detect("ok sure whatever");
+    expect(r.triggered).toBe(false);
+    expect(r.score).toBeLessThan(window.DETECTION_THRESHOLD);
+  });
+
+  test('it was a great dinner — sentiment recap', () => {
+    // hard block: it was great
+    const r = detect("it was a great dinner, loved it");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('we have already had lunch — perfect tense', () => {
+    // hard block: we have already
+    const r = detect("we have already had lunch");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('sometime soon — vague future', () => {
+    const r = detect("we should catch up sometime soon");
+    expect(r.triggered).toBe(false);
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// MUST-TRIGGER — hardened rules must not break these
+// ─────────────────────────────────────────────
+
+describe('Must-trigger — should still trigger after hardening', () => {
+
+  test('classic plan proposal', () => {
+    const r = detect("let's grab dinner tomorrow at 7");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+  test('implicit activity invitation with day and time', () => {
+    // activity-question creation phrase + temporal + action
+    const r = detect("Coffee Thursday at noon?");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+  test('wanna hang — slang invitation', () => {
+    // wanna (creation phrase) + Saturday (temporal) + hang (action)
+    const r = detect("I'm free Saturday, wanna hang?");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+  test('sounds good confirmation with day', () => {
+    // sounds good (creation phrase + confirmation score) + Friday (temporal)
+    const r = detect("sounds good, see you Friday");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+  test('down for gym tonight', () => {
+    // down for (creation phrase) + gym (action) + tonight (temporal)
+    const r = detect("down for gym tonight");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+  test('tmrw invitation with you in', () => {
+    // you in (creation phrase) + gym (action) + tmrw + time (temporal)
+    const r = detect("gym tmrw at 6pm, you in?");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
   });
 
 });

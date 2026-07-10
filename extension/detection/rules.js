@@ -21,7 +21,9 @@ const DETECTION_RULES = {
       /\b\d{1,2}(:\d{2})?\s*(am|pm)\b/i,
       /\b\d{1,2}\/\d{1,2}\b/,
       /\bin\s+\d+\s+(hours?|days?|weeks?)\b/i,
-      /\bat\s+\d{1,2}\b/i
+      /\bat\s+\d{1,2}\b/i,
+      /\bnoon\b/i,
+      /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i
     ]
   },
   action: {
@@ -36,7 +38,7 @@ const DETECTION_RULES = {
       /\bstudy\b/i,
       /\bwatch\b/i,
       /\bmovie\b/i,
-      /\bhang\s*out\b/i,
+      /\bhang\s*(out)?\b/i,
       /\bcall\b/i,
       /\bcatch\s*up\b/i,
       /\bparty\b/i,
@@ -46,18 +48,14 @@ const DETECTION_RULES = {
   },
   social: {
     weight: 1,
-    patterns: [/\bwe\b/i, /\bus\b/i, /\byou\b/i, /\btogether\b/i, /\bjoin\b/i, /\bwith\b/i]
+    patterns: [/\btogether\b/i, /\bjoin\b/i]
   },
   confirmation: {
     weight: 1,
     patterns: [
       /\bsounds good\b/i,
-      /\bokay\b/i,
-      /\bok\b/i,
-      /\bsure\b/i,
       /\bdeal\b/i,
       /\blet'?s\s+do\s+it\b/i,
-      /\bperfect\b/i,
       /\bworks for me\b/i,
       /\bi'?m\s+(in|down)\b/i
     ]
@@ -77,7 +75,7 @@ const DETECTION_RULES = {
   }
 };
 
-const DETECTION_THRESHOLD = 2;
+const DETECTION_THRESHOLD = 3;
 
 /**
  * HARD BLOCK RULES
@@ -105,7 +103,25 @@ const HARD_BLOCK_RULES = [
   /\bhad\s+.+?\s+(at|tonight|tomorrow)\b/i,
   /\blast\s+(night|week|month)\b/i,
   /\byesterday\b/i,
-  /\bwas\s+supposed\s+to\b/i
+  /\bwas\s+supposed\s+to\b/i,
+
+  // Past activity + past time marker
+  /\b(had|ate|went|saw|was\s+at|were\s+at|watched|caught|visited)\b.{0,60}\b(yesterday|last\s+night|last\s+week|last\s+weekend|this\s+morning|earlier|already)\b/i,
+
+  // "just finished / just got back" pattern
+  /\bjust\s+(had|went|saw|finished|got\s+back|left|ate|watched|came\s+from)\b/i,
+
+  // Perfect tense
+  /\b(i've|we've|i\s+have|we\s+have)\s+(just|already|been|had|gone)\b/i,
+
+  // Sentiment recap
+  /\b(it\s+was|that\s+was|what\s+a)\s+(great|amazing|fun|good|nice|wild|crazy)\b/i,
+  /\bamazing\s+(dinner|lunch|coffee|breakfast|brunch|night|evening|time|day)\b/i,
+
+  // Vague future with no specific time anchor
+  /\bwe\s+should\s+(really\s+|definitely\s+|totally\s+|probably\s+)?(hang\s+out|meet\s+up|catch\s+up|get\s+together)\b(?!.{0,30}\b(tomorrow|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday|next|this\s+week|\d+\s*(am|pm))\b)/i,
+  /\bsometime\s+(soon|maybe|hopefully)\b/i,
+  /\bit\s+would\s+be\s+(nice|fun|great)\s+(to|if\s+we)\b/i,
 ];
 
 /**
@@ -159,6 +175,8 @@ const CREATION_PHRASES = [
   /\bcome\s+at\b/i,
   /\bhead\s+over\s+to\b/i,
   /\blet'?s\s+(sync|connect|meet|catch\s+up)\b/i,
+  /\byou\s+in\b/i,
+  /\b(coffee|lunch|dinner|drinks|brunch|breakfast|gym|movie)\b.{0,60}\?$/i,
 ];
 
 if (typeof window !== "undefined") {
