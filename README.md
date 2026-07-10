@@ -4,7 +4,7 @@ A Chrome extension that automatically detects plans in your messaging conversati
 
 ## What it does
 
-PlanWise monitors WhatsApp Web, Discord, Telegram, and Gmail for messages that look like plans — dinner at 7pm, a coffee catch-up, a trip next weekend. When it spots one, a badge appears on the extension icon. Open the popup, review the extracted details, edit if needed, then hit **Add** to save it to your calendar.
+PlanWise monitors WhatsApp Web, Telegram Web, and Gmail for messages that look like plans — dinner at 7pm, a coffee catch-up, a trip next weekend. When it spots one, a badge appears on the extension icon. Open the popup, review the extracted details, edit if needed, then hit **Add** to save it to your calendar.
 
 From the calendar dashboard you can share events with groups, RSVP, comment in real time, and see other members' shared events alongside your own — all colour-coded by group.
 
@@ -24,7 +24,7 @@ Once a plan is confirmed:
 
 ## Features
 
-- **Auto-detection** — scoring engine reads conversation text for dates, times, people, activities, and intent signals across WhatsApp, Discord, Telegram, and Gmail
+- **Auto-detection** — scoring engine reads conversation text for dates, times, people, activities, and intent signals across WhatsApp Web, Telegram Web, and Gmail
 - **Calendar dashboard** — month and week views; task deadlines appear as a separate "Deadlines" category (orange)
 - **Groups & sharing** — create groups, invite members by email, share events to groups; members see shared events on their own calendar with colour-coded pills
 - **RSVP & comments** — Going / Maybe / Can't with live comment threads (Supabase Realtime)
@@ -38,7 +38,6 @@ Once a plan is confirmed:
 | Platform | Outgoing messages | Incoming messages |
 |---|---|---|
 | WhatsApp Web | Yes | Yes |
-| Discord | Yes | Yes |
 | Telegram Web | Yes | Yes |
 | Gmail | Yes | Yes |
 

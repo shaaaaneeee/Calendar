@@ -12,12 +12,6 @@ const PLATFORM_SELECTORS = {
     sendButtonSelector: 'button[data-testid="send"]',
     name: "WhatsApp"
   },
-  "discord.com": {
-    inputSelector: 'div[role="textbox"][data-slate-editor="true"]',
-    messageSelector: ".messageContent-2t3eCI",
-    sendButtonSelector: null,
-    name: "Discord"
-  },
   "web.telegram.org": {
     inputSelector: [
       'div.input-message-input[contenteditable="true"]',
