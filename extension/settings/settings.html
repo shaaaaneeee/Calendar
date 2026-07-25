@@ -31,6 +31,9 @@
       <a href="../tasks/tasks.html" class="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
         <span class="material-symbols-outlined text-[18px]">task_alt</span>Tasks
       </a>
+      <a href="../equipment/equipment.html" class="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
+        <span class="material-symbols-outlined text-[18px]">flight</span>Equipment
+      </a>
       <a href="settings.html" class="flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-surface border-l-2 border-primary bg-surface-mid">
         <span class="material-symbols-outlined text-[18px]">settings</span>Settings
       </a>
@@ -88,7 +91,9 @@
 
       <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
         <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Names</label>
-        <p class="text-sm text-on-muted -mt-1">People or places you frequently make plans with. Name is added to the event title and notes — does not affect detection score.</p>
+        <p class="text-sm text-on-muted -mt-1">People or places you frequently make plans with. Boosted names are added to the event title and notes — does not affect detection score.</p>
+        <div id="priority-contact-picker" class="flex flex-col gap-1"></div>
+        <p class="text-sm text-on-muted -mt-1">Or add a name that isn't in your contacts (e.g. a place like "Studio B"):</p>
         <div class="flex gap-2">
           <input type="text" id="priority-name-input" placeholder="e.g. Coach Kim, Studio B..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
           <button id="btn-add-priority-name" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
@@ -116,7 +121,7 @@
         <div id="meeting-word-tags" class="tag-list flex flex-wrap gap-1.5"></div>
       </div>
 
-      <div class="setting-group flex flex-col gap-3">
+      <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
         <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Plan Items</label>
         <p class="text-sm text-on-muted -mt-1">Things that appear in plans — items to bring, gear, supplies. Each match adds +1.</p>
         <div class="flex gap-2">
@@ -124,6 +129,16 @@
           <button id="btn-add-item" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
         </div>
         <div id="item-tags" class="tag-list flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <div class="setting-group flex flex-col gap-3">
+        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Place Words</label>
+        <p class="text-sm text-on-muted -mt-1">Destinations you frequently make plans at — gym, pier, office, and any custom places. Each match adds +1 and fills the event's location.</p>
+        <div class="flex gap-2">
+          <input type="text" id="place-word-input" placeholder="e.g. gym, pier, office..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+          <button id="btn-add-place-word" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
+        </div>
+        <div id="place-word-tags" class="tag-list flex flex-wrap gap-1.5"></div>
       </div>
     </section>
 

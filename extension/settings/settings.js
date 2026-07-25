@@ -19,6 +19,7 @@ let settings = {
   activityWords:        [],
   meetingWords:         [],
   items:                [],
+  placeWords:           [],
   sensitivity:          2,
   notificationsEnabled: true,
 };
@@ -75,6 +76,7 @@ async function loadSettings() {
           activityWords:        remote.activity_words        || [],
           meetingWords:         remote.meeting_words         || [],
           items:                remote.items                 || [],
+          placeWords:           remote.place_words           || [],
         };
       }
     }
@@ -113,9 +115,11 @@ function renderAll() {
   renderSensitivity();
   renderTriggerTags();
   renderPriorityNameTags();
+  renderPriorityContactPicker();
   renderActivityWordTags();
   renderMeetingWordTags();
   renderItemTags();
+  renderPlaceWordTags();
   renderSummaryTable();
   renderContacts();
   renderNotifications();
@@ -145,8 +149,48 @@ function renderPriorityNameTags() {
     container.appendChild(makeTag(name, () => {
       settings.priorityNames = settings.priorityNames.filter(n => n !== name);
       renderPriorityNameTags();
+      renderPriorityContactPicker();
       renderSummaryTable();
     }));
+  }
+}
+
+function renderPriorityContactPicker() {
+  const container = el('priority-contact-picker');
+  container.innerHTML = '';
+
+  if (!settings.contacts || settings.contacts.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'text-sm text-on-muted';
+    empty.textContent = 'Add contacts in the Contacts tab to boost them here without retyping.';
+    container.appendChild(empty);
+    return;
+  }
+
+  for (const contact of settings.contacts) {
+    const boosted = (settings.priorityNames || [])
+      .some(n => n.toLowerCase() === contact.name.toLowerCase());
+    const label = document.createElement('label');
+    label.className = 'flex items-center gap-2 cursor-pointer text-sm py-0.5';
+    label.innerHTML = `
+      <input type="checkbox" class="priority-contact-cb w-3 h-3 cursor-pointer" ${boosted ? 'checked' : ''} />
+      <span>${contact.name}</span>
+    `;
+    label.querySelector('input').addEventListener('change', (e) => {
+      settings.priorityNames = settings.priorityNames || [];
+      if (e.target.checked) {
+        if (!settings.priorityNames.some(n => n.toLowerCase() === contact.name.toLowerCase())) {
+          settings.priorityNames.push(contact.name);
+        }
+      } else {
+        settings.priorityNames = settings.priorityNames.filter(
+          n => n.toLowerCase() !== contact.name.toLowerCase()
+        );
+      }
+      renderPriorityNameTags();
+      renderSummaryTable();
+    });
+    container.appendChild(label);
   }
 }
 
@@ -186,6 +230,18 @@ function renderItemTags() {
   }
 }
 
+function renderPlaceWordTags() {
+  const container = el('place-word-tags');
+  container.innerHTML = '';
+  for (const word of (settings.placeWords || [])) {
+    container.appendChild(makeTag(word, () => {
+      settings.placeWords = settings.placeWords.filter(w => w !== word);
+      renderPlaceWordTags();
+      renderSummaryTable();
+    }));
+  }
+}
+
 function renderSummaryTable() {
   const tbody = el('summary-tbody');
   if (!tbody) return;
@@ -197,6 +253,7 @@ function renderSummaryTable() {
     { label: 'Activity Words', key: 'activityWords', score: '+2 each' },
     { label: 'Meeting Words',  key: 'meetingWords',  score: '+2 each' },
     { label: 'Items',          key: 'items',         score: '+1 each' },
+    { label: 'Place Words',    key: 'placeWords',    score: '+1 each' },
   ];
 
   for (const { label, key, score } of rows) {
@@ -302,7 +359,11 @@ function makeContactItem(contact) {
   removeBtn.textContent = '✕';
   removeBtn.addEventListener('click', () => {
     settings.contacts = settings.contacts.filter(c => c.name !== contact.name);
+    settings.priorityNames = (settings.priorityNames || []).filter(n => n !== contact.name);
     renderContacts();
+    renderPriorityNameTags();
+    renderPriorityContactPicker();
+    renderSummaryTable();
   });
 
   item.appendChild(info);
@@ -355,7 +416,15 @@ function wireControls() {
     if (e.key === 'Enter') addItem();
   });
 
+  el('btn-add-place-word').addEventListener('click', addPlaceWord);
+  el('place-word-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addPlaceWord();
+  });
+
   el('btn-add-contact').addEventListener('click', addContact);
+  el('contact-name-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addContact();
+  });
   el('contact-nickname-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addContact();
   });
@@ -388,7 +457,7 @@ function addPriorityName() {
   const name  = input.value.trim();
   if (!name) return;
   settings.priorityNames = settings.priorityNames || [];
-  if (settings.priorityNames.includes(name)) { input.value = ''; return; }
+  if (settings.priorityNames.some(n => n.toLowerCase() === name.toLowerCase())) { input.value = ''; return; }
   settings.priorityNames.push(name);
   input.value = '';
   renderPriorityNameTags();
@@ -431,6 +500,18 @@ function addItem() {
   renderSummaryTable();
 }
 
+function addPlaceWord() {
+  const input = el('place-word-input');
+  const word  = input.value.trim().toLowerCase();
+  if (!word) return;
+  settings.placeWords = settings.placeWords || [];
+  if (settings.placeWords.includes(word)) { input.value = ''; return; }
+  settings.placeWords.push(word);
+  input.value = '';
+  renderPlaceWordTags();
+  renderSummaryTable();
+}
+
 function addContact() {
   const nameInput = el('contact-name-input');
   const nickInput = el('contact-nickname-input');
@@ -452,6 +533,7 @@ function addContact() {
   nameInput.value = '';
   nickInput.value = '';
   renderContacts();
+  renderPriorityContactPicker();
 }
 
 

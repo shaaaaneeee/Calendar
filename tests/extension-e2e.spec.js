@@ -34,6 +34,15 @@ function extUrl(id, page) {
   return `chrome-extension://${id}/${page}`;
 }
 
+// Matches dashboard.js's local-date toDateString() — using toISOString()
+// here would convert to UTC first and could land on the wrong day.
+function localDateString(date) {
+  const year  = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day   = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SUITE 1 — POPUP PAGE (unauthenticated)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -498,7 +507,7 @@ test.describe('Dashboard', () => {
     const page = await ctx3.newPage();
     await page.goto(extUrl(id3, 'dashboard/dashboard.html'));
     // Inject a task with today's date
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateString(new Date());
     await page.evaluate((today) => {
       chrome.storage.local.set({
         planwiseTasks: [{
@@ -524,7 +533,7 @@ test.describe('Dashboard', () => {
   test('DASH-19: deadline pill click does NOT open edit modal', async () => {
     const page = await ctx3.newPage();
     await page.goto(extUrl(id3, 'dashboard/dashboard.html'));
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateString(new Date());
     await page.evaluate((today) => {
       chrome.storage.local.set({
         planwiseTasks: [{

@@ -91,6 +91,7 @@ function scoreText(text, customRules = {}) {
   totalScore += applyCustomWords(text, customRules.activityWords, 2, matches, "activityWords");
   totalScore += applyCustomWords(text, customRules.meetingWords,  2, matches, "meetingWords");
   totalScore += applyCustomWords(text, customRules.items,         1, matches, "items");
+  totalScore += applyCustomWords(text, customRules.placeWords,    1, matches, "placeWords");
 
   // Pass 1: proximity negation check.
   let proximityNegationHit = false;

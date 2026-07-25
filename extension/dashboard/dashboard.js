@@ -482,6 +482,7 @@ function openModal(event) {
     el("modal-field-date").value         = selectedDay || "";
     el("modal-field-time").value         = "";
     el("modal-field-participants").value = "";
+    el("modal-field-location").value     = "";
     el("modal-field-notes").value        = "";
     el("modal-source").classList.remove("visible");
     hide("modal-delete");
@@ -492,6 +493,7 @@ function openModal(event) {
     el("modal-field-date").value         = event.event_date || event.date || "";
     el("modal-field-time").value         = event.event_time || event.time || "";
     el("modal-field-participants").value = (event.participants || []).join(", ");
+    el("modal-field-location").value     = event.location || "";
     el("modal-field-notes").value        = event.notes || "";
 
     const sourceText = event.source_text || event.sourceText || "";
@@ -541,6 +543,7 @@ async function handleModalSave() {
     time:         el("modal-field-time").value,
     participants: el("modal-field-participants").value
       .split(",").map((s) => s.trim()).filter(Boolean),
+    location:     el("modal-field-location").value.trim(),
     notes:        el("modal-field-notes").value.trim(),
   };
 
@@ -707,7 +710,10 @@ function updateTodayDisplay() {
 }
 
 function toDateString(date) {
-  return date.toISOString().split("T")[0];
+  const year  = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day   = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function formatTime(timeStr) {
@@ -1107,6 +1113,12 @@ async function initNotifFeed() {
         return;
       }
       await renderNotifFeed();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (panel.classList.contains("hidden")) return;
+      if (panel.contains(e.target) || bell.contains(e.target)) return;
+      panel.classList.add("hidden");
     });
   }
 

@@ -282,12 +282,25 @@ const ACTIVITY_LABELS = [
   { pattern: /\b(?:go\s+on\s+a\s+date|on\s+a\s+date|date\s+night|(?:dinner|coffee|lunch|romantic)\s+date)\b/i, label: "Date" }
 ];
 
-function extractTitle(text) {
+function titleCase(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+}
+
+function extractTitle(text, activityWords = []) {
   for (const { pattern, label } of ACTIVITY_LABELS) {
     if (pattern.test(text)) {
       return label;
     }
   }
+
+  for (const word of activityWords) {
+    if (!word || typeof word !== "string") continue;
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) {
+      return titleCase(word);
+    }
+  }
+
   return "Plan";
 }
 
@@ -339,6 +352,13 @@ function extractParticipants(text, contacts = []) {
     // Also exclude any word that starts a note-trigger phrase — those are instructions, not names.
     const NOTE_TRIGGER_WORDS = new Set(["Bring", "Remember", "Forget", "Please", "Can", "Could"]);
 
+    // Require a relational cue word nearby — otherwise any capitalized proper
+    // noun (brand, place, sentence-medial word) gets hallucinated as a name.
+    const RELATIONAL_CUES = new Set([
+      "with", "and", "meet", "join", "call", "text", "from", "invite", "&"
+    ]);
+    const CUE_WINDOW = 2; // look up to 2 words back for a cue
+
     const words = text.split(/\s+/);
     for (let i = 1; i < words.length; i += 1) {
       const word = words[i].replace(/[^a-zA-Z]/g, "");
@@ -349,7 +369,15 @@ function extractParticipants(text, contacts = []) {
         !IGNORE.has(word) &&
         !NOTE_TRIGGER_WORDS.has(word)
       ) {
-        found.add(word);
+        let hasCue = false;
+        for (let j = Math.max(0, i - CUE_WINDOW); j < i; j += 1) {
+          const prevWord = words[j].replace(/[^a-zA-Z&]/g, "").toLowerCase();
+          if (RELATIONAL_CUES.has(prevWord)) {
+            hasCue = true;
+            break;
+          }
+        }
+        if (hasCue) found.add(word);
       }
     }
   }
@@ -387,6 +415,43 @@ function extractNotes(text) {
   return deduped.join("; ");
 }
 
+const PLACE_LABELS = [
+  { pattern: /\bgym\b/i,                    label: "Gym" },
+  { pattern: /\bpier\b/i,                   label: "Pier" },
+  { pattern: /\boffice\b/i,                 label: "Office" },
+  { pattern: /\bhome\b/i,                   label: "Home" },
+  { pattern: /\bschool\b/i,                 label: "School" },
+  { pattern: /\bmall\b/i,                   label: "Mall" },
+  { pattern: /\bbeach\b/i,                  label: "Beach" },
+  { pattern: /\bpark\b/i,                   label: "Park" },
+  { pattern: /\brestaurant\b/i,             label: "Restaurant" },
+  { pattern: /\bbar\b/i,                    label: "Bar" },
+  { pattern: /\bcaf[eé]\b/i,                label: "Cafe" },
+  { pattern: /\bairport\b/i,                label: "Airport" },
+  { pattern: /\bstation\b/i,                label: "Station" },
+  { pattern: /\bdowntown\b/i,               label: "Downtown" },
+  { pattern: /\bcampus\b/i,                 label: "Campus" },
+  { pattern: /\bhouse\b/i,                  label: "House" },
+];
+
+function extractLocation(text, placeWords = []) {
+  for (const { pattern, label } of PLACE_LABELS) {
+    if (pattern.test(text)) {
+      return label;
+    }
+  }
+
+  for (const word of placeWords) {
+    if (!word || typeof word !== "string") continue;
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) {
+      return titleCase(word);
+    }
+  }
+
+  return null;
+}
+
 function extractMatchedPriorityNames(text, priorityNames) {
   if (!Array.isArray(priorityNames)) return [];
   const found = [];
@@ -398,9 +463,10 @@ function extractMatchedPriorityNames(text, priorityNames) {
   return found;
 }
 
-function extractEvent(text, contacts = [], priorityNames = []) {
+function extractEvent(text, contacts = [], priorityNames = [], activityWords = [], placeWords = []) {
   const { date, time, rawDate, rawTime } = extractDateTime(text);
-  const baseTitle = extractTitle(text);
+  const baseTitle = extractTitle(text, activityWords);
+  const location = extractLocation(text, placeWords);
   const matchedNames = extractMatchedPriorityNames(text, priorityNames);
 
   const title = matchedNames.length > 0
@@ -418,6 +484,7 @@ function extractEvent(text, contacts = [], priorityNames = []) {
     title,
     date,
     time,
+    location,
     participants: extractParticipants(text, contacts),
     notes: mergedNotes,
     rawDate,
@@ -427,7 +494,10 @@ function extractEvent(text, contacts = [], priorityNames = []) {
 }
 
 function toDateString(date) {
-  return date.toISOString().split("T")[0];
+  const year  = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day   = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function resolveNamedDay(qualifier, dayName) {

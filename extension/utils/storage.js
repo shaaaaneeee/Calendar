@@ -66,6 +66,7 @@ const Storage = {
           activityWords: [],
           meetingWords: [],
           items: [],
+          placeWords: [],
           sensitivity: 2,
           notificationsEnabled: true
         }
@@ -78,6 +79,7 @@ const Storage = {
         activityWords: [],
         meetingWords: [],
         items: [],
+        placeWords: [],
         sensitivity: 2,
         notificationsEnabled: true
       };

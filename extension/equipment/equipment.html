@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>PlanWise — Tasks</title>
+  <title>PlanWise — Equipment</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -10,7 +10,7 @@
   <script src="../vendor/suppress-cdn-warning.js"></script>
   <script src="../vendor/tailwind.js"></script>
   <script src="../vendor/tailwind-config.js"></script>
-  <link rel="stylesheet" href="tasks.css" />
+  <link rel="stylesheet" href="equipment.css" />
 </head>
 <body class="bg-background font-sans text-on-surface h-screen overflow-hidden">
 <div id="app" class="flex h-screen overflow-hidden">
@@ -25,10 +25,10 @@
       <a href="../dashboard/dashboard.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
         <span class="material-symbols-outlined text-[18px]">calendar_today</span>Calendar
       </a>
-      <a href="tasks.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-surface border-l-2 border-primary bg-surface-mid">
+      <a href="../tasks/tasks.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
         <span class="material-symbols-outlined text-[18px]">task_alt</span>Tasks
       </a>
-      <a href="../equipment/equipment.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
+      <a href="equipment.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-surface border-l-2 border-primary bg-surface-mid">
         <span class="material-symbols-outlined text-[18px]">flight</span>Equipment
       </a>
       <a href="../settings/settings.html" class="leftnav-item flex items-center gap-3 px-5 py-2.5 text-sm font-medium text-on-muted border-l-2 border-transparent hover:bg-surface-low hover:text-on-surface transition-colors">
@@ -45,9 +45,9 @@
 
     <!-- Top bar -->
     <header id="topbar" class="flex items-center justify-between h-12 px-4 border-b border-outline bg-surface shrink-0">
-      <div class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-on-muted">Tasks</div>
-      <button id="btn-add-task" class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all">
-        <span class="material-symbols-outlined text-[14px]">add</span>NEW TASK
+      <div class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-on-muted">Equipment</div>
+      <button id="btn-add-equipment" class="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs hover:shadow-neo-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all">
+        <span class="material-symbols-outlined text-[14px]">add</span>NEW EQUIPMENT
       </button>
     </header>
 
@@ -56,46 +56,46 @@
       <main id="main" class="flex-1 overflow-auto p-5">
         <div id="board" class="grid grid-cols-3 gap-4 h-full min-w-0">
 
-          <!-- TODO column -->
-          <div class="column flex flex-col min-w-0" id="col-todo">
+          <!-- IN USE column -->
+          <div class="column flex flex-col min-w-0" id="col-in_use">
             <div class="col-head flex items-center justify-between px-3 py-2 border border-outline border-b-0 bg-surface-mid">
-              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">TODO</span>
+              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">In Use</span>
               <div class="flex items-center gap-2">
-                <span id="count-todo" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
-                <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="todo">
+                <span id="count-in_use" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
+                <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="in_use">
                   <span class="material-symbols-outlined text-[14px]">add</span>
                 </button>
               </div>
             </div>
-            <div id="cards-todo" class="cards flex flex-col gap-2 p-2 border border-outline flex-1 overflow-y-auto bg-surface-low"></div>
+            <div id="cards-in_use" class="cards flex flex-col gap-2 p-2 border border-outline flex-1 overflow-y-auto bg-surface-low"></div>
           </div>
 
-          <!-- IN PROGRESS column -->
-          <div class="column flex flex-col min-w-0" id="col-inprogress">
+          <!-- TO PREPARE column -->
+          <div class="column flex flex-col min-w-0" id="col-to_prepare">
             <div class="col-head flex items-center justify-between px-3 py-2 border border-outline border-b-0 bg-surface-mid">
-              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">IN PROGRESS</span>
+              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">To Prepare</span>
               <div class="flex items-center gap-2">
-                <span id="count-inprogress" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
-                <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="inprogress">
+                <span id="count-to_prepare" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
+                <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="to_prepare">
                   <span class="material-symbols-outlined text-[14px]">add</span>
                 </button>
               </div>
             </div>
-            <div id="cards-inprogress" class="cards flex flex-col gap-2 p-2 border border-outline flex-1 overflow-y-auto bg-surface-low"></div>
+            <div id="cards-to_prepare" class="cards flex flex-col gap-2 p-2 border border-outline flex-1 overflow-y-auto bg-surface-low"></div>
           </div>
 
-          <!-- DONE column -->
-          <div class="column flex flex-col min-w-0" id="col-done">
+          <!-- MAINTENANCE column -->
+          <div class="column flex flex-col min-w-0" id="col-maintenance">
             <div class="col-head flex items-center justify-between px-3 py-2 border border-outline border-b-0 bg-surface-mid">
-              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">DONE</span>
+              <span class="font-mono text-[10px] font-bold tracking-wider uppercase">Maintenance</span>
               <div class="flex items-center gap-2">
-                <span id="count-done" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
-                <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="done">
+                <span id="count-maintenance" class="font-mono text-[9px] font-bold bg-primary text-on-primary px-1.5 py-0.5">0</span>
+                <button class="col-add-btn w-5 h-5 flex items-center justify-center hover:bg-surface-high transition-colors" data-col="maintenance">
                   <span class="material-symbols-outlined text-[14px]">add</span>
                 </button>
               </div>
             </div>
-            <div id="cards-done" class="cards flex flex-col gap-2 p-2 border border-outline flex-1 overflow-y-auto bg-surface-low"></div>
+            <div id="cards-maintenance" class="cards flex flex-col gap-2 p-2 border border-outline flex-1 overflow-y-auto bg-surface-low"></div>
           </div>
 
         </div>
@@ -104,12 +104,12 @@
   </div>
 </div><!-- /#app -->
 
-<!-- Task add/edit — right-side drawer -->
+<!-- Equipment add/edit — right-side drawer -->
 <div id="modal-overlay" class="hidden fixed top-12 inset-x-0 bottom-0 bg-on-surface/20 z-30">
   <div id="modal" class="absolute right-0 top-0 bottom-0 w-80 bg-surface border-l border-outline shadow-neo flex flex-col">
 
     <div class="modal-head flex items-center justify-between px-5 py-3 border-b border-outline shrink-0">
-      <div id="modal-title" class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">ADD TASK</div>
+      <div id="modal-title" class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">ADD EQUIPMENT</div>
       <button id="modal-close" class="w-6 h-6 flex items-center justify-center hover:bg-surface-mid transition-colors">
         <span class="material-symbols-outlined text-[16px]">close</span>
       </button>
@@ -117,33 +117,29 @@
 
     <div class="modal-fields px-5 py-4 flex flex-col gap-3 flex-1 overflow-y-auto">
       <div class="flex flex-col gap-1">
-        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">TITLE</label>
-        <input type="text" id="task-title"
+        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">NAME</label>
+        <input type="text" id="equipment-name"
           class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low"
-          placeholder="What needs doing?" />
+          placeholder="e.g. DJI Mavic 3, Battery Pack B..." />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">DUE DATE</label>
-        <input type="date" id="task-date"
+        <label id="equipment-date-label" class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">DATE</label>
+        <input type="date" id="equipment-date"
           class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
       </div>
       <div class="flex flex-col gap-1">
-        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">PRIORITY</label>
-        <select id="task-priority"
-          class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none cursor-pointer">
-          <option value="">None</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1">
         <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">NOTES</label>
-        <textarea id="task-notes"
+        <textarea id="equipment-notes"
           class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low resize-none"
           rows="4" placeholder="Optional notes..."></textarea>
       </div>
+      <div id="equipment-group-row" class="flex flex-col gap-1.5 hidden">
+        <label class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted">SHARE TO GROUP <span class="font-normal normal-case text-[8px]">(optional)</span></label>
+        <div id="equipment-field-groups" class="flex flex-col gap-1"></div>
+      </div>
     </div>
+
+    <p id="modal-error" class="hidden px-5 py-2 font-mono text-[10px] text-error bg-error-bg border-t border-error/30"></p>
 
     <div class="modal-foot flex gap-2 px-5 py-3 border-t border-outline shrink-0">
       <button id="modal-save"
@@ -163,6 +159,9 @@
   </div>
 </div>
 
-<script src="tasks.js"></script>
+<script src="../vendor/supabase.js"></script>
+<script src="../utils/storage.js"></script>
+<script src="../utils/supabase-client.js"></script>
+<script src="equipment.js"></script>
 </body>
 </html>

@@ -50,6 +50,27 @@ const DETECTION_RULES = {
     weight: 1,
     patterns: [/\btogether\b/i, /\bjoin\b/i]
   },
+  location: {
+    weight: 1,
+    patterns: [
+      /\bgym\b/i,
+      /\bpier\b/i,
+      /\boffice\b/i,
+      /\bhome\b/i,
+      /\bschool\b/i,
+      /\bmall\b/i,
+      /\bbeach\b/i,
+      /\bpark\b/i,
+      /\brestaurant\b/i,
+      /\bbar\b/i,
+      /\bcaf[eé]\b/i,
+      /\bairport\b/i,
+      /\bstation\b/i,
+      /\bdowntown\b/i,
+      /\bcampus\b/i,
+      /\bhouse\b/i
+    ]
+  },
   confirmation: {
     weight: 1,
     patterns: [

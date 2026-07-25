@@ -12,6 +12,16 @@ require('../extension/detection/extractor.js');
 
 const { extractEvent } = window.PlanWiseExtractor;
 
+// Builds the same local-date string the extractor itself produces —
+// using toISOString() here would convert to UTC first and could be off
+// by a day from the extractor's local-date result depending on timezone.
+function localDateString(date) {
+  const year  = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day   = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // We also need access to the internal functions for unit testing.
 // Since they aren't exported individually, we test them via extractEvent()
 // and check the returned fields.
@@ -31,19 +41,19 @@ describe('Date extraction', () => {
     // Date should be tomorrow's date
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    expect(r.date).toBe(tomorrow.toISOString().split('T')[0]);
+    expect(r.date).toBe(localDateString(tomorrow));
   });
 
   test('tonight', () => {
     const r = extractEvent("dinner tonight");
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateString(new Date());
     expect(r.date).toBe(today);
     expect(r.rawDate).toBe('tonight');
   });
 
   test('today', () => {
     const r = extractEvent("lunch today");
-    const today = new Date().toISOString().split('T')[0];
+    const today = localDateString(new Date());
     expect(r.date).toBe(today);
   });
 
@@ -57,14 +67,14 @@ describe('Date extraction', () => {
     const r = extractEvent("let's meet in 2 days");
     const expected = new Date();
     expected.setDate(expected.getDate() + 2);
-    expect(r.date).toBe(expected.toISOString().split('T')[0]);
+    expect(r.date).toBe(localDateString(expected));
   });
 
   test('relative — in 1 week', () => {
     const r = extractEvent("catch up in 1 week");
     const expected = new Date();
     expected.setDate(expected.getDate() + 7);
-    expect(r.date).toBe(expected.toISOString().split('T')[0]);
+    expect(r.date).toBe(localDateString(expected));
   });
 
   test('named day — this Friday', () => {
@@ -147,6 +157,16 @@ describe('Title extraction', () => {
     expect(r.title).toBe('Plan');
   });
 
+  test('custom activity word becomes the title', () => {
+    const r = extractEvent("operation starts tomorrow at 7", [], [], ['operation']);
+    expect(r.title).toBe('Operation');
+  });
+
+  test('hardcoded activity label takes priority over custom activity word', () => {
+    const r = extractEvent("dinner tomorrow", [], [], ['dinner']);
+    expect(r.title).toBe('Dinner');
+  });
+
 });
 
 
@@ -199,6 +219,48 @@ describe('Participant extraction', () => {
     const r = extractEvent("dinner tomorrow at 7");
     // May return empty or only non-ignored caps — just check it's an array
     expect(Array.isArray(r.participants)).toBe(true);
+  });
+
+  test('does not hallucinate a capitalized brand/place as a name', () => {
+    const r = extractEvent("let's go to Costco tomorrow");
+    expect(r.participants).not.toContain('Costco');
+  });
+
+  test('does not hallucinate a sentence-medial capitalized word', () => {
+    const r = extractEvent("dinner tomorrow. Excited for it!");
+    expect(r.participants).not.toContain('Excited');
+  });
+
+  test('still finds a name preceded by "and"', () => {
+    const r = extractEvent("lunch tomorrow with Sarah and James");
+    expect(r.participants).toContain('Sarah');
+    expect(r.participants).toContain('James');
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// LOCATION EXTRACTION
+// ─────────────────────────────────────────────
+
+describe('Location extraction', () => {
+
+  test('finds gym', () => {
+    expect(extractEvent("gym at 6am tomorrow").location).toBe('Gym');
+  });
+
+  test('finds pier', () => {
+    expect(extractEvent("meet at the pier tomorrow").location).toBe('Pier');
+  });
+
+  test('no location — returns null', () => {
+    expect(extractEvent("dinner tomorrow at 7").location).toBeNull();
+  });
+
+  test('custom place word from settings', () => {
+    const r = extractEvent("let's meet at the lake tomorrow", [], [], [], ['lake']);
+    expect(r.location).toBe('Lake');
   });
 
 });

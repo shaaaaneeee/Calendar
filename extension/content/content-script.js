@@ -40,6 +40,11 @@ async function attachWhenReady(platform) {
     // Element not found within timeout - watch indefinitely for it.
     // This handles WhatsApp's home screen: input only exists inside a chat.
     console.log("[PlanWise] Input not found yet - watching for chat to open...");
+    console.warn(
+      `[PlanWise] No selector matched for ${platform.name} after 30s. ` +
+      `Page title: "${document.title}". If ${platform.name} changed its DOM, ` +
+      `the selectors in dom-observer.js need updating.`
+    );
     watchForInput(platform);
   }
 }
@@ -122,7 +127,13 @@ async function analyzeText(text, platform, fromSend = false) {
   }
 
   if (result.triggered) {
-    const event = window.PlanWiseExtractor.extractEvent(text, settings.contacts, settings.priorityNames || []);
+    const event = window.PlanWiseExtractor.extractEvent(
+      text,
+      settings.contacts,
+      settings.priorityNames || [],
+      settings.activityWords || [],
+      settings.placeWords || []
+    );
     const pending = await window.PlanWiseStorage.enqueuePendingEvent(event);
     if (!pending) return;
 

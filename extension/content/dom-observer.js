@@ -5,11 +5,15 @@
 const PLATFORM_SELECTORS = {
   "web.whatsapp.com": {
     inputSelector: [
-      'div[role="textbox"][data-tab="10"]',
+      'div[aria-placeholder="Type a message"]',
+      '#main footer div[contenteditable="true"][role="textbox"]',
+      'footer div[contenteditable="true"][role="textbox"]',
       'div[role="textbox"][data-lexical-editor="true"]',
+      'div[role="textbox"][data-tab="10"]',
+      '#main div[contenteditable="true"][role="textbox"]',
     ],
-    messageSelector: ".message-in .copyable-text, .message-out .copyable-text",
-    sendButtonSelector: 'button[data-testid="send"]',
+    messageSelector: ".message-in .copyable-text, .message-out .copyable-text, [data-pre-plain-text]",
+    sendButtonSelector: 'button[data-testid="send"], button[aria-label="Send"], span[data-icon="send"]',
     name: "WhatsApp"
   },
   "web.telegram.org": {
