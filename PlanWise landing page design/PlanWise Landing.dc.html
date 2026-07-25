@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8" />
+  <title>PlanWise — plans, highlighted</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    html { scroll-behavior: auto; }
+    body { margin: 0; -webkit-font-smoothing: antialiased; }
+    ::selection { background: #00D1FF; color: #1A1C1C; }
+    @keyframes pw-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+  </style>
+</helmet>
+
+<div style="{{ rootStyle }}">
+
+  <!-- NAV -->
+  <div style="{{ navStyle }}">
+    <div style="{{ navInnerStyle }}">
+      <div style="{{ navLogoStyle }}"><span style="{{ navLogoDotStyle }}"></span>PlanWise</div>
+      <div style="{{ navLinksStyle }}">
+        <a href="#how" style="{{ navLinkStyle }}">How it works</a>
+        <a href="#features" style="{{ navLinkStyle }}">Features</a>
+        <a href="#platforms" style="{{ navLinkStyle }}">Platforms</a>
+      </div>
+      <div style="{{ navRightStyle }}">
+        <a href="#cta" style="{{ navCtaStyle }}">Add to Chrome</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO (pinned) -->
+  <div ref="{{ heroWrapRef }}" style="{{ heroWrapStyle }}">
+    <div style="{{ heroStickyStyle }}">
+      <div style="{{ heroInnerStyle }}">
+
+        <div style="{{ heroLeftStyle }}">
+          <div style="{{ eyebrowStyle }}">CHROME EXTENSION — MV3</div>
+          <h1 style="{{ headlineStyle }}">Every plan in your chats,<br />highlighted automatically.</h1>
+          <p style="{{ subheadStyle }}">PlanWise reads WhatsApp, Telegram, and Gmail as you go. The moment a date is mentioned, it's captured to one shared calendar with RSVPs and live comments.</p>
+          <div style="{{ heroCtaRowStyle }}">
+            <a href="#cta" style="{{ primaryCtaStyle }}">Add to Chrome — it's free</a>
+            <a href="#how" style="{{ secondaryCtaStyle }}">See how it works ↓</a>
+          </div>
+        </div>
+
+        <div style="{{ heroRightStyle }}">
+          <div style="{{ demoShellStyle }}">
+            <div style="{{ demoTitleBarStyle }}">
+              <div style="{{ trafficLightsStyle }}">
+                <span style="{{ dotRedStyle }}"></span>
+                <span style="{{ dotYellowStyle }}"></span>
+                <span style="{{ dotGreenStyle }}"></span>
+              </div>
+              <div style="{{ demoPlatformLabelStyle }}">WhatsApp Web</div>
+            </div>
+
+            <div style="{{ demoBodyStyle }}">
+              <div style="{{ demoContactRowStyle }}">
+                <div style="{{ demoAvatarStyle }}">A</div>
+                <div style="{{ demoContactNameStyle }}">Alex Rivera</div>
+              </div>
+
+              <div style="{{ msg1Style }}">
+                <div style="{{ bubbleInStyle }}">Hey — are we still doing the thing <mark style="{{ markSaturdayStyle }}">Saturday</mark>?</div>
+              </div>
+              <div style="{{ msg2Style }}">
+                <div style="{{ bubbleOutStyle }}">Yeah! Let's say <mark style="{{ markSevenStyle }}">7</mark></div>
+              </div>
+              <div style="{{ msg3Style }}">
+                <div style="{{ bubbleInStyle }}">Perfect, see you then</div>
+              </div>
+
+              <div style="{{ planStripStyle }}">Plan detected</div>
+
+              <div style="{{ eventCardStyle }}">
+                <div style="{{ eventCardIconStyle }}">＋</div>
+                <div style="{{ eventCardTextWrapStyle }}">
+                  <div style="{{ eventCardTitleStyle }}">The thing</div>
+                  <div style="{{ eventCardMetaStyle }}">Saturday · 7:00 PM</div>
+                </div>
+                <div style="{{ eventCardAddStyle }}">Add</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div style="{{ scrollHintStyle }}">SCROLL</div>
+  </div>
+
+  <!-- HOW IT WORKS (pinned) -->
+  <div ref="{{ howWrapRef }}" id="how" style="{{ howWrapStyle }}" data-screen-label="How it works">
+    <div style="{{ howStickyStyle }}">
+      <div style="{{ howHeaderStyle }}">
+        <div style="{{ sectionEyebrowStyle }}">HOW IT WORKS</div>
+        <h2 style="{{ sectionTitleStyle }}">From a stray message to a synced plan.</h2>
+      </div>
+      <div style="{{ howTrackStyle }}">
+        <sc-for list="{{ howSteps }}" as="step" hint-placeholder-count="3">
+          <div style="{{ step.style }}">
+            <div style="{{ step.numberStyle }}">{{ step.number }}</div>
+            <div style="{{ stepTitleStyle }}">{{ step.title }}</div>
+            <div style="{{ stepDescStyle }}">{{ step.desc }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES (pinned) -->
+  <div ref="{{ featuresWrapRef }}" id="features" style="{{ featuresWrapStyle }}" data-screen-label="Features">
+    <div style="{{ featuresStickyStyle }}">
+      <div style="{{ howHeaderStyle }}">
+        <div style="{{ sectionEyebrowStyle }}">FEATURES</div>
+        <h2 style="{{ sectionTitleStyle }}">Built for groups that plan in chat.</h2>
+      </div>
+      <div style="{{ featuresGridStyle }}">
+        <sc-for list="{{ features }}" as="feat" hint-placeholder-count="4">
+          <div style="{{ feat.style }}">
+            <div style="{{ featureLabelStyle }}">{{ feat.label }}</div>
+            <div style="{{ featureTitleStyle }}">{{ feat.title }}</div>
+            <div style="{{ featureDescStyle }}">{{ feat.desc }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLATFORMS (pinned) -->
+  <div ref="{{ platformsWrapRef }}" id="platforms" style="{{ platformsWrapStyle }}" data-screen-label="Platforms">
+    <div style="{{ platformsStickyStyle }}">
+      <div style="{{ howHeaderStyle }}">
+        <div style="{{ sectionEyebrowStyle }}">WORKS WHERE YOU ALREADY TALK</div>
+        <h2 style="{{ sectionTitleStyle }}">Three inboxes. One calendar.</h2>
+      </div>
+      <div style="{{ platformsRowStyle }}">
+        <sc-for list="{{ platforms }}" as="plat" hint-placeholder-count="3">
+          <div style="{{ plat.style }}">
+            <div style="{{ platformIconStyle }}">{{ plat.glyph }}</div>
+            <div style="{{ platformNameStyle }}">{{ plat.name }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA BAND -->
+  <div ref="{{ ctaRef }}" id="cta" style="{{ ctaBandStyle }}">
+    <div style="{{ ctaInnerStyle }}">
+      <div style="{{ ctaEyebrowStyle }}">GET PLANWISE</div>
+      <h2 style="{{ ctaTitleStyle }}">Stop scrolling back to find the date.</h2>
+      <a href="#" style="{{ ctaButtonStyle }}">Add to Chrome — it's free</a>
+      <div style="{{ ctaSubStyle }}">Free · Manifest V3 · No account required to start</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="{{ footerStyle }}">
+    <div style="{{ footerInnerStyle }}">
+      <div style="{{ footerLogoStyle }}"><span style="{{ navLogoDotStyle }}"></span>PlanWise</div>
+      <div style="{{ footerLinksStyle }}">
+        <a href="#" style="{{ footerLinkStyle }}">Privacy</a>
+        <a href="#" style="{{ footerLinkStyle }}">Terms</a>
+        <a href="#" style="{{ footerLinkStyle }}">Contact</a>
+      </div>
+      <div style="{{ footerTagStyle }}">© 2026 PlanWise. Built for people who make plans in chat.</div>
+    </div>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CYCLE_MS = 9500;
+const PRIMARY = '#000000';
+const ON_PRIMARY = '#FFFFFF';
+
+const HOW_DATA = [
+  { number: '01', title: 'Detect', desc: 'PlanWise watches your conversations in the background and flags dates, times, and places the moment they\u2019re typed.' },
+  { number: '02', title: 'Extract', desc: 'One click pulls the plan into a clean event card \u2014 title, time, location \u2014 no retyping.' },
+  { number: '03', title: 'Sync', desc: 'It lands on a shared calendar with your group, ready for RSVPs and live comments.' },
+];
+
+const FEATURES_DATA = [
+  { label: 'DETECT', title: 'Automatic detection', desc: 'No copy-paste. PlanWise parses natural language across chats in real time.' },
+  { label: 'CALENDAR', title: 'Shared calendar', desc: 'Every plan lands in one place your whole group can see and edit.' },
+  { label: 'RSVP', title: 'RSVPs built in', desc: 'Everyone marks yes, no, or maybe without leaving the thread.' },
+  { label: 'COMMENTS', title: 'Live comments', desc: 'Coordinate details \u2014 who\u2019s driving, what to bring \u2014 right on the event.' },
+];
+
+const PLATFORMS_DATA = [
+  { name: 'WhatsApp Web', glyph: '\u25C8' },
+  { name: 'Telegram Web', glyph: '\u25B6' },
+  { name: 'Gmail', glyph: '\u2709' },
+];
+
+class Component extends DCLogic {
+  state = {
+    scrollY: 0,
+    vh: 900,
+    vw: 1440,
+    isMobile: false,
+    reducedMotion: false,
+    theme: 'light',
+    demoT: 0,
+    heroP: 0,
+    howP: 0,
+    featuresP: 0,
+    platformsP: 0,
+    heroPinMode: 'before',
+    howPinMode: 'before',
+    featuresPinMode: 'before',
+    platformsPinMode: 'before',
+    ctaIn: false,
+  };
+
+  heroWrapRef = React.createRef();
+  howWrapRef = React.createRef();
+  featuresWrapRef = React.createRef();
+  platformsWrapRef = React.createRef();
+  ctaRef = React.createRef();
+
+  clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  lerp(a, b, t) { return a + (b - a) * t; }
+
+  progressFor(ref, vh) {
+    const el = ref.current;
+    if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    const total = rect.height - vh;
+    if (total <= 0) return 1;
+    return this.clamp((0 - rect.top) / total, 0, 1);
+  }
+
+  pinStateFor(ref, vh) {
+    const el = ref.current;
+    if (!el) return { progress: 0, mode: 'before' };
+    const rect = el.getBoundingClientRect();
+    if (rect.top > 0) return { progress: 0, mode: 'before' };
+    if (rect.bottom < vh) return { progress: 1, mode: 'after' };
+    const total = rect.height - vh;
+    const progress = total <= 0 ? 1 : this.clamp((0 - rect.top) / total, 0, 1);
+    return { progress, mode: 'pin' };
+  }
+
+  componentDidMount() {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.setState({ reducedMotion: mq.matches, vh: window.innerHeight, vw: window.innerWidth, isMobile: window.innerWidth < 768 });
+    this._mqListener = (e) => this.setState({ reducedMotion: e.matches });
+    if (mq.addEventListener) mq.addEventListener('change', this._mqListener);
+
+    this._onResize = () => this.setState({ vh: window.innerHeight, vw: window.innerWidth, isMobile: window.innerWidth < 768 });
+    window.addEventListener('resize', this._onResize);
+
+    this._startTime = performance.now();
+    const tick = (now) => {
+      const vh = window.innerHeight;
+      const demoT = (now - this._startTime) % CYCLE_MS;
+      const ctaEl = this.ctaRef.current;
+      let ctaIn = this.state.ctaIn;
+      if (ctaEl) {
+        const r = ctaEl.getBoundingClientRect();
+        ctaIn = r.top < vh * 0.82;
+      }
+      const heroPin = this.pinStateFor(this.heroWrapRef, vh);
+      const howPin = this.pinStateFor(this.howWrapRef, vh);
+      const featuresPin = this.pinStateFor(this.featuresWrapRef, vh);
+      const platformsPin = this.pinStateFor(this.platformsWrapRef, vh);
+      this.setState({
+        scrollY: window.scrollY,
+        demoT,
+        heroP: heroPin.progress, heroPinMode: heroPin.mode,
+        howP: howPin.progress, howPinMode: howPin.mode,
+        featuresP: featuresPin.progress, featuresPinMode: featuresPin.mode,
+        platformsP: platformsPin.progress, platformsPinMode: platformsPin.mode,
+        ctaIn,
+      });
+      this._raf = requestAnimationFrame(tick);
+    };
+    this._raf = requestAnimationFrame(tick);
+  }
+
+  componentWillUnmount() {
+    if (this._raf) cancelAnimationFrame(this._raf);
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
+  }
+
+  renderVals() {
+    const { scrollY, isMobile, reducedMotion, demoT, heroP, howP, featuresP, platformsP, ctaIn, heroPinMode, howPinMode, featuresPinMode, platformsPinMode } = this.state;
+    const pinStyle = (mode) => {
+      if (reducedMotion) return { position: 'relative', height: '100vh' };
+      if (mode === 'before') return { position: 'absolute', top: 0, left: 0, width: '100%', height: '100vh' };
+      if (mode === 'after') return { position: 'absolute', bottom: 0, left: 0, width: '100%', height: '100vh' };
+      return { position: 'fixed', top: 0, left: 0, width: '100%', height: '100vh' };
+    };
+    const mono = '"JetBrains Mono", "Courier New", monospace';
+    const sans = '"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+    const amber = '#00D1FF';
+    const dark = false;
+
+    const c = { bg: '#F9F9F9', text: '#1A1C1C', card: '#EEEEEE', cardHigh: '#E8E8E8', muted: '#4C4546', secondary: '#5D5F5F', line: '#1A1C1C', lineSoft: '#CFC4C5', invBg: '#000000', invText: '#FFFFFF' };
+    const sh = (n) => `${n}px ${n}px 0 #000000`;
+
+    const mo = reducedMotion ? 0 : (isMobile ? 0.55 : 1);
+    const runway = (vhMult) => reducedMotion ? '100vh' : `${isMobile ? Math.round(vhMult * 0.65) : vhMult}vh`;
+
+    const rootStyle = { background: c.bg, color: c.text, fontFamily: sans, minHeight: '100vh', overflowX: 'hidden' };
+
+    // NAV
+    const navStyle = { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: c.bg, borderBottom: `1px solid ${c.line}` };
+    const navInnerStyle = { maxWidth: 1280, margin: '0 auto', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px' };
+    const navLogoStyle = { fontFamily: mono, fontWeight: 700, fontSize: 18, display: 'flex', alignItems: 'center', gap: 8, letterSpacing: '-0.02em' };
+    const navLogoDotStyle = { width: 8, height: 8, borderRadius: '50%', background: amber, display: 'inline-block' };
+    const navLinksStyle = { display: isMobile ? 'none' : 'flex', gap: 32 };
+    const navLinkStyle = { fontFamily: mono, fontSize: 13, color: c.secondary, textDecoration: 'none' };
+    const navRightStyle = { display: 'flex', alignItems: 'center', gap: 16 };
+    const navCtaStyle = { fontFamily: mono, fontSize: 13, fontWeight: 700, background: PRIMARY, color: ON_PRIMARY, borderRadius: 9999, padding: '10px 18px', textDecoration: 'none', display: isMobile ? 'none' : 'block', boxShadow: sh(2) };
+
+    // HERO
+    const heroFade = reducedMotion ? 1 : this.clamp(1 - heroP * 1.1, 0, 1);
+    const heroLift = reducedMotion ? 0 : -heroP * 60 * mo;
+    const heroScale = reducedMotion ? 1 : 1 - heroP * 0.06 * mo;
+    const chatRot = reducedMotion ? 0 : this.lerp(6, -4, heroP) * mo;
+    const chatLift = reducedMotion ? 0 : -heroP * 90 * mo;
+
+    const heroWrapStyle = { position: 'relative', height: runway(160), background: c.bg };
+    const heroStickyStyle = { ...pinStyle(heroPinMode), display: 'flex', alignItems: 'center', overflow: 'hidden' };
+    const heroInnerStyle = {
+      boxSizing: 'border-box', maxWidth: 1280, margin: '64px auto 0', width: '100%', padding: isMobile ? '0 24px' : '0 32px',
+      display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 40 : 24, alignItems: 'center',
+      opacity: heroFade, transform: `translateY(${heroLift}px) scale(${heroScale})`, willChange: 'transform, opacity',
+    };
+    const heroLeftStyle = { display: 'flex', flexDirection: 'column', gap: 24 };
+    const eyebrowStyle = { fontFamily: mono, fontSize: 13, letterSpacing: '0.08em', color: c.secondary, fontWeight: 700 };
+    const headlineStyle = { fontFamily: sans, fontWeight: 800, fontSize: isMobile ? 40 : 64, lineHeight: 1.04, letterSpacing: '-0.03em', margin: 0 };
+    const subheadStyle = { fontFamily: sans, fontSize: 18, lineHeight: 1.55, color: c.muted, maxWidth: 480, margin: 0 };
+    const heroCtaRowStyle = { display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap', marginTop: 8 };
+    const primaryCtaStyle = { fontFamily: mono, fontWeight: 700, fontSize: 14, background: PRIMARY, color: ON_PRIMARY, borderRadius: 9999, padding: '16px 28px', textDecoration: 'none', boxShadow: sh(4) };
+    const secondaryCtaStyle = { fontFamily: mono, fontSize: 14, color: c.text, textDecoration: 'none', borderBottom: `1px solid ${c.line}`, paddingBottom: 2 };
+
+    const heroRightStyle = { display: 'flex', justifyContent: isMobile ? 'flex-start' : 'center', perspective: 1200 };
+    const demoShellStyle = {
+      width: '100%', maxWidth: 420, background: c.card, border: `2px solid ${c.line}`,
+      boxShadow: sh(8),
+      transform: `rotateY(${chatRot}deg) translateY(${chatLift}px)`, transformStyle: 'preserve-3d', willChange: 'transform',
+    };
+    const demoTitleBarStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: `1px solid ${c.line}` };
+    const trafficLightsStyle = { display: 'flex', gap: 6 };
+    const dotBase = { width: 10, height: 10, borderRadius: '50%' };
+    const dotRedStyle = { ...dotBase, background: '#EC6A5E' };
+    const dotYellowStyle = { ...dotBase, background: '#F4BF4F' };
+    const dotGreenStyle = { ...dotBase, background: '#61C554' };
+    const demoPlatformLabelStyle = { fontFamily: mono, fontSize: 11, color: c.muted, letterSpacing: '0.04em' };
+
+    const demoBodyStyle = { padding: 20, display: 'flex', flexDirection: 'column', gap: 12, minHeight: 320 };
+    const demoContactRowStyle = { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 };
+    const demoAvatarStyle = { width: 28, height: 28, borderRadius: '50%', background: c.muted, color: c.card, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: mono, fontSize: 12, fontWeight: 700 };
+    const demoContactNameStyle = { fontFamily: sans, fontWeight: 700, fontSize: 14 };
+
+    const msgReveal = (threshold) => {
+      const v = reducedMotion ? 1 : this.clamp((demoT - threshold) / 260, 0, 1);
+      return { opacity: v, transform: `translateY(${(1 - v) * 14}px)`, transition: 'none' };
+    };
+    const msg1Style = { ...msgReveal(250), display: 'flex' };
+    const msg2Style = { ...msgReveal(1300), display: 'flex', justifyContent: 'flex-end' };
+    const msg3Style = { ...msgReveal(2350), display: 'flex' };
+
+    const bubbleBase = { maxWidth: '82%', padding: '10px 14px', fontFamily: sans, fontSize: 14.5, lineHeight: 1.4 };
+    const bubbleInStyle = { ...bubbleBase, background: '#FFFFFF', border: `1px solid ${c.lineSoft}` };
+    const bubbleOutStyle = { ...bubbleBase, background: c.cardHigh, border: `1px solid ${c.lineSoft}` };
+
+    const highlightOn = demoT > 3600 && demoT < 8800;
+    const markStyleBase = { padding: '0 3px', transition: 'background 0.4s ease, color 0.4s ease' };
+    const markSaturdayStyle = { ...markStyleBase, background: highlightOn ? amber : 'transparent', color: highlightOn ? '#1A1C1C' : 'inherit' };
+    const markSevenStyle = { ...markStyleBase, background: highlightOn ? amber : 'transparent', color: highlightOn ? '#1A1C1C' : 'inherit' };
+
+    const stripV = reducedMotion ? 1 : this.clamp((demoT - 4600) / 260, 0, 1);
+    const planStripStyle = {
+      fontFamily: mono, fontSize: 12, fontWeight: 700, letterSpacing: '0.05em', color: '#1A1C1C', background: amber,
+      padding: '6px 10px', display: 'inline-block', alignSelf: 'flex-start', boxShadow: sh(2),
+      opacity: demoT > 4600 && demoT < 8800 ? stripV : 0,
+      transform: `translateY(${(1 - stripV) * 8}px)`,
+      animation: (demoT > 4600 && demoT < 8800) ? 'pw-pulse 1.6s ease 1' : 'none',
+    };
+
+    const cardV = reducedMotion ? 1 : this.clamp((demoT - 5600) / 320, 0, 1);
+    const cardShow = demoT > 5600 && demoT < 8800;
+    const eventCardStyle = {
+      display: 'flex', alignItems: 'center', gap: 12, background: c.cardHigh, border: `2px solid ${c.line}`, padding: 14, boxShadow: sh(4),
+      opacity: cardShow ? cardV : 0, transform: `translateY(${(1 - cardV) * 20}px)`,
+    };
+    const eventCardIconStyle = { width: 36, height: 36, background: PRIMARY, color: ON_PRIMARY, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, flexShrink: 0 };
+    const eventCardTextWrapStyle = { flex: 1, minWidth: 0 };
+    const eventCardTitleStyle = { fontFamily: sans, fontWeight: 700, fontSize: 15 };
+    const eventCardMetaStyle = { fontFamily: mono, fontSize: 12, color: c.muted, marginTop: 2 };
+    const eventCardAddStyle = { fontFamily: mono, fontSize: 12, fontWeight: 700, background: PRIMARY, color: ON_PRIMARY, borderRadius: 9999, padding: '8px 14px', flexShrink: 0, boxShadow: sh(1) };
+
+    const scrollHintStyle = {
+      position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+      fontFamily: mono, fontSize: 11, letterSpacing: '0.15em', color: c.muted,
+      opacity: reducedMotion ? 0 : this.clamp(1 - heroP * 3, 0, 1),
+    };
+
+    // shared section header style
+    const sectionEyebrowStyle = { fontFamily: mono, fontSize: 13, letterSpacing: '0.08em', color: c.secondary, fontWeight: 700, textAlign: isMobile ? 'left' : 'center' };
+    const sectionTitleStyle = { fontFamily: sans, fontWeight: 800, fontSize: isMobile ? 28 : 36, letterSpacing: '-0.02em', margin: '10px 0 0', textAlign: isMobile ? 'left' : 'center' };
+    const howHeaderStyle = { boxSizing: 'border-box', maxWidth: 720, width: '100%', margin: '0 auto', padding: isMobile ? '0 24px' : '0 32px', textAlign: isMobile ? 'left' : 'center', flexShrink: 0 };
+
+    // HOW IT WORKS
+    const howWrapStyle = { position: 'relative', height: runway(220), background: c.bg, borderTop: `1px solid ${c.line}` };
+    const howStickyStyle = { ...pinStyle(howPinMode), boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16, overflow: 'hidden', padding: '48px 0' };
+    const howTrackStyle = { flexShrink: 0, boxSizing: 'border-box', maxWidth: 1280, margin: '0 auto', width: '100%', padding: isMobile ? '0 24px' : '0 32px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 0 };
+    const stepTitleStyle = { fontFamily: sans, fontWeight: 800, fontSize: 22, margin: '12px 0 6px' };
+    const stepDescStyle = { fontFamily: sans, fontSize: 14.5, lineHeight: 1.45, color: c.muted, maxWidth: 320 };
+
+    const howSteps = HOW_DATA.map((s, i) => {
+      const segStart = i / 3, segEnd = (i + 1) / 3;
+      const local = this.clamp((howP - segStart) / (segEnd - segStart + 0.0001), 0, 1);
+      const enter = reducedMotion ? 1 : this.clamp(local * 1.4, 0, 1);
+      const numScale = reducedMotion ? 1 : this.lerp(0.7, 1, enter);
+      return {
+        number: s.number, title: s.title, desc: s.desc,
+        style: {
+          minHeight: 0,
+          borderLeft: isMobile ? 'none' : (i === 0 ? 'none' : `1px solid ${c.line}`),
+          borderTop: isMobile && i !== 0 ? `1px solid ${c.line}` : 'none',
+          padding: isMobile ? '32px 0' : '0 40px',
+          opacity: enter, transform: `translateY(${(1 - enter) * 32 * mo}px)`,
+        },
+        numberStyle: { fontFamily: mono, fontWeight: 700, fontSize: 48, color: '#1A1C1C', transform: `scale(${numScale})`, transformOrigin: 'left center' },
+      };
+    });
+
+    // FEATURES
+    const featuresWrapStyle = { position: 'relative', height: runway(200), background: c.bg, borderTop: `1px solid ${c.line}` };
+    const featuresStickyStyle = { ...pinStyle(featuresPinMode), boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16, overflow: 'hidden', padding: '48px 0' };
+    const featuresGridStyle = { boxSizing: 'border-box', maxWidth: 960, margin: '0 auto', width: '100%', padding: isMobile ? '0 24px' : '0 32px', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', border: `1px solid ${c.line}` };
+    const featureLabelStyle = { fontFamily: mono, fontSize: 12, color: c.secondary, fontWeight: 700, letterSpacing: '0.05em' };
+    const featureTitleStyle = { fontFamily: sans, fontWeight: 800, fontSize: 20, margin: '8px 0 6px' };
+    const featureDescStyle = { fontFamily: sans, fontSize: 14, lineHeight: 1.42, color: c.muted };
+
+    const features = FEATURES_DATA.map((f, i) => {
+      const segStart = i * 0.2, segEnd = segStart + 0.45;
+      const local = this.clamp((featuresP - segStart) / (segEnd - segStart), 0, 1);
+      const enter = reducedMotion ? 1 : this.clamp(local * 1.3, 0, 1);
+      const row = Math.floor(i / 2), col = i % 2;
+      return {
+        label: f.label, title: f.title, desc: f.desc,
+        style: {
+          padding: 24,
+          borderRight: (!isMobile && col === 0) ? `1px solid ${c.line}` : 'none',
+          borderBottom: (row === 0) ? `1px solid ${c.line}` : 'none',
+          opacity: enter,
+          transform: `scale(${this.lerp(0.92, 1, enter)})`,
+          clipPath: reducedMotion ? 'none' : `inset(${(1 - enter) * 40}% 0 0 0)`,
+        },
+      };
+    });
+
+    // PLATFORMS
+    const platformsWrapStyle = { position: 'relative', height: runway(160), background: c.bg, borderTop: `1px solid ${c.line}` };
+    const platformsStickyStyle = { ...pinStyle(platformsPinMode), boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 16, overflow: 'hidden', padding: '48px 0' };
+    const platformsRowStyle = { boxSizing: 'border-box', maxWidth: 900, margin: '0 auto', width: '100%', padding: isMobile ? '0 24px' : '0 32px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', gap: isMobile ? 32 : 24 };
+    const platformIconStyle = { fontSize: 34, color: '#1A1C1C' };
+    const platformNameStyle = { fontFamily: mono, fontSize: 14, marginTop: 14, color: c.text };
+
+    const platforms = PLATFORMS_DATA.map((p, i) => {
+      const segStart = i * 0.22, segEnd = segStart + 0.5;
+      const local = this.clamp((platformsP - segStart) / (segEnd - segStart), 0, 1);
+      const enter = reducedMotion ? 1 : this.clamp(local * 1.3, 0, 1);
+      const dir = i % 2 === 0 ? -1 : 1;
+      return {
+        name: p.name, glyph: p.glyph,
+        style: {
+          flex: 1, textAlign: 'center', padding: '32px 20px', border: `1px solid ${c.line}`,
+          opacity: enter, transform: `translateX(${(1 - enter) * dir * 40 * mo}px)`,
+        },
+      };
+    });
+
+    // CTA BAND
+    const ctaFade = reducedMotion ? 1 : (ctaIn ? 1 : 0);
+    const ctaBandStyle = { background: c.text, color: c.bg, borderTop: `1px solid ${c.line}`, padding: '100px 32px' };
+    const ctaInnerStyle = { maxWidth: 720, margin: '0 auto', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, opacity: ctaFade, transform: `translateY(${reducedMotion ? 0 : (ctaIn ? 0 : 24)}px)`, transition: 'opacity 0.7s ease, transform 0.7s ease' };
+    const ctaEyebrowStyle = { fontFamily: mono, fontSize: 13, letterSpacing: '0.08em', color: amber, fontWeight: 700 };
+    const ctaTitleStyle = { fontFamily: sans, fontWeight: 800, fontSize: isMobile ? 30 : 42, letterSpacing: '-0.02em', margin: 0 };
+    const ctaButtonStyle = { fontFamily: mono, fontWeight: 700, fontSize: 14, background: ON_PRIMARY, color: '#1A1C1C', borderRadius: 9999, padding: '18px 32px', textDecoration: 'none', marginTop: 8, boxShadow: `4px 4px 0 ${amber}` };
+    const ctaSubStyle = { fontFamily: mono, fontSize: 12, color: c.bg, opacity: 0.6 };
+
+    // FOOTER
+    const footerStyle = { background: c.bg, borderTop: `1px solid ${c.line}`, padding: '40px 32px' };
+    const footerInnerStyle = { maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', gap: 20 };
+    const footerLogoStyle = { fontFamily: mono, fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 };
+    const footerLinksStyle = { display: 'flex', gap: 20 };
+    const footerLinkStyle = { fontFamily: mono, fontSize: 12, color: c.muted, textDecoration: 'none' };
+    const footerTagStyle = { fontFamily: mono, fontSize: 12, color: c.muted };
+
+    return {
+      rootStyle, navStyle, navInnerStyle, navLogoStyle, navLogoDotStyle, navLinksStyle, navLinkStyle, navRightStyle,
+      navCtaStyle,
+      heroWrapRef: this.heroWrapRef, heroWrapStyle, heroStickyStyle, heroInnerStyle, heroLeftStyle, eyebrowStyle, headlineStyle, subheadStyle,
+      heroCtaRowStyle, primaryCtaStyle, secondaryCtaStyle, heroRightStyle, demoShellStyle, demoTitleBarStyle, trafficLightsStyle,
+      dotRedStyle, dotYellowStyle, dotGreenStyle, demoPlatformLabelStyle, demoBodyStyle, demoContactRowStyle, demoAvatarStyle, demoContactNameStyle,
+      msg1Style, msg2Style, msg3Style, bubbleInStyle, bubbleOutStyle, markSaturdayStyle, markSevenStyle, planStripStyle,
+      eventCardStyle, eventCardIconStyle, eventCardTextWrapStyle, eventCardTitleStyle, eventCardMetaStyle, eventCardAddStyle, scrollHintStyle,
+      howWrapRef: this.howWrapRef, howWrapStyle, howStickyStyle, howHeaderStyle, sectionEyebrowStyle, sectionTitleStyle, howTrackStyle, howSteps,
+      stepTitleStyle, stepDescStyle,
+      featuresWrapRef: this.featuresWrapRef, featuresWrapStyle, featuresStickyStyle, featuresGridStyle, features, featureLabelStyle, featureTitleStyle, featureDescStyle,
+      platformsWrapRef: this.platformsWrapRef, platformsWrapStyle, platformsStickyStyle, platformsRowStyle, platforms, platformIconStyle, platformNameStyle,
+      ctaRef: this.ctaRef, ctaBandStyle, ctaInnerStyle, ctaEyebrowStyle, ctaTitleStyle, ctaButtonStyle, ctaSubStyle,
+      footerStyle, footerInnerStyle, footerLogoStyle, footerLinksStyle, footerLinkStyle, footerTagStyle,
+    };
+  }
+}
+
+</script>
+</body>
+</html>
