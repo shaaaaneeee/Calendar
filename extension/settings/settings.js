@@ -115,13 +115,10 @@ function renderAll() {
   renderSensitivity();
   renderTriggerTags();
   renderPriorityNameTags();
-  renderPriorityContactPicker();
   renderActivityWordTags();
-  renderMeetingWordTags();
   renderItemTags();
   renderPlaceWordTags();
   renderSummaryTable();
-  renderContacts();
   renderNotifications();
 }
 
@@ -149,48 +146,8 @@ function renderPriorityNameTags() {
     container.appendChild(makeTag(name, () => {
       settings.priorityNames = settings.priorityNames.filter(n => n !== name);
       renderPriorityNameTags();
-      renderPriorityContactPicker();
       renderSummaryTable();
     }));
-  }
-}
-
-function renderPriorityContactPicker() {
-  const container = el('priority-contact-picker');
-  container.innerHTML = '';
-
-  if (!settings.contacts || settings.contacts.length === 0) {
-    const empty = document.createElement('p');
-    empty.className = 'text-sm text-on-muted';
-    empty.textContent = 'Add contacts in the Contacts tab to boost them here without retyping.';
-    container.appendChild(empty);
-    return;
-  }
-
-  for (const contact of settings.contacts) {
-    const boosted = (settings.priorityNames || [])
-      .some(n => n.toLowerCase() === contact.name.toLowerCase());
-    const label = document.createElement('label');
-    label.className = 'flex items-center gap-2 cursor-pointer text-sm py-0.5';
-    label.innerHTML = `
-      <input type="checkbox" class="priority-contact-cb w-3 h-3 cursor-pointer" ${boosted ? 'checked' : ''} />
-      <span>${contact.name}</span>
-    `;
-    label.querySelector('input').addEventListener('change', (e) => {
-      settings.priorityNames = settings.priorityNames || [];
-      if (e.target.checked) {
-        if (!settings.priorityNames.some(n => n.toLowerCase() === contact.name.toLowerCase())) {
-          settings.priorityNames.push(contact.name);
-        }
-      } else {
-        settings.priorityNames = settings.priorityNames.filter(
-          n => n.toLowerCase() !== contact.name.toLowerCase()
-        );
-      }
-      renderPriorityNameTags();
-      renderSummaryTable();
-    });
-    container.appendChild(label);
   }
 }
 
@@ -201,18 +158,6 @@ function renderActivityWordTags() {
     container.appendChild(makeTag(word, () => {
       settings.activityWords = settings.activityWords.filter(w => w !== word);
       renderActivityWordTags();
-      renderSummaryTable();
-    }));
-  }
-}
-
-function renderMeetingWordTags() {
-  const container = el('meeting-word-tags');
-  container.innerHTML = '';
-  for (const word of (settings.meetingWords || [])) {
-    container.appendChild(makeTag(word, () => {
-      settings.meetingWords = settings.meetingWords.filter(w => w !== word);
-      renderMeetingWordTags();
       renderSummaryTable();
     }));
   }
@@ -243,17 +188,22 @@ function renderPlaceWordTags() {
 }
 
 function renderSummaryTable() {
+  // Word-list edits (trigger/name/activity/item/place add-or-remove) all funnel
+  // through here as their last step, so persist to local storage immediately
+  // instead of requiring "Save Settings" — content-script.js reads storage
+  // fresh on every message, so an unsaved word is silently invisible to detection.
+  LocalStorage.saveSettings(settings);
+
   const tbody = el('summary-tbody');
   if (!tbody) return;
   tbody.innerHTML = '';
 
   const rows = [
     { label: 'Trigger Words',  key: 'triggerWords',  score: '+2 each' },
-    { label: 'Custom Names',   key: 'priorityNames', score: 'Title & Notes' },
-    { label: 'Activity Words', key: 'activityWords', score: '+2 each' },
-    { label: 'Meeting Words',  key: 'meetingWords',  score: '+2 each' },
+    { label: 'Custom Names',   key: 'priorityNames', score: 'People field' },
+    { label: 'Activity Words', key: 'activityWords', score: '+2 each, title' },
     { label: 'Items',          key: 'items',         score: '+1 each' },
-    { label: 'Place Words',    key: 'placeWords',    score: '+1 each' },
+    { label: 'Place Words',    key: 'placeWords',    score: '+1 each, location' },
   ];
 
   for (const { label, key, score } of rows) {
@@ -291,23 +241,6 @@ function renderSummaryTable() {
   }
 }
 
-function renderContacts() {
-  const container = el('contact-list');
-  container.innerHTML = '';
-
-  if (settings.contacts.length === 0) {
-    const empty = document.createElement('p');
-    empty.style.cssText = 'font-size:12px;color:var(--text-muted);';
-    empty.textContent   = 'No contacts added yet.';
-    container.appendChild(empty);
-    return;
-  }
-
-  for (const contact of settings.contacts) {
-    container.appendChild(makeContactItem(contact));
-  }
-}
-
 function renderNotifications() {
   el('toggle-notifications').checked = settings.notificationsEnabled;
 }
@@ -333,44 +266,6 @@ function makeTag(text, onRemove) {
   tag.appendChild(btn);
   return tag;
 }
-
-function makeContactItem(contact) {
-  const item = document.createElement('div');
-  item.className = 'contact-item';
-
-  const info = document.createElement('div');
-  info.className = 'contact-item-info';
-
-  const name = document.createElement('div');
-  name.className   = 'contact-item-name';
-  name.textContent = contact.name;
-
-  info.appendChild(name);
-
-  if (contact.nicknames?.length > 0) {
-    const nicks = document.createElement('div');
-    nicks.className   = 'contact-item-nicknames';
-    nicks.textContent = `aka: ${contact.nicknames.join(', ')}`;
-    info.appendChild(nicks);
-  }
-
-  const removeBtn = document.createElement('button');
-  removeBtn.className   = 'contact-remove';
-  removeBtn.textContent = '✕';
-  removeBtn.addEventListener('click', () => {
-    settings.contacts = settings.contacts.filter(c => c.name !== contact.name);
-    settings.priorityNames = (settings.priorityNames || []).filter(n => n !== contact.name);
-    renderContacts();
-    renderPriorityNameTags();
-    renderPriorityContactPicker();
-    renderSummaryTable();
-  });
-
-  item.appendChild(info);
-  item.appendChild(removeBtn);
-  return item;
-}
-
 
 // ─────────────────────────────────────────────
 // ACCOUNT
@@ -406,11 +301,6 @@ function wireControls() {
     if (e.key === 'Enter') addActivityWord();
   });
 
-  el('btn-add-meeting-word').addEventListener('click', addMeetingWord);
-  el('meeting-word-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addMeetingWord();
-  });
-
   el('btn-add-item').addEventListener('click', addItem);
   el('item-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addItem();
@@ -419,14 +309,6 @@ function wireControls() {
   el('btn-add-place-word').addEventListener('click', addPlaceWord);
   el('place-word-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addPlaceWord();
-  });
-
-  el('btn-add-contact').addEventListener('click', addContact);
-  el('contact-name-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addContact();
-  });
-  el('contact-nickname-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addContact();
   });
 
   el('toggle-notifications').addEventListener('change', () => {
@@ -476,18 +358,6 @@ function addActivityWord() {
   renderSummaryTable();
 }
 
-function addMeetingWord() {
-  const input = el('meeting-word-input');
-  const word  = input.value.trim().toLowerCase();
-  if (!word) return;
-  settings.meetingWords = settings.meetingWords || [];
-  if (settings.meetingWords.includes(word)) { input.value = ''; return; }
-  settings.meetingWords.push(word);
-  input.value = '';
-  renderMeetingWordTags();
-  renderSummaryTable();
-}
-
 function addItem() {
   const input = el('item-input');
   const word  = input.value.trim().toLowerCase();
@@ -511,31 +381,6 @@ function addPlaceWord() {
   renderPlaceWordTags();
   renderSummaryTable();
 }
-
-function addContact() {
-  const nameInput = el('contact-name-input');
-  const nickInput = el('contact-nickname-input');
-  const name      = nameInput.value.trim();
-  if (!name) return;
-
-  const nicknames = nickInput.value
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean);
-
-  if (settings.contacts.find(c => c.name.toLowerCase() === name.toLowerCase())) {
-    nameInput.value = '';
-    nickInput.value = '';
-    return;
-  }
-
-  settings.contacts.push({ name, nicknames });
-  nameInput.value = '';
-  nickInput.value = '';
-  renderContacts();
-  renderPriorityContactPicker();
-}
-
 
 // ─────────────────────────────────────────────
 // NAVIGATION

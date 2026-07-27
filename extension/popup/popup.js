@@ -171,6 +171,7 @@ function renderEvent(event, totalPending) {
   el("field-title").value            = event.title || "";
   el("field-date").value             = event.date || "";
   el("field-time").value             = event.time || "";
+  el("field-location").value         = event.location || "";
   el("field-participants").value     = event.participants?.join(", ") || "";
   el("field-notes").value            = event.notes || "";
 
@@ -192,6 +193,7 @@ async function handleYes() {
     title:        el("field-title").value.trim(),
     date:         el("field-date").value,
     time:         el("field-time").value,
+    location:     el("field-location").value.trim(),
     participants: el("field-participants").value
       .split(",")
       .map((value) => value.trim())

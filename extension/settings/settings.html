@@ -55,7 +55,6 @@
     <div class="flex border-b border-outline bg-surface shrink-0 overflow-x-auto">
       <a href="#" class="nav-item active tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase whitespace-nowrap" data-section="detection">Detection</a>
       <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="overview">Overview</a>
-      <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="contacts">Contacts</a>
       <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="groups">Groups</a>
       <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="notifications">Notifications</a>
       <a href="#" class="nav-item tab-item px-4 py-3 font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted whitespace-nowrap hover:text-on-surface hover:bg-surface-low" data-section="account">Account</a>
@@ -81,9 +80,9 @@
 
       <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
         <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Trigger Words</label>
-        <p class="text-sm text-on-muted -mt-1">Words that strongly suggest a plan. Each match adds +2 to detection score.</p>
+        <p class="text-sm text-on-muted -mt-1">Words that strongly suggest a plan — meetings, rehearsals, standups, anything specific to how you talk. Each match adds +2 to detection score.</p>
         <div class="flex gap-2">
-          <input type="text" id="trigger-word-input" placeholder="e.g. rehearsal, training..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+          <input type="text" id="trigger-word-input" placeholder="e.g. rehearsal, standup, training..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
           <button id="btn-add-trigger" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
         </div>
         <div id="trigger-tags" class="tag-list flex flex-wrap gap-1.5"></div>
@@ -91,11 +90,9 @@
 
       <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
         <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Names</label>
-        <p class="text-sm text-on-muted -mt-1">People or places you frequently make plans with. Boosted names are added to the event title and notes — does not affect detection score.</p>
-        <div id="priority-contact-picker" class="flex flex-col gap-1"></div>
-        <p class="text-sm text-on-muted -mt-1">Or add a name that isn't in your contacts (e.g. a place like "Studio B"):</p>
+        <p class="text-sm text-on-muted -mt-1">People PlanWise should recognise in conversations and add to the event's People field.</p>
         <div class="flex gap-2">
-          <input type="text" id="priority-name-input" placeholder="e.g. Coach Kim, Studio B..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+          <input type="text" id="priority-name-input" placeholder="e.g. Coach Kim, Esmond..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
           <button id="btn-add-priority-name" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
         </div>
         <div id="priority-name-tags" class="tag-list flex flex-wrap gap-1.5"></div>
@@ -103,22 +100,12 @@
 
       <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
         <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Activity Words</label>
-        <p class="text-sm text-on-muted -mt-1">Activities PlanWise doesn't recognise by default. Each match adds +2.</p>
+        <p class="text-sm text-on-muted -mt-1">Activities PlanWise doesn't recognise by default. Each match adds +2 and becomes the event title.</p>
         <div class="flex gap-2">
           <input type="text" id="activity-word-input" placeholder="e.g. rehearsal, sparring, recital..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
           <button id="btn-add-activity-word" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
         </div>
         <div id="activity-word-tags" class="tag-list flex flex-wrap gap-1.5"></div>
-      </div>
-
-      <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
-        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Meeting Words</label>
-        <p class="text-sm text-on-muted -mt-1">Work or group meeting types specific to your context. Each match adds +2.</p>
-        <div class="flex gap-2">
-          <input type="text" id="meeting-word-input" placeholder="e.g. standup, retrospective, sync..." class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
-          <button id="btn-add-meeting-word" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px]">Add</button>
-        </div>
-        <div id="meeting-word-tags" class="tag-list flex flex-wrap gap-1.5"></div>
       </div>
 
       <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
@@ -159,18 +146,6 @@
           <tbody id="summary-tbody"></tbody>
         </table>
       </div>
-    </section>
-
-    <!-- Contacts -->
-    <section id="section-contacts" class="section hidden p-8 max-w-2xl">
-      <h1 class="text-xl font-bold tracking-tight mb-1">Contacts</h1>
-      <p class="text-sm text-on-muted mb-6">People PlanWise should recognise in conversations.</p>
-      <div class="flex gap-2 mb-4">
-        <input type="text" id="contact-name-input"     placeholder="Name (e.g. Alex)"              class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
-        <input type="text" id="contact-nickname-input" placeholder="Nicknames (comma separated)"    class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
-        <button id="btn-add-contact" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs">Add</button>
-      </div>
-      <div id="contact-list" class="contact-list flex flex-col gap-2"></div>
     </section>
 
     <section id="section-groups" class="section hidden p-8 max-w-2xl">

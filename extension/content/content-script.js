@@ -129,7 +129,6 @@ async function analyzeText(text, platform, fromSend = false) {
   if (result.triggered) {
     const event = window.PlanWiseExtractor.extractEvent(
       text,
-      settings.contacts,
       settings.priorityNames || [],
       settings.activityWords || [],
       settings.placeWords || []
@@ -161,6 +160,16 @@ async function waitForSendButton(selector, buffer) {
   }
 }
 
+/**
+ * Message bubbles' textContent includes the trailing timestamp/read-receipt
+ * text baked into the DOM (e.g. "...spare batt10:29" or "...spare batt 10:29 ✓✓").
+ * Strip it so detection doesn't treat it as part of the message body.
+ */
+function stripTrailingTimestamp(text) {
+  if (!text) return text;
+  return text.replace(/\s*\d{1,2}:\d{2}\s*(?:am|pm)?\s*[✓✔]*\s*$/i, "").trim();
+}
+
 function watchIncomingMessages(platform, buffer) {
   let lastIncomingCheck = 0;
 
@@ -179,7 +188,7 @@ function watchIncomingMessages(platform, buffer) {
           : node.querySelector(platform.messageSelector);
 
         if (messageElement) {
-          const text = messageElement.textContent?.trim();
+          const text = stripTrailingTimestamp(messageElement.textContent?.trim());
           if (text) {
             lastIncomingCheck = now;
             buffer.push(text);

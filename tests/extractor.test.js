@@ -158,13 +158,25 @@ describe('Title extraction', () => {
   });
 
   test('custom activity word becomes the title', () => {
-    const r = extractEvent("operation starts tomorrow at 7", [], [], ['operation']);
+    const r = extractEvent("operation starts tomorrow at 7", [], ['operation']);
     expect(r.title).toBe('Operation');
   });
 
   test('hardcoded activity label takes priority over custom activity word', () => {
-    const r = extractEvent("dinner tomorrow", [], [], ['dinner']);
+    const r = extractEvent("dinner tomorrow", [], ['dinner']);
     expect(r.title).toBe('Dinner');
+  });
+
+  test('title never includes a name, even with a matched priority name', () => {
+    const r = extractEvent("Gym with Weile & Kaden", ['Weile', 'Kaden']);
+    expect(r.title).toBe('Gym');
+    expect(r.participants).toEqual(expect.arrayContaining(['Weile', 'Kaden']));
+  });
+
+  test('title stays bare when the plan is just a name and an activity', () => {
+    const r = extractEvent("tomorrow i need you to meet Esmond at the office at 9pm", ['Esmond']);
+    expect(r.title).toBe('Meeting');
+    expect(r.participants).toContain('Esmond');
   });
 
 });
@@ -203,16 +215,9 @@ describe('Participant extraction', () => {
     expect(r.participants).not.toContain('January');
   });
 
-  test('matches contact by name', () => {
-    const contacts = [{ name: 'Alex', nicknames: [] }];
-    const r = extractEvent("dinner with Alex tomorrow", contacts);
+  test('matches a custom priority name', () => {
+    const r = extractEvent("dinner with Alex tomorrow", ['Alex']);
     expect(r.participants).toContain('Alex');
-  });
-
-  test('matches contact by nickname', () => {
-    const contacts = [{ name: 'Alexander', nicknames: ['Alex', 'Al'] }];
-    const r = extractEvent("coffee with Alex tomorrow", contacts);
-    expect(r.participants).toContain('Alexander');
   });
 
   test('no names — returns empty array', () => {
@@ -237,6 +242,19 @@ describe('Participant extraction', () => {
     expect(r.participants).toContain('James');
   });
 
+  test('finds a lowercase name right after a cue word', () => {
+    const r = extractEvent("meet esmond and Weile at the office tomorrow at 9pm");
+    expect(r.participants).toContain('Esmond');
+    expect(r.participants).toContain('Weile');
+  });
+
+  test('chains a comma-separated name list after a cue word', () => {
+    const r = extractEvent("gym with Weile, Kaden and John tomorrow");
+    expect(r.participants).toContain('Weile');
+    expect(r.participants).toContain('Kaden');
+    expect(r.participants).toContain('John');
+  });
+
 });
 
 
@@ -259,7 +277,7 @@ describe('Location extraction', () => {
   });
 
   test('custom place word from settings', () => {
-    const r = extractEvent("let's meet at the lake tomorrow", [], [], [], ['lake']);
+    const r = extractEvent("let's meet at the lake tomorrow", [], [], ['lake']);
     expect(r.location).toBe('Lake');
   });
 

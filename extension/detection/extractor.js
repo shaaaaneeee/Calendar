@@ -304,80 +304,66 @@ function extractTitle(text, activityWords = []) {
   return "Plan";
 }
 
-function extractParticipants(text, contacts = []) {
+// Common words that sit right after a relational cue but are never names
+// ("with you", "meet up", "call me later").
+const PARTICIPANT_IGNORE = new Set([
+  "i", "me", "the", "a", "an", "and", "but", "or", "so", "we", "you", "he", "she",
+  "they", "it", "this", "that", "my", "your", "his", "her", "our", "their", "its",
+  "us", "him", "them",
+  "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+  "tomorrow", "tonight", "today",
+  "january", "february", "march", "april", "may", "june",
+  "july", "august", "september", "october", "november", "december",
+  "up", "down", "out", "over", "later", "soon", "again", "back",
+  "some", "everyone", "everybody", "all", "both",
+]);
+
+// Words that start a note-trigger phrase — instructions, not names.
+const NOTE_TRIGGER_WORDS = new Set(["bring", "remember", "forget", "please", "can", "could"]);
+
+// A cue word almost always has a name right after it ("with Alex", "meet Esmond",
+// "call Sarah"). Anchoring on the cue - rather than requiring the following word to
+// be capitalized - is what lets this survive casually-typed lowercase names.
+const RELATIONAL_CUES = new Set([
+  "with", "and", "meet", "join", "call", "text", "from", "invite", "&"
+]);
+
+// Words that continue a name list ("with Weile, Kaden and John").
+const LIST_JOINERS = new Set(["and", "&"]);
+
+function isParticipantCandidate(word) {
+  if (!word || word.length < 2) return false;
+  const lower = word.toLowerCase();
+  return !PARTICIPANT_IGNORE.has(lower) && !NOTE_TRIGGER_WORDS.has(lower) && !RELATIONAL_CUES.has(lower);
+}
+
+function normalizeParticipantName(word) {
+  return /^[a-z]+$/.test(word) ? titleCase(word) : word;
+}
+
+function extractParticipants(text) {
   const found = new Set();
+  const rawWords = text.split(/\s+/);
+  const cleanWords = rawWords.map(w => w.replace(/[^a-zA-Z']/g, ""));
 
-  for (const contact of contacts) {
-    const namesToCheck = [contact.name, ...(contact.nicknames || [])];
-    for (const name of namesToCheck) {
-      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) {
-        found.add(contact.name);
+  for (let i = 0; i < cleanWords.length; i += 1) {
+    if (!RELATIONAL_CUES.has(cleanWords[i].toLowerCase())) continue;
+
+    let j = i + 1;
+    while (j < cleanWords.length) {
+      const candidate = cleanWords[j];
+      if (!isParticipantCandidate(candidate)) break;
+      found.add(normalizeParticipantName(candidate));
+
+      const nextIsJoiner = j + 1 < cleanWords.length && LIST_JOINERS.has(cleanWords[j + 1].toLowerCase());
+      const trailingComma = /,\s*$/.test(rawWords[j]);
+
+      if (nextIsJoiner) {
+        j += 2;
+      } else if (trailingComma) {
+        j += 1;
+      } else {
         break;
-      }
-    }
-  }
-
-  if (found.size === 0) {
-    const IGNORE = new Set([
-      // Articles, conjunctions, pronouns
-      "I", "The", "A", "An", "And", "But", "Or", "So", "We", "You", "He", "She", "They", "It",
-      "This", "That", "My", "Your", "His", "Her", "Our", "Their", "Its",
-      // Days / months / time words
-      "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
-      "Tomorrow", "Tonight", "Today",
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
-      // Common action/instruction verbs that appear capitalized mid-sentence
-      "Bring", "Get", "Take", "Have", "Come", "Go", "See", "Tell", "Ask",
-      "Let", "Make", "Try", "Need", "Keep", "Put", "Give", "Call", "Meet",
-      "Be", "Know", "Think", "Feel", "Want", "Like", "Look", "Use", "Find",
-      "Work", "Remember", "Forget", "Please", "Wait", "Check", "Watch", "Send",
-      "Pick", "Drop", "Grab", "Buy", "Book", "Plan", "Stay", "Head", "Show",
-      // Common qualifiers / fillers
-      "Just", "Sure", "Still", "Also", "Even", "Only", "Really", "Actually",
-      "Probably", "Definitely", "Maybe", "Ok", "Okay", "Yeah", "Yes", "No",
-      "Oh", "Ah", "Hey", "Hi", "Lol", "Haha", "Sorry", "Thanks", "Thank",
-      "Cool", "Nice", "Good", "Great", "Wow", "Right", "Alright",
-      // Prepositions / connectors
-      "About", "After", "Before", "Around", "With", "For", "From", "By",
-      "Up", "Down", "Out", "On", "Off", "Away", "Near", "Into", "Over",
-      // Contractions (cleaned forms)
-      "Dont", "Wont", "Cant", "Didnt", "Doesnt", "Isnt", "Wasnt", "Havent",
-      "Wouldnt", "Couldnt", "Shouldnt", "Im", "Ill", "Ive", "Id", "Were", "Thats",
-      // Misc common chat words not likely to be names
-      "Its", "Hes", "Shes", "Theyre", "Weve", "Youre", "Youll", "Well"
-    ]);
-
-    // Also exclude any word that starts a note-trigger phrase — those are instructions, not names.
-    const NOTE_TRIGGER_WORDS = new Set(["Bring", "Remember", "Forget", "Please", "Can", "Could"]);
-
-    // Require a relational cue word nearby — otherwise any capitalized proper
-    // noun (brand, place, sentence-medial word) gets hallucinated as a name.
-    const RELATIONAL_CUES = new Set([
-      "with", "and", "meet", "join", "call", "text", "from", "invite", "&"
-    ]);
-    const CUE_WINDOW = 2; // look up to 2 words back for a cue
-
-    const words = text.split(/\s+/);
-    for (let i = 1; i < words.length; i += 1) {
-      const word = words[i].replace(/[^a-zA-Z]/g, "");
-      if (
-        word.length > 1 &&
-        word[0] === word[0].toUpperCase() &&
-        word[0] !== word[0].toLowerCase() &&
-        !IGNORE.has(word) &&
-        !NOTE_TRIGGER_WORDS.has(word)
-      ) {
-        let hasCue = false;
-        for (let j = Math.max(0, i - CUE_WINDOW); j < i; j += 1) {
-          const prevWord = words[j].replace(/[^a-zA-Z&]/g, "").toLowerCase();
-          if (RELATIONAL_CUES.has(prevWord)) {
-            hasCue = true;
-            break;
-          }
-        }
-        if (hasCue) found.add(word);
       }
     }
   }
@@ -463,30 +449,22 @@ function extractMatchedPriorityNames(text, priorityNames) {
   return found;
 }
 
-function extractEvent(text, contacts = [], priorityNames = [], activityWords = [], placeWords = []) {
+function extractEvent(text, priorityNames = [], activityWords = [], placeWords = []) {
   const { date, time, rawDate, rawTime } = extractDateTime(text);
-  const baseTitle = extractTitle(text, activityWords);
+  const title = extractTitle(text, activityWords);
   const location = extractLocation(text, placeWords);
   const matchedNames = extractMatchedPriorityNames(text, priorityNames);
+  const participants = [...new Set([...extractParticipants(text), ...matchedNames])];
 
-  const title = matchedNames.length > 0
-    ? (baseTitle === "Plan" ? matchedNames[0] : `${baseTitle} with ${matchedNames[0]}`)
-    : baseTitle;
-
-  const nameNote = matchedNames.length > 0
-    ? `With: ${matchedNames.join(", ")}`
-    : "";
-
-  const patternNotes = extractNotes(text);
-  const mergedNotes = [nameNote, patternNotes].filter(Boolean).join("; ");
+  const notes = extractNotes(text);
 
   return {
     title,
     date,
     time,
     location,
-    participants: extractParticipants(text, contacts),
-    notes: mergedNotes,
+    participants,
+    notes,
     rawDate,
     rawTime,
     sourceText: text.trim()

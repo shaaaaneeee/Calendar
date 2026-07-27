@@ -29,6 +29,25 @@ const INTENT = {
   AMBIGUOUS: "AMBIGUOUS"
 };
 
+const DAY_MONTH_NAMES = new Set([
+  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+  "January", "February", "March", "April", "May", "June", "July", "August",
+  "September", "October", "November", "December", "Tomorrow", "Tonight", "Today"
+]);
+
+// Cheap heuristic: does the text likely name a specific person? Used only to
+// gate the structural-confirm fallback below, not full participant extraction.
+function hasLikelyPersonName(text) {
+  const words = text.split(/\s+/);
+  for (let i = 1; i < words.length; i += 1) {
+    const word = words[i].replace(/[^a-zA-Z]/g, "");
+    if (word.length > 1 && word[0] === word[0].toUpperCase() && !DAY_MONTH_NAMES.has(word)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function isWordAlreadyScored(word, matches) {
   const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const wordPattern = new RegExp(`\\b${escaped}\\b`, "i");
@@ -140,7 +159,7 @@ function scoreText(text, customRules = {}) {
   };
 }
 
-function classifyIntent(text) {
+function classifyIntent(text, structuralMatches = {}) {
   const hardBlocks = window.HARD_BLOCK_RULES || [];
   const cancellationPhrases = window.CANCELLATION_PHRASES || [];
   const creationPhrases = window.CREATION_PHRASES || [];
@@ -186,6 +205,24 @@ function classifyIntent(text) {
     return { intent: INTENT.CONFIRM, reason: "default_confirm_on_tie", votes };
   }
 
+  // No literal creation/cancellation phrase matched. Rather than dropping a
+  // message that already carries strong structural plan signals (an action
+  // word, a time anchor, and a named place or person), treat that combination
+  // as an implicit creation signal. Phrase lists can never enumerate every way
+  // of saying "let's meet" - structural signals (what/when/where-or-who) are
+  // the reliable core. Action+temporal alone isn't enough: habitual statements
+  // ("I watch movies every Sunday") and vague asks ("call me tonight") also
+  // carry those two but aren't actually plans.
+  if (
+    votes.reject === 0 &&
+    structuralMatches.action &&
+    structuralMatches.temporal &&
+    (structuralMatches.location || hasLikelyPersonName(text))
+  ) {
+    votes.reasons.push("structural: action+temporal+(location|person)");
+    return { intent: INTENT.CONFIRM, reason: "structural_confirm", votes };
+  }
+
   return { intent: INTENT.AMBIGUOUS, reason: "no_intent_signal", votes };
 }
 
@@ -204,7 +241,7 @@ function analyzeIntent(text, customRules = {}) {
     };
   }
 
-  const intentResult = classifyIntent(text);
+  const intentResult = classifyIntent(text, scoreResult.matches);
 
   let intent = intentResult.intent;
   let reason = intentResult.reason;
