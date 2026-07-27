@@ -42,8 +42,10 @@ describe('Clear plan creation — should trigger', () => {
 
   test('gym plan with time', () => {
     const r = detect("gym tomorrow at 6");
-    // No creation phrase — ambiguous statement, correctly dropped
-    expect(r.triggered).toBe(false);
+    // No literal creation phrase, but action+temporal+location (gym is both) is
+    // strong enough structural evidence on its own — see "structural_confirm".
+    expect(r.triggered).toBe(true);
+    expect(r.reason).toBe('structural_confirm');
   });
 
   test('coffee plan with confirmation', () => {
@@ -340,6 +342,29 @@ describe('False positives — should NOT trigger after hardening', () => {
   test('sometime soon — vague future', () => {
     const r = detect("we should catch up sometime soon");
     expect(r.triggered).toBe(false);
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// STRUCTURAL CONFIRM — action+temporal+(location|person) with no literal
+// creation phrase must still actually trigger, not just report intent CONFIRM
+// ─────────────────────────────────────────────
+
+describe('Structural confirm — no literal creation phrase, but a real plan', () => {
+
+  test('"meet X at Y at Z" triggers even without a creation phrase', () => {
+    const r = detect("tomorrow please meet Esmond and Seth at the office at 10am, we are going out for ops bring the m3e drone");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+    expect(r.reason).toBe('structural_confirm');
+  });
+
+  test('action+temporal+location with a name, no creation phrase', () => {
+    const r = detect("tomorrow i need you to meet Esmond at the office at 9pm for night ops");
+    expect(r.triggered).toBe(true);
+    expect(r.reason).toBe('structural_confirm');
   });
 
 });

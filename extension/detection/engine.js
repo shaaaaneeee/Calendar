@@ -219,6 +219,7 @@ function classifyIntent(text, structuralMatches = {}) {
     structuralMatches.temporal &&
     (structuralMatches.location || hasLikelyPersonName(text))
   ) {
+    votes.confirm += 1;
     votes.reasons.push("structural: action+temporal+(location|person)");
     return { intent: INTENT.CONFIRM, reason: "structural_confirm", votes };
   }
