@@ -213,11 +213,26 @@ function classifyIntent(text, structuralMatches = {}) {
   // the reliable core. Action+temporal alone isn't enough: habitual statements
   // ("I watch movies every Sunday") and vague asks ("call me tonight") also
   // carry those two but aren't actually plans.
+  //
+  // scoreText() stores custom-word matches under their own keys (custom,
+  // activityWords, meetingWords, placeWords) rather than folding them into
+  // the built-in "action"/"location" keys, so a custom Trigger/Activity word
+  // is just as valid a "what" signal as a built-in one, and a custom Place
+  // Word is just as valid a "where" signal as a built-in location - both are
+  // treated as equivalent here rather than only recognizing the hardcoded set.
+  const hasActionSignal = Boolean(
+    structuralMatches.action ||
+    structuralMatches.custom ||
+    structuralMatches.activityWords ||
+    structuralMatches.meetingWords
+  );
+  const hasLocationSignal = Boolean(structuralMatches.location || structuralMatches.placeWords);
+
   if (
     votes.reject === 0 &&
-    structuralMatches.action &&
+    hasActionSignal &&
     structuralMatches.temporal &&
-    (structuralMatches.location || hasLikelyPersonName(text))
+    (hasLocationSignal || hasLikelyPersonName(text))
   ) {
     votes.confirm += 1;
     votes.reasons.push("structural: action+temporal+(location|person)");

@@ -367,6 +367,24 @@ describe('Structural confirm — no literal creation phrase, but a real plan', (
     expect(r.reason).toBe('structural_confirm');
   });
 
+  test('custom trigger word + custom place word count as action/location signals', () => {
+    // Neither "rehearsal" nor "Studio B" exist in the built-in rules, so this
+    // only scores via customRules.triggerWords/placeWords. Without treating
+    // those as action/location equivalents, this used to pass the score gate
+    // and still get dropped as no_intent_signal_drop.
+    const customRules = { triggerWords: ['rehearsal'], placeWords: ['studio b'] };
+    const r = analyzeIntent('rehearsal tomorrow at Studio B', customRules);
+    expect(r.triggered).toBe(true);
+    expect(r.reason).toBe('structural_confirm');
+  });
+
+  test('custom activity word alone (no location) still needs a person or location', () => {
+    const customRules = { activityWords: ['rehearsal'] };
+    const r = analyzeIntent('rehearsal tomorrow', customRules);
+    expect(r.triggered).toBe(false);
+    expect(r.reason).toBe('no_intent_signal_drop');
+  });
+
 });
 
 
