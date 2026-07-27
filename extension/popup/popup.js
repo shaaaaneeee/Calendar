@@ -24,35 +24,43 @@ let overrideOverlap = false;
 // ─────────────────────────────────────────────
 
 async function init() {
+  let user;
   try {
     // Race the session check against a timeout.
     // If Supabase hangs, we fall through to the auth screen rather
     // than showing "Loading..." forever.
-    const user = await Promise.race([
+    user = await Promise.race([
       Auth.getUser(),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error("timeout")), 8000)
       )
     ]);
-
-    hide("loading");
-
-    if (!user) {
-      showAuthScreen();
-      return;
-    }
-
-    await showQueue();
   } catch (err) {
     hide("loading");
-
     if (err.message === "timeout") {
       console.warn("[PlanWise] Session check timed out - showing auth screen.");
     } else {
       console.warn("[PlanWise] Session check failed:", err.message);
     }
-
     showAuthScreen();
+    return;
+  }
+
+  hide("loading");
+
+  if (!user) {
+    showAuthScreen();
+    return;
+  }
+
+  // Deliberately NOT in the auth try/catch above - a bug here (bad storage
+  // read, a missing DOM field, etc.) must not get misreported as "not signed
+  // in". Surface it as an empty queue and log it instead of bouncing to auth.
+  try {
+    await showQueue();
+  } catch (err) {
+    console.error("[PlanWise] Failed to render pending queue:", err);
+    show("empty");
   }
 }
 

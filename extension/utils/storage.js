@@ -4,6 +4,13 @@
  * Wraps chrome.storage.local with promise-based helpers.
  */
 
+// chrome.storage.local enforces an ~8KB per-item quota. pendingEvents lives
+// under a single key, so an unbounded queue can eventually make the write
+// throw - previously that failure was swallowed silently (see the catch
+// below), so a plan could be "detected" but never actually persisted with no
+// visible sign why. Capping it keeps that from ever happening again.
+const MAX_PENDING_EVENTS = 25;
+
 const Storage = {
   async enqueuePendingEvent(event) {
     try {
@@ -16,9 +23,11 @@ const Storage = {
         status: "pending"
       };
       existing.push(entry);
+      while (existing.length > MAX_PENDING_EVENTS) existing.shift();
       await chrome.storage.local.set({ pendingEvents: existing });
       return entry;
     } catch (err) {
+      console.error("[PlanWise] enqueuePendingEvent failed:", err);
       return null;
     }
   },
