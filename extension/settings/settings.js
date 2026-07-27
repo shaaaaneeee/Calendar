@@ -59,6 +59,17 @@ async function init() {
 // LOAD / SAVE
 // ─────────────────────────────────────────────
 
+// Word-list fields where "whichever side has data" should win, rather than
+// remote unconditionally overwriting local. Word lists autosave to local
+// storage the instant you add one but only reach Supabase when you click
+// "Save Settings" - if you add a word and reopen Settings before saving,
+// wholesale-replacing `settings` with the (older/emptier) remote copy would
+// silently wipe what you just typed.
+const MERGE_AS_UNION_IF_LOCAL_EMPTY = [
+  'triggerWords', 'contacts', 'priorityNames', 'activityWords',
+  'meetingWords', 'items', 'placeWords'
+];
+
 async function loadSettings() {
   const local = await LocalStorage.getSettings();
   settings = { ...settings, ...local };
@@ -67,7 +78,7 @@ async function loadSettings() {
     if (currentUser) {
       const remote = await SupaSettings.load();
       if (remote) {
-        settings = {
+        const remoteMapped = {
           triggerWords:         remote.trigger_words         || [],
           contacts:             remote.contacts              || [],
           sensitivity:          remote.sensitivity           ?? 2,
@@ -78,6 +89,14 @@ async function loadSettings() {
           items:                remote.items                 || [],
           placeWords:           remote.place_words           || [],
         };
+
+        for (const key of MERGE_AS_UNION_IF_LOCAL_EMPTY) {
+          if (!settings[key]?.length && remoteMapped[key].length) {
+            settings[key] = remoteMapped[key];
+          }
+        }
+        settings.sensitivity          = remoteMapped.sensitivity;
+        settings.notificationsEnabled = remoteMapped.notificationsEnabled;
       }
     }
   } catch (err) {
