@@ -131,7 +131,8 @@ async function analyzeText(text, platform, fromSend = false) {
       text,
       settings.priorityNames || [],
       settings.activityWords || [],
-      settings.placeWords || []
+      settings.placeWords || [],
+      settings.triggerWords || []
     );
     const pending = await window.PlanWiseStorage.enqueuePendingEvent(event);
     if (!pending) return;

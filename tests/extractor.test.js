@@ -162,9 +162,16 @@ describe('Title extraction', () => {
     expect(r.title).toBe('Operation');
   });
 
-  test('hardcoded activity label takes priority over custom activity word', () => {
-    const r = extractEvent("dinner tomorrow", [], ['dinner']);
-    expect(r.title).toBe('Dinner');
+  test('custom activity word takes priority over a hardcoded activity label', () => {
+    // "coffee" would hardcode-match to "Coffee", but "standup" is a custom
+    // activity word present in the same message - custom should win.
+    const r = extractEvent("coffee standup tomorrow", [], ['standup']);
+    expect(r.title).toBe('Standup');
+  });
+
+  test('custom trigger word becomes the title when nothing else matches', () => {
+    const r = extractEvent("night ops tomorrow at 9pm", [], [], [], ['ops']);
+    expect(r.title).toBe('Ops');
   });
 
   test('title never includes a name, even with a matched priority name', () => {
@@ -255,6 +262,16 @@ describe('Participant extraction', () => {
     expect(r.participants).toContain('John');
   });
 
+  test('does not hallucinate a name from a bare "and" mid-sentence', () => {
+    // "and" only continues a list a real cue (with/meet/call/etc.) already
+    // started - it must not act as its own anchor, or unrelated words after
+    // any "and" (like an item in a packing list) get misread as a person.
+    const r = extractEvent("tomorrow please meet Seth at the office at 7:50am, remember to pack the m3e drone and spare batt");
+    expect(r.participants).toContain('Seth');
+    expect(r.participants).not.toContain('Spare');
+    expect(r.participants).not.toContain('Batt');
+  });
+
 });
 
 
@@ -279,6 +296,14 @@ describe('Location extraction', () => {
   test('custom place word from settings', () => {
     const r = extractEvent("let's meet at the lake tomorrow", [], [], ['lake']);
     expect(r.location).toBe('Lake');
+  });
+
+  test('custom place word takes priority over a hardcoded location label', () => {
+    // "office" would hardcode-match to "Office", but "marina south pier" is a
+    // custom place word present in the same message - custom should win.
+    const r = extractEvent("meet at marina south pier not the office", [], [], ['marina south pier']);
+    // titleCase() only capitalizes the first character of the whole string.
+    expect(r.location).toBe('Marina south pier');
   });
 
 });

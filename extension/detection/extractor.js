@@ -286,18 +286,21 @@ function titleCase(word) {
   return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
 }
 
-function extractTitle(text, activityWords = []) {
-  for (const { pattern, label } of ACTIVITY_LABELS) {
-    if (pattern.test(text)) {
-      return label;
-    }
-  }
-
-  for (const word of activityWords) {
+function extractTitle(text, activityWords = [], triggerWords = []) {
+  // Custom words win over the built-in label set - if you've specifically
+  // taught PlanWise that "ops" or "rehearsal" is your activity word, that's a
+  // more precise signal than the generic hardcoded list.
+  for (const word of [...activityWords, ...triggerWords]) {
     if (!word || typeof word !== "string") continue;
     const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) {
       return titleCase(word);
+    }
+  }
+
+  for (const { pattern, label } of ACTIVITY_LABELS) {
+    if (pattern.test(text)) {
+      return label;
     }
   }
 
@@ -324,17 +327,24 @@ const NOTE_TRIGGER_WORDS = new Set(["bring", "remember", "forget", "please", "ca
 // A cue word almost always has a name right after it ("with Alex", "meet Esmond",
 // "call Sarah"). Anchoring on the cue - rather than requiring the following word to
 // be capitalized - is what lets this survive casually-typed lowercase names.
-const RELATIONAL_CUES = new Set([
-  "with", "and", "meet", "join", "call", "text", "from", "invite", "&"
+// "and"/"&" are NOT anchors on their own - they only continue a list that one of
+// these already started. Treating bare "and" as its own anchor means literally
+// any "and X" in the message (e.g. "the drone and spare batt") gets scanned for
+// a name, which is how unrelated words like "spare" got misdetected as people.
+const ANCHOR_CUES = new Set([
+  "with", "meet", "join", "call", "text", "from", "invite", "&"
 ]);
 
-// Words that continue a name list ("with Weile, Kaden and John").
+// Words that continue a name list once an anchor above has already started one
+// ("with Weile, Kaden and John").
 const LIST_JOINERS = new Set(["and", "&"]);
+
+const ALL_CUE_WORDS = new Set([...ANCHOR_CUES, ...LIST_JOINERS]);
 
 function isParticipantCandidate(word) {
   if (!word || word.length < 2) return false;
   const lower = word.toLowerCase();
-  return !PARTICIPANT_IGNORE.has(lower) && !NOTE_TRIGGER_WORDS.has(lower) && !RELATIONAL_CUES.has(lower);
+  return !PARTICIPANT_IGNORE.has(lower) && !NOTE_TRIGGER_WORDS.has(lower) && !ALL_CUE_WORDS.has(lower);
 }
 
 function normalizeParticipantName(word) {
@@ -347,7 +357,7 @@ function extractParticipants(text) {
   const cleanWords = rawWords.map(w => w.replace(/[^a-zA-Z']/g, ""));
 
   for (let i = 0; i < cleanWords.length; i += 1) {
-    if (!RELATIONAL_CUES.has(cleanWords[i].toLowerCase())) continue;
+    if (!ANCHOR_CUES.has(cleanWords[i].toLowerCase())) continue;
 
     let j = i + 1;
     while (j < cleanWords.length) {
@@ -421,17 +431,20 @@ const PLACE_LABELS = [
 ];
 
 function extractLocation(text, placeWords = []) {
-  for (const { pattern, label } of PLACE_LABELS) {
-    if (pattern.test(text)) {
-      return label;
-    }
-  }
-
+  // Custom place words win over the built-in label set, same rationale as
+  // extractTitle: a word you specifically taught PlanWise is more precise
+  // than the generic hardcoded list.
   for (const word of placeWords) {
     if (!word || typeof word !== "string") continue;
     const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) {
       return titleCase(word);
+    }
+  }
+
+  for (const { pattern, label } of PLACE_LABELS) {
+    if (pattern.test(text)) {
+      return label;
     }
   }
 
@@ -449,9 +462,9 @@ function extractMatchedPriorityNames(text, priorityNames) {
   return found;
 }
 
-function extractEvent(text, priorityNames = [], activityWords = [], placeWords = []) {
+function extractEvent(text, priorityNames = [], activityWords = [], placeWords = [], triggerWords = []) {
   const { date, time, rawDate, rawTime } = extractDateTime(text);
-  const title = extractTitle(text, activityWords);
+  const title = extractTitle(text, activityWords, triggerWords);
   const location = extractLocation(text, placeWords);
   const matchedNames = extractMatchedPriorityNames(text, priorityNames);
   const participants = [...new Set([...extractParticipants(text), ...matchedNames])];
