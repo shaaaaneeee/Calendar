@@ -1,11 +1,10 @@
 {
   "manifest_version": 3,
   "name": "PlanWise",
-  "version": "0.1.0",
-  "description": "Automatically detect plans in conversations and add them to your calendar.",
+  "version": "0.2.0",
+  "description": "Detects plans in messages you type and adds them to your calendar. Only reads your own compose box - never other people's messages.",
   "permissions": [
     "storage",
-    "alarms",
     "notifications",
     "tabs"
   ],
@@ -15,6 +14,12 @@
     "https://mail.google.com/*",
     "https://*.supabase.co/*"
   ],
+  "icons": {
+    "16": "assets/icon-16.png",
+    "32": "assets/icon-32.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  },
   "background": {
     "service_worker": "background/service-worker.js",
     "type": "module"

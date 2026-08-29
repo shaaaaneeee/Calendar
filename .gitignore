@@ -5,3 +5,4 @@ test-screenshots/
 .env.local
 *.log
 landing/dist/
+.playwright-mcp/
