@@ -1,23 +1,28 @@
 # TODO
 
-## Custom SMTP for auth emails
+## Custom SMTP for auth emails — done for now
 
-**Why:** Supabase's default (non-custom-SMTP) email sender has a strict
-rate limit on the shared/free infrastructure — we've been hitting it
-during signup testing. It also sends from a generic
-`noreply@mail.app.supabase.io` address, not a PlanWise one.
+**Resolved:** switched to Gmail SMTP relay (`smtp.gmail.com:587`, App
+Password) sending as `planwisecalendar@gmail.com` — Resend was ruled out
+for now since it requires a verified domain we don't have yet, and there's
+no sandbox fallback for sending to arbitrary recipients. Confirmed working
+end-to-end: signup -> email arrives -> confirm link -> lands on
+`confirmed.html`. Site URL is also correctly set to
+`https://planwise-eosin.vercel.app/confirmed.html`.
 
-**Decisions already made:**
-- Provider: **Resend** (generous free tier, official Supabase integration guide, easiest setup of the options considered).
-- No custom domain yet — start with Resend's default shared sending address (`onboarding@resend.dev`-style); upgrading to a real `noreply@planwise.app`-style address later is just adding DNS records, no config rework needed.
+**Known limitation, not urgent:** emails land in spam for new recipients.
+Root cause is the branded-name/personal-gmail-address mismatch
+(`"PlanWise" <planwisecalendar@gmail.com>`) plus zero sender reputation -
+not something fixable without a real domain. **Revisit before real users
+depend on this**: buy a domain, verify it in Resend, switch SMTP sender to
+`noreply@planwise.app`. Not needed for solo testing.
 
-**Steps, in order:**
-1. ~~Link the `landing/` site to Vercel via GitHub~~ **Done** — live at https://planwise-eosin.vercel.app/, linked to `shaaaaneeee/Calendar` with Root Directory `landing`, auto-deploys on every push to `main`.
-2. Update **Supabase Dashboard → Authentication → URL Configuration → Site URL** to `https://planwise-eosin.vercel.app` (currently wrong — defaults to `http://localhost:3000`, which is why the "Confirm your mail" email link led nowhere useful). Add `https://planwise-eosin.vercel.app/*` to Redirect URLs too if there's a separate allow-list field. **Not yet confirmed done — verify in dashboard.**
-3. Sign up for Resend, get an API key.
-4. In Supabase Dashboard → Authentication → Settings → SMTP Settings: enable custom SMTP, plug in Resend's SMTP host/port/credentials.
-5. Send a test signup through `extension/signup/signup.html` and confirm the email arrives from Resend, not Supabase's default sender.
-6. (Later, once a domain exists) verify the domain in Resend (SPF/DKIM DNS records) and switch the sending address to something like `noreply@planwise.app`.
+**Small free win still on the table:** the email Subject line in
+Supabase Dashboard -> Authentication -> Email Templates -> Confirm signup
+is still the default "Confirm Your Signup" (generic, phishing-pattern-y) -
+only the HTML body got updated to the branded template, not the subject.
+Changing it to "Confirm your PlanWise account" is free and may help
+marginally with spam placement.
 
 ## Password requirements
 

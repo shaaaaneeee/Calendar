@@ -68,8 +68,8 @@ Also needed: a 440×280 (or 1400×560) promotional tile image — not yet made.
 
 ## Outstanding before this is actually submission-ready
 
-- [ ] Fill in the `[DATE]` and `[CONTACT EMAIL]` placeholders in `landing/public/privacy.html`.
-- [ ] Deploy the landing site so `privacy.html` resolves at a real public URL (needed — the Store requires a live privacy policy link, not a repo file).
+- [x] Fill in the `[DATE]` and `[CONTACT EMAIL]` placeholders in `landing/public/privacy.html` — done, contact is `planwisecalendar@gmail.com`.
+- [x] Deploy the landing site so `privacy.html` resolves at a real public URL — live at https://planwise-eosin.vercel.app/privacy.html, auto-deploys on push to `main`.
 - [ ] Capture the 5 screenshots above from a real signed-in session.
 - [ ] Make the 440×280 promo tile.
 - [ ] Chrome Web Store developer account (one-time $5 registration fee) if not already set up.
