@@ -19,7 +19,7 @@ Dashboard's Privacy tab.
 |---|---|
 | `storage` | Stores the local detection log, pending (unconfirmed) detected plans, and user settings on-device via `chrome.storage.local`. |
 | `notifications` | Shows a system notification when an event is shared to a group the user belongs to (real-time collaboration feature). |
-| `tabs` | Opens the calendar dashboard, settings, tasks, and training pages in a new tab from the popup (`chrome.tabs.create`). |
+| `tabs` | Opens the calendar dashboard, settings, and tasks pages in a new tab from the popup (`chrome.tabs.create`). |
 | `host_permissions: web.whatsapp.com` | Reads the text in your own WhatsApp Web compose box as you type, to detect plans before you send them. Never reads messages from other people. |
 | `host_permissions: web.telegram.org` | Same, for Telegram Web's compose box. |
 | `host_permissions: mail.google.com` | Same, for Gmail's compose window — reads only what you're actively drafting, the same scope Grammarly's Gmail integration uses. |

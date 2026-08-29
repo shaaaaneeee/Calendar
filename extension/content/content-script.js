@@ -116,12 +116,6 @@ async function analyzeText(text, platform, fromSend = false) {
     result.votes
   );
 
-  try {
-    await window.DetectionLogger.log(text, result);
-  } catch (err) {
-    console.warn('[PlanWise] Logger failed:', err.message);
-  }
-
   if (result.triggered) {
     const event = window.PlanWiseExtractor.extractEvent(
       text,

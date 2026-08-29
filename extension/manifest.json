@@ -33,7 +33,6 @@
       ],
       "js": [
         "utils/storage.js",
-        "utils/logger.js",
         "detection/rules.js",
         "detection/engine.js",
         "detection/extractor.js",

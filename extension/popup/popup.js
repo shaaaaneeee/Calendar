@@ -119,8 +119,6 @@ async function showQueue() {
   show("footer-sep");
   show("btn-settings");
   show("footer-sep-settings");
-  show("footer-sep-training");
-  show("btn-training");
 
   const pending = await PlanStorage.getPendingEvents();
 
@@ -305,10 +303,6 @@ el("btn-settings").addEventListener("click", (e) => {
 el("btn-tasks").addEventListener("click", (e) => {
   e.preventDefault();
   chrome.tabs.create({ url: chrome.runtime.getURL("tasks/tasks.html") });
-});
-el("btn-training").addEventListener("click", (e) => {
-  e.preventDefault();
-  chrome.tabs.create({ url: chrome.runtime.getURL("training/training.html") });
 });
 
 init();

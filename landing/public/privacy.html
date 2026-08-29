@@ -174,7 +174,7 @@
   <h2>What we store, and where</h2>
 
   <h3>On your device only</h3>
-  <p>Every message you type that PlanWise analyzes — whether or not it turns out to look like a plan — is logged locally in your browser's extension storage (<code>chrome.storage.local</code>), capped at the most recent 500 entries. This local log powers the optional Training page, where you can review and label past detections to help improve accuracy, or export/clear it at any time. <strong>This log never leaves your device</strong> — it is not transmitted to us or anyone else.</p>
+  <p>Each message you type is analyzed in memory as you type it and is not retained afterward unless it looks like a plan. When PlanWise thinks it's found one, the extracted details are held in your browser's local extension storage (<code>chrome.storage.local</code>) only until you review it in the popup and either confirm or dismiss it. <strong>None of this ever leaves your device</strong> at this stage — it is not transmitted to us or anyone else.</p>
 
   <h3>Synced to our servers — only when you confirm a plan</h3>
   <p>When PlanWise detects a plan, it shows you a card with the extracted details (title, date, time, location, people, notes) before anything is saved anywhere. Nothing is sent to our servers at this stage. Only if you click <strong>Add</strong> do we store that specific event — including the original message text for that one plan — in our database (hosted on Supabase), tied to your account.</p>
@@ -198,7 +198,7 @@
 
   <h2>Your controls</h2>
   <ul>
-    <li><strong>Local detection log:</strong> review, export, or clear it anytime from the Training page.</li>
+    <li><strong>Pending detections:</strong> confirm or dismiss them from the extension popup — dismissed ones are discarded immediately.</li>
     <li><strong>Confirmed events:</strong> edit or delete them from the calendar dashboard.</li>
     <li><strong>Account data:</strong> to request deletion of your account and associated data, contact us at planwisecalendar@gmail.com.</li>
   </ul>

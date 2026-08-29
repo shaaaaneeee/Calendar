@@ -27,11 +27,10 @@ Once a plan is confirmed:
 
 - **Auto-detection** — scoring engine reads what you type for dates, times, people, activities, and intent signals across WhatsApp Web, Telegram Web, and Gmail. It only ever reads your own compose box — never other people's messages.
 - **Calendar dashboard** — month and week views; task deadlines appear as a separate "Deadlines" category (orange)
-- **Groups & sharing** — create groups, invite members by email, share events to groups; members see shared events on their own calendar with colour-coded pills
+- **Groups & sharing** — create groups, invite members by username, share events to groups; members see shared events on their own calendar with colour-coded pills
 - **RSVP & comments** — Going / Maybe / Can't with live comment threads (Supabase Realtime)
 - **Kanban task board** — Todo / In Progress / Done columns with priority, deadline, and notes; deadlines sync to the calendar automatically
 - **Notification feed** — in-app bell with real-time push notifications when events are shared to your groups
-- **Training mode** — label detected snippets to improve the engine over time; export training data as JSON
 - **Configurable** — sensitivity slider, custom trigger words, activity words, place words, custom names, and plan items — all saved to Supabase per user
 
 ## Supported platforms
@@ -93,7 +92,6 @@ extension/
   dashboard/        full-page calendar app
   tasks/            kanban board
   settings/         detection, groups, notifications, account
-  training/         training data labeller + JSON export
   utils/            shared storage helpers + Supabase client
   vendor/           bundled dependencies (supabase.js, tailwind, anime)
 
@@ -136,6 +134,6 @@ Run in order in the Supabase SQL Editor:
 Open the **Settings** page from the dashboard sidebar to configure:
 
 - **Detection** — sensitivity threshold, custom trigger words, activity words, place words, custom names, and plan items
-- **Groups** — create and manage social groups; invite members by email
+- **Groups** — create and manage social groups; invite members by username
 - **Notifications** — toggle badge notifications on/off
 - **Account** — sign out

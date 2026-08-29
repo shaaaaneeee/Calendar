@@ -868,9 +868,9 @@ test.describe('Detection Engine', () => {
   test.beforeAll(async () => {
     ({ ctx: ctx6, id: id6 } = await launchWithExtension());
     page = await ctx6.newPage();
-    // Load the detection engine scripts by navigating to training page
-    // (it loads logger.js which doesn't require auth)
-    await page.goto(extUrl(id6, 'training/training.html'));
+    // Load any extension page that doesn't require auth, just to get a
+    // real extension-origin document to inject the detection scripts into.
+    await page.goto(extUrl(id6, 'signup/signup.html'));
     await page.waitForTimeout(1000);
     // Inject the detection scripts manually
     await page.addScriptTag({ path: path.resolve(__dirname, '../extension/detection/rules.js') });
@@ -980,139 +980,6 @@ test.describe('Detection Engine', () => {
   test('DET-15: "are you free this saturday?" triggers', async () => {
     const r = await analyze("are you free this saturday?");
     expect(r.triggered).toBe(true);
-  });
-});
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SUITE 7 — TRAINING PAGE
-// ─────────────────────────────────────────────────────────────────────────────
-
-test.describe('Training Page', () => {
-  let ctx7, id7;
-
-  test.beforeAll(async () => {
-    ({ ctx: ctx7, id: id7 } = await launchWithExtension());
-  });
-  test.afterAll(async () => { await ctx7.close(); });
-
-  test('TRAIN-01: training page loads with empty state', async () => {
-    const page = await ctx7.newPage();
-    await page.goto(extUrl(id7, 'training/training.html'));
-    await page.waitForTimeout(1500);
-    await expect(page.locator('#empty-state')).toBeVisible();
-    await expect(page.locator('#stat-total')).toHaveText('0');
-    await page.screenshot({ path: 'test-screenshots/TRAIN-01-empty.png' });
-    await page.close();
-  });
-
-  test('TRAIN-02: stats show correct counts with injected log', async () => {
-    const page = await ctx7.newPage();
-    await page.goto(extUrl(id7, 'training/training.html'));
-    await page.evaluate(() => {
-      chrome.storage.local.set({ detectionLog: [
-        { id: 'l1', text: 'meet tomorrow', triggered: true, score: 4, intent: 'CONFIRM', reason: 'test', label: 'correct', loggedAt: Date.now() },
-        { id: 'l2', text: 'just chatting', triggered: false, score: 1, intent: 'AMBIGUOUS', reason: 'test', label: 'false_positive', loggedAt: Date.now() },
-        { id: 'l3', text: 'dinner tonight', triggered: true, score: 3, intent: 'CONFIRM', reason: 'test', label: null, loggedAt: Date.now() },
-      ]});
-    });
-    await page.reload();
-    await page.waitForTimeout(1500);
-    expect(await page.textContent('#stat-total')).toBe('3');
-    expect(await page.textContent('#stat-correct')).toBe('1');
-    expect(await page.textContent('#stat-fp')).toBe('1');
-    await page.close();
-  });
-
-  test('TRAIN-03: filter by "triggered" shows only triggered entries', async () => {
-    const page = await ctx7.newPage();
-    await page.goto(extUrl(id7, 'training/training.html'));
-    await page.evaluate(() => {
-      chrome.storage.local.set({ detectionLog: [
-        { id: 'f1', text: 'triggered text', triggered: true, score: 4, intent: 'CONFIRM', reason: 'r', label: null, loggedAt: Date.now() },
-        { id: 'f2', text: 'not triggered', triggered: false, score: 1, intent: 'AMBIGUOUS', reason: 'r', label: null, loggedAt: Date.now() },
-      ]});
-    });
-    await page.reload();
-    await page.waitForTimeout(1500);
-    await page.click('[data-filter="triggered"]');
-    await page.waitForTimeout(300);
-    const entries = await page.locator('.entry').count();
-    expect(entries).toBe(1);
-    await page.close();
-  });
-
-  test('TRAIN-04: search filters entries by text', async () => {
-    const page = await ctx7.newPage();
-    await page.goto(extUrl(id7, 'training/training.html'));
-    await page.evaluate(() => {
-      chrome.storage.local.set({ detectionLog: [
-        { id: 's1', text: 'coffee meeting tomorrow', triggered: true, score: 4, intent: 'CONFIRM', reason: 'r', label: null, loggedAt: Date.now() },
-        { id: 's2', text: 'random conversation', triggered: false, score: 0, intent: 'AMBIGUOUS', reason: 'r', label: null, loggedAt: Date.now() },
-      ]});
-    });
-    await page.reload();
-    await page.waitForTimeout(1500);
-    await page.fill('#search', 'coffee');
-    await page.waitForTimeout(300);
-    const entries = await page.locator('.entry').count();
-    expect(entries).toBe(1);
-    await page.close();
-  });
-
-  test('TRAIN-05: export button triggers file download', async () => {
-    const page = await ctx7.newPage();
-    await page.goto(extUrl(id7, 'training/training.html'));
-    await page.evaluate(() => {
-      chrome.storage.local.set({ detectionLog: [
-        { id: 'e1', text: 'exportable', triggered: true, score: 4, intent: 'CONFIRM', reason: 'r', label: 'correct', loggedAt: Date.now() },
-      ]});
-    });
-    await page.reload();
-    await page.waitForTimeout(1500);
-    const [download] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('#btn-export'),
-    ]);
-    expect(download.suggestedFilename()).toMatch(/planwise-training-\d+\.json/);
-    await page.close();
-  });
-
-  test('TRAIN-06: clear log shows confirmation and empties list', async () => {
-    const page = await ctx7.newPage();
-    await page.goto(extUrl(id7, 'training/training.html'));
-    await page.evaluate(() => {
-      chrome.storage.local.set({ detectionLog: [
-        { id: 'c1', text: 'test', triggered: true, score: 4, intent: 'CONFIRM', reason: 'r', label: null, loggedAt: Date.now() },
-      ]});
-    });
-    await page.reload();
-    await page.waitForTimeout(1500);
-    // Accept the confirm dialog
-    page.once('dialog', d => d.accept());
-    await page.click('#btn-clear');
-    await page.waitForTimeout(500);
-    await expect(page.locator('#empty-state')).toBeVisible();
-    expect(await page.textContent('#stat-total')).toBe('0');
-    await page.close();
-  });
-
-  test('TRAIN-07: XSS in logged text is HTML-escaped via escapeHtml', async () => {
-    const page = await ctx7.newPage();
-    const xss = [];
-    page.on('pageerror', e => xss.push(e.message));
-    await page.goto(extUrl(id7, 'training/training.html'));
-    await page.evaluate(() => {
-      chrome.storage.local.set({ detectionLog: [
-        { id: 'x1', text: '<script>window.__xss=1</script>', triggered: true, score: 4, intent: 'CONFIRM', reason: 'r', label: null, loggedAt: Date.now() },
-      ]});
-    });
-    await page.reload();
-    await page.waitForTimeout(1500);
-    const xssExecuted = await page.evaluate(() => window.__xss);
-    expect(xssExecuted).toBeFalsy();
-    expect(xss).toHaveLength(0);
-    await page.close();
   });
 });
 
@@ -1284,12 +1151,6 @@ test.describe('Console Error Audit', () => {
   test('CONS-03: tasks.html — no page errors on load', async () => {
     const { errors } = await collectErrors(ctx10, id10, 'tasks/tasks.html', 1500);
     console.log('tasks errors:', errors);
-    expect(errors).toHaveLength(0);
-  });
-
-  test('CONS-04: training.html — no page errors on load', async () => {
-    const { errors } = await collectErrors(ctx10, id10, 'training/training.html', 1500);
-    console.log('training errors:', errors);
     expect(errors).toHaveLength(0);
   });
 });
