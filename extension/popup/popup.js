@@ -75,11 +75,11 @@ function showAuthScreen() {
 }
 
 async function handleSignIn() {
-  const email    = el("auth-email").value.trim();
-  const password = el("auth-password").value;
+  const identifier = el("auth-email").value.trim();
+  const password   = el("auth-password").value;
 
-  if (!email || !password) {
-    setAuthError("Please enter your email and password.");
+  if (!identifier || !password) {
+    setAuthError("Please enter your email/username and password.");
     return;
   }
 
@@ -88,7 +88,7 @@ async function handleSignIn() {
     el("btn-signin").textContent = "Signing in...";
     el("btn-signin").disabled    = true;
 
-    await Auth.signIn(email, password);
+    await Auth.signIn(identifier, password);
 
     hide("auth-screen");
     el("header-subtitle").textContent = "Plan detected";
@@ -101,49 +101,12 @@ async function handleSignIn() {
   }
 }
 
-async function handleSignUp() {
-  const email    = el("auth-email").value.trim();
-  const password = el("auth-password").value;
-
-  if (!email || !password) {
-    setAuthError("Please enter your email and password.");
-    return;
-  }
-
-  if (password.length < 6) {
-    setAuthError("Password must be at least 6 characters.");
-    return;
-  }
-
-  try {
-    setAuthError("");
-    el("btn-signup").textContent = "Signing up...";
-    el("btn-signup").disabled    = true;
-
-    await Auth.signUp(email, password);
-    setAuthSuccess("✓ Check your email to confirm your account, then sign in.");
-  } catch (err) {
-    setAuthError(err.message);
-  } finally {
-    el("btn-signup").textContent = "Sign up";
-    el("btn-signup").disabled    = false;
-  }
-}
-
 function setAuthError(msg) {
   const p = el("auth-error");
   p.classList.add("text-error");
   p.classList.remove("text-status-ok");
   p.textContent = msg;
   msg ? show("auth-error") : hide("auth-error");
-}
-
-function setAuthSuccess(msg) {
-  const p = el("auth-error");
-  p.classList.remove("text-error");
-  p.classList.add("text-status-ok");
-  p.textContent = msg;
-  show("auth-error");
 }
 
 
@@ -326,7 +289,9 @@ function hide(id) { el(id).classList.add("hidden"); }
 // ─────────────────────────────────────────────
 
 el("btn-signin").addEventListener("click", handleSignIn);
-el("btn-signup").addEventListener("click", handleSignUp);
+el("btn-signup").addEventListener("click", () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL("signup/signup.html") });
+});
 el("btn-yes").addEventListener("click", handleYes);
 el("btn-no").addEventListener("click", handleNo);
 el("btn-dashboard").addEventListener("click", (e) => {

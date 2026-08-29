@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PlanWise — Sign up</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="../vendor/suppress-cdn-warning.js"></script>
+  <script src="../vendor/tailwind.js"></script>
+  <script src="../vendor/tailwind-config.js"></script>
+</head>
+<body class="bg-background font-sans text-on-surface min-h-screen flex items-center justify-center">
+
+<div class="w-full max-w-sm px-6 py-10">
+  <div class="mb-8 text-center">
+    <div class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-on-muted leading-none mb-1">Plan</div>
+    <div class="font-sans text-2xl font-black uppercase tracking-tighter text-on-surface leading-none">Wise</div>
+  </div>
+
+  <h1 class="text-lg font-bold mb-1">Create your account</h1>
+  <p class="text-sm text-on-muted mb-6">Sign in with either your email or username afterward.</p>
+
+  <form id="signup-form" class="flex flex-col gap-3">
+    <div class="flex flex-col gap-1">
+      <label class="font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted">Username</label>
+      <input type="text" id="signup-username" autocomplete="username" placeholder="e.g. shanelee" class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+      <p id="username-status" class="text-xs font-mono min-h-[1em]"></p>
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted">Email</label>
+      <input type="email" id="signup-email" autocomplete="email" placeholder="you@example.com" class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted">Password</label>
+      <input type="password" id="signup-password" autocomplete="new-password" placeholder="At least 6 characters" class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+    </div>
+
+    <div class="flex flex-col gap-1">
+      <label class="font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted">Confirm password</label>
+      <input type="password" id="signup-confirm" autocomplete="new-password" class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+    </div>
+
+    <p id="signup-error" class="hidden text-xs font-mono text-error"></p>
+    <p id="signup-success" class="hidden text-xs font-mono text-status-ok"></p>
+
+    <button type="submit" id="btn-signup-submit" class="mt-2 py-2.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">
+      Create account
+    </button>
+  </form>
+
+  <p class="text-xs text-on-muted mt-5 text-center">
+    Already have an account? Close this tab and sign in from the PlanWise icon.
+  </p>
+</div>
+
+<script src="../vendor/supabase.js"></script>
+<script src="../utils/supabase-client.js"></script>
+<script src="signup.js"></script>
+</body>
+</html>

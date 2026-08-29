@@ -26,8 +26,8 @@
   <!-- Auth screen — shown when not logged in -->
   <div id="auth-screen" class="hidden px-4 py-5 flex-col gap-3">
     <p class="text-sm text-on-muted">Sign in to save your plans.</p>
-    <input type="email"    id="auth-email"    placeholder="Email"    autocomplete="email"            class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
-    <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+    <input type="text"     id="auth-email"    placeholder="Email or username" autocomplete="username"         class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+    <input type="password" id="auth-password" placeholder="Password"          autocomplete="current-password" class="border border-outline px-3 py-2 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
     <div class="flex gap-2">
       <button id="btn-signin" class="flex-1 py-2 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Sign in</button>
       <button id="btn-signup" class="flex-1 py-2 border border-outline font-mono text-[10px] font-bold tracking-wider uppercase text-on-muted hover:bg-surface-mid">Sign up</button>

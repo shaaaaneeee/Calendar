@@ -62,17 +62,65 @@ const SupabaseAuth = {
     return data.session;
   },
 
-  async signUp(email, password) {
-    const { data, error } = await db.auth.signUp({ email, password });
+  async signUp(email, password, username) {
+    const { data, error } = await db.auth.signUp({
+      email,
+      password,
+      options: { data: { username } },
+    });
     if (error) throw error;
     return data;
   },
 
-  async signIn(email, password) {
+  // Accepts either an email or a username. Emails are used as-is; usernames
+  // are resolved to their email server-side first, since profiles RLS only
+  // allows reads by authenticated users - a logged-out client can't look
+  // this up directly (see get_email_for_login in migration 012).
+  async signIn(identifier, password) {
+    let email = identifier;
+    if (!identifier.includes('@')) {
+      const { data: resolvedEmail, error: lookupError } = await db.rpc('get_email_for_login', {
+        identifier,
+      });
+      if (lookupError) throw lookupError;
+      if (!resolvedEmail) throw new Error('No account found for that username.');
+      email = resolvedEmail;
+    }
+
     const { data, error } = await db.auth.signInWithPassword({ email, password });
     if (error) throw error;
     await this._saveSession(data.session);
     return data;
+  },
+
+  async checkUsernameAvailable(username) {
+    const { data, error } = await db.rpc('is_username_available', { check_username: username });
+    if (error) throw error;
+    return data === true;
+  },
+
+  async setUsername(username) {
+    const session = await this._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
+    const { error } = await db
+      .from('profiles')
+      .update({ username })
+      .eq('id', session.user.id);
+    if (error) throw error;
+  },
+
+  async getUsername() {
+    const session = await this._restoreSession();
+    if (!session) return null;
+
+    const { data, error } = await db
+      .from('profiles')
+      .select('username')
+      .eq('id', session.user.id)
+      .single();
+    if (error) return null;
+    return data?.username || null;
   },
 
   async signOut() {

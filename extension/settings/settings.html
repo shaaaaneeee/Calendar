@@ -208,6 +208,15 @@
           <div class="font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted mb-1">Signed in as</div>
           <div id="account-email" class="text-sm font-medium">—</div>
         </div>
+        <div>
+          <div class="font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted mb-1">Username</div>
+          <div id="account-username-display" class="text-sm font-medium hidden">—</div>
+          <div id="account-username-form" class="flex gap-2 hidden">
+            <input type="text" id="account-username-input" placeholder="Choose a username" class="flex-1 border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
+            <button id="btn-set-username" class="px-4 py-1.5 bg-primary text-on-primary font-mono text-[10px] font-bold tracking-wider uppercase hover:shadow-neo-xs">Set</button>
+          </div>
+          <p id="account-username-status" class="text-xs font-mono mt-1 min-h-[1em]"></p>
+        </div>
         <button id="btn-signout" class="self-start px-4 py-2 border border-error text-error font-mono text-[10px] font-bold tracking-wider uppercase hover:bg-error hover:text-on-primary">Sign out</button>
       </div>
     </section>

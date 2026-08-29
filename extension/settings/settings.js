@@ -59,7 +59,7 @@ async function init() {
     wireNav();
     wireControls();
     wireGroupsSection();
-    loadAccountInfo();
+    await loadAccountInfo();
   } catch (err) {
     console.error("[PlanWise] Settings page failed to initialize:", err);
   }
@@ -310,8 +310,68 @@ function makeTag(text, onRemove) {
 // ACCOUNT
 // ─────────────────────────────────────────────
 
-function loadAccountInfo() {
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
+
+async function loadAccountInfo() {
   el('account-email').textContent = currentUser?.email || 'Not signed in';
+
+  let username = null;
+  try {
+    username = await Auth.getUsername();
+  } catch (err) {
+    console.warn('[PlanWise] Could not load username:', err.message);
+  }
+  renderUsername(username);
+}
+
+function renderUsername(username) {
+  const display = el('account-username-display');
+  const form    = el('account-username-form');
+
+  if (username) {
+    display.textContent = '@' + username;
+    display.classList.remove('hidden');
+    form.classList.add('hidden');
+  } else {
+    display.classList.add('hidden');
+    form.classList.remove('hidden');
+  }
+}
+
+async function handleSetUsername() {
+  const input  = el('account-username-input');
+  const status = el('account-username-status');
+  const username = input.value.trim();
+
+  if (!USERNAME_PATTERN.test(username)) {
+    status.textContent = '3-20 characters, letters/numbers/underscore only.';
+    status.className = 'text-xs font-mono mt-1 min-h-[1em] text-error';
+    return;
+  }
+
+  const btn = el('btn-set-username');
+  btn.disabled = true;
+  btn.textContent = 'Checking...';
+  status.textContent = '';
+
+  try {
+    const available = await Auth.checkUsernameAvailable(username);
+    if (!available) {
+      status.textContent = 'That username is already taken.';
+      status.className = 'text-xs font-mono mt-1 min-h-[1em] text-error';
+      return;
+    }
+
+    btn.textContent = 'Saving...';
+    await Auth.setUsername(username);
+    renderUsername(username);
+  } catch (err) {
+    status.textContent = err.message;
+    status.className = 'text-xs font-mono mt-1 min-h-[1em] text-error';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Set';
+  }
 }
 
 
@@ -354,6 +414,11 @@ function wireControls() {
   el('toggle-notifications').addEventListener('change', () => {
     settings.notificationsEnabled = el('toggle-notifications').checked;
     persistLocal();
+  });
+
+  el('btn-set-username').addEventListener('click', handleSetUsername);
+  el('account-username-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleSetUsername();
   });
 
   el('btn-signout').addEventListener('click', async () => {

@@ -79,7 +79,7 @@ const SUPABASE_ANON = 'your-anon-key';
 
 ### 4. Sign up
 
-Click the PlanWise icon in the toolbar, create an account, and open the dashboard.
+Click the PlanWise icon in the toolbar, then **Sign up** — this opens a dedicated signup page where you choose a username, email, and password. Afterward, sign in from the popup using either your email or your username.
 
 ## Project structure
 
@@ -88,7 +88,8 @@ extension/
   background/       service worker (badge, notifications)
   content/          DOM observer, text buffer, content script
   detection/        rules, scoring engine, event extractor
-  popup/            extension popup (auth + pending event queue)
+  popup/            extension popup (sign in + pending event queue)
+  signup/           dedicated signup page (username + email + password)
   dashboard/        full-page calendar app
   tasks/            kanban board
   settings/         detection, groups, notifications, account
