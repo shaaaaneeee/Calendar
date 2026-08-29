@@ -1,9 +1,10 @@
 ﻿/**
  * PlanWise Settings Page
  *
- * Loads settings from chrome.storage.local, lets the user edit them,
- * and saves back on "Save Settings".
- * Settings are also synced to Supabase if the user is logged in.
+ * Loads settings from chrome.storage.local, lets the user edit them.
+ * Every change autosaves to chrome.storage.local immediately (detection
+ * reads from there, so an unsaved word would otherwise be invisible), and
+ * separately debounces a sync to Supabase if the user is signed in.
  */
 
 const Auth         = window.SupabaseClient.auth;
@@ -114,19 +115,30 @@ async function loadSettings() {
   }
 }
 
-async function saveSettings() {
-  await LocalStorage.saveSettings(settings);
+// Any settings change should be saved locally immediately (detection reads
+// storage fresh on every message, so an unsaved change is invisible to it)
+// and separately synced to Supabase, debounced so rapid edits (e.g. typing
+// in the sensitivity slider, adding several words in a row) don't fire one
+// network request per keystroke.
+const SYNC_DEBOUNCE_MS = 1200;
+let syncTimer = null;
 
+function persistLocal() {
+  LocalStorage.saveSettings(settings);
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncToCloud, SYNC_DEBOUNCE_MS);
+}
+
+async function syncToCloud() {
   try {
     const user = await Auth.getUser();
-    if (user) {
-      await SupaSettings.save(settings);
-    }
+    if (!user) return;
+    await SupaSettings.save(settings);
+    showSaveStatus('✓ Synced');
   } catch (err) {
     console.warn('[PlanWise] Could not sync settings to Supabase:', err.message);
+    showSaveStatus('⚠ Cloud sync failed (saved locally)');
   }
-
-  showSaveStatus('✓ Saved');
 }
 
 function showSaveStatus(msg) {
@@ -217,11 +229,9 @@ function renderPlaceWordTags() {
 }
 
 function renderSummaryTable() {
-  // Word-list edits (trigger/name/activity/item/place add-or-remove) all funnel
-  // through here as their last step, so persist to local storage immediately
-  // instead of requiring "Save Settings" — content-script.js reads storage
-  // fresh on every message, so an unsaved word is silently invisible to detection.
-  LocalStorage.saveSettings(settings);
+  // Word-list edits (trigger/name/activity/item/place add-or-remove) all
+  // funnel through here as their last step, so persist here.
+  persistLocal();
 
   const tbody = el('summary-tbody');
   if (!tbody) return;
@@ -313,6 +323,7 @@ function wireControls() {
   el('sensitivity-slider').addEventListener('input', () => {
     settings.sensitivity = parseInt(el('sensitivity-slider').value);
     el('sensitivity-display').textContent = settings.sensitivity;
+    persistLocal();
   });
 
   el('btn-add-trigger').addEventListener('click', addTriggerWord);
@@ -342,9 +353,8 @@ function wireControls() {
 
   el('toggle-notifications').addEventListener('change', () => {
     settings.notificationsEnabled = el('toggle-notifications').checked;
+    persistLocal();
   });
-
-  el('btn-save').addEventListener('click', saveSettings);
 
   el('btn-signout').addEventListener('click', async () => {
     await Auth.signOut();
