@@ -104,10 +104,6 @@ function attachBuffer(inputElement, platform) {
     waitForSendButton(platform.sendButtonSelector, buffer);
   }
 
-  if (platform.messageSelector) {
-    watchIncomingMessages(platform, buffer);
-  }
-
   console.log("[PlanWise] Monitoring active on", platform.name);
 }
 
@@ -159,45 +155,4 @@ async function waitForSendButton(selector, buffer) {
   } catch (e) {
     // Not critical - Enter key still works.
   }
-}
-
-/**
- * Message bubbles' textContent includes the trailing timestamp/read-receipt
- * text baked into the DOM (e.g. "...spare batt10:29" or "...spare batt 10:29 ✓✓").
- * Strip it so detection doesn't treat it as part of the message body.
- */
-function stripTrailingTimestamp(text) {
-  if (!text) return text;
-  return text.replace(/\s*\d{1,2}:\d{2}\s*(?:am|pm)?\s*[✓✔]*\s*$/i, "").trim();
-}
-
-function watchIncomingMessages(platform, buffer) {
-  let lastIncomingCheck = 0;
-
-  const observer = new MutationObserver((mutations) => {
-    const now = Date.now();
-    if (now - lastIncomingCheck < 5000) return;
-
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        if (node.nodeType !== Node.ELEMENT_NODE) {
-          continue;
-        }
-
-        const messageElement = node.matches(platform.messageSelector)
-          ? node
-          : node.querySelector(platform.messageSelector);
-
-        if (messageElement) {
-          const text = stripTrailingTimestamp(messageElement.textContent?.trim());
-          if (text) {
-            lastIncomingCheck = now;
-            buffer.push(text);
-          }
-        }
-      }
-    }
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
 }

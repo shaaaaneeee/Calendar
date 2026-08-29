@@ -12,7 +12,6 @@ const PLATFORM_SELECTORS = {
       'div[role="textbox"][data-tab="10"]',
       '#main div[contenteditable="true"][role="textbox"]',
     ],
-    messageSelector: ".message-in .copyable-text, .message-out .copyable-text, [data-pre-plain-text]",
     sendButtonSelector: 'button[data-testid="send"], button[aria-label="Send"], span[data-icon="send"]',
     name: "WhatsApp"
   },
@@ -23,7 +22,6 @@ const PLATFORM_SELECTORS = {
       "div[data-peer-id] div[contenteditable=\"true\"]",
       "div.composer-wrapper div[contenteditable=\"true\"]",
     ],
-    messageSelector: ".text-content",
     sendButtonSelector: "button.send",
     name: "Telegram"
   },
@@ -32,7 +30,6 @@ const PLATFORM_SELECTORS = {
       'div[role="textbox"][aria-label="Message Body"]',
       'div.Am.aiL.editable',
     ],
-    messageSelector: null,
     sendButtonSelector: null,
     name: "Gmail"
   }

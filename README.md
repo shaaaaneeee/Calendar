@@ -1,10 +1,10 @@
 # PlanWise
 
-A Chrome extension that automatically detects plans in your messaging conversations, saves them to a shared social calendar, and lets you coordinate with groups — all without leaving your chat.
+A Chrome extension that automatically detects plans in the messages **you write**, saves them to a shared social calendar, and lets you coordinate with groups — all without leaving your chat.
 
 ## What it does
 
-PlanWise monitors WhatsApp Web, Telegram Web, and Gmail for messages that look like plans — dinner at 7pm, a coffee catch-up, a trip next weekend. When it spots one, a badge appears on the extension icon. Open the popup, review the extracted details, edit if needed, then hit **Add** to save it to your calendar.
+PlanWise reads the message you're composing in WhatsApp Web, Telegram Web, or Gmail — as you type it, before you hit send — and checks whether it looks like a plan: dinner at 7pm, a coffee catch-up, a trip next weekend. It never reads messages from other people; it only ever sees text in your own compose box, the same way a spell-checker would. When it spots a plan, a badge appears on the extension icon. Open the popup, review the extracted details, edit if needed, then hit **Add** to save it to your calendar.
 
 From the calendar dashboard you can share events with groups, RSVP, comment in real time, and see other members' shared events alongside your own — all colour-coded by group.
 
@@ -14,32 +14,35 @@ Detection runs as a two-stage pipeline:
 
 1. **Scoring** — the message is scored across five categories: temporal signals (`tomorrow`, `at 7pm`), action words (`dinner`, `gym`), social context (`we`, `together`), confirmation phrases (`sounds good`, `I'm in`), and negation. If the total score clears a threshold, the message is a candidate.
 
-2. **Intent classification** — hard-block phrases (`can't make it`, `something came up`) immediately reject the candidate. Otherwise, creation phrases and cancellation phrases vote, and the majority decides. A candidate with no rejection evidence defaults to confirmed.
+2. **Intent classification** — hard-block phrases (`can't make it`, `something came up`) immediately reject the candidate. Otherwise, creation phrases and cancellation phrases vote, and the majority decides. If neither votes, a structural fallback checks for action + temporal + (location or a named person) and confirms on that combination alone — a candidate with genuinely no signal either way is dropped as ambiguous rather than defaulting to confirmed.
 
 Once a plan is confirmed:
-- The **title** is extracted from the activity keyword in the message (Dinner, Coffee, Movie, etc.)
+- The **title** comes from a custom Trigger/Activity Word if one matches (these take priority over the built-in list), otherwise from the built-in activity keyword in the message (Dinner, Coffee, Movie, etc.)
 - **Date and time** are parsed from natural language (`tomorrow`, `next Friday`, `at 8pm`)
-- **People** are matched against your saved contacts first; uncased proper nouns are used as a fallback
+- **Location** comes from a custom Place Word if one matches (also takes priority over the built-in list), otherwise a built-in location keyword (gym, office, pier, etc.)
+- **People** are matched against your saved Custom Names first, then a cue-word heuristic (`with Alex`, `meet Sarah and James`) that works even with casually-typed lowercase names
 - **Notes** are extracted in a second pass, scanning for reminder phrases like `bring`, `don't forget`, and `remember to`
 
 ## Features
 
-- **Auto-detection** — scoring engine reads conversation text for dates, times, people, activities, and intent signals across WhatsApp Web, Telegram Web, and Gmail
+- **Auto-detection** — scoring engine reads what you type for dates, times, people, activities, and intent signals across WhatsApp Web, Telegram Web, and Gmail. It only ever reads your own compose box — never other people's messages.
 - **Calendar dashboard** — month and week views; task deadlines appear as a separate "Deadlines" category (orange)
 - **Groups & sharing** — create groups, invite members by email, share events to groups; members see shared events on their own calendar with colour-coded pills
 - **RSVP & comments** — Going / Maybe / Can't with live comment threads (Supabase Realtime)
 - **Kanban task board** — Todo / In Progress / Done columns with priority, deadline, and notes; deadlines sync to the calendar automatically
 - **Notification feed** — in-app bell with real-time push notifications when events are shared to your groups
 - **Training mode** — label detected snippets to improve the engine over time; export training data as JSON
-- **Configurable** — sensitivity slider, custom trigger words, activity words, meeting words, contacts, and plan items — all saved to Supabase per user
+- **Configurable** — sensitivity slider, custom trigger words, activity words, place words, custom names, and plan items — all saved to Supabase per user
 
 ## Supported platforms
 
-| Platform | Outgoing messages | Incoming messages |
-|---|---|---|
-| WhatsApp Web | Yes | Yes |
-| Telegram Web | Yes | Yes |
-| Gmail | Yes | Yes |
+PlanWise only reads text in your own compose box on each platform — never messages sent by other people.
+
+| Platform | Reads what you type |
+|---|---|
+| WhatsApp Web | Yes |
+| Telegram Web | Yes |
+| Gmail | Yes |
 
 ## Tech stack
 
@@ -88,7 +91,7 @@ extension/
   popup/            extension popup (auth + pending event queue)
   dashboard/        full-page calendar app
   tasks/            kanban board
-  settings/         detection, contacts, groups, account
+  settings/         detection, groups, notifications, account
   training/         training data labeller + JSON export
   utils/            shared storage helpers + Supabase client
   vendor/           bundled dependencies (supabase.js, tailwind, anime)
@@ -131,8 +134,7 @@ Run in order in the Supabase SQL Editor:
 
 Open the **Settings** page from the dashboard sidebar to configure:
 
-- **Detection** — sensitivity threshold, custom trigger words, activity words, meeting words, and plan items
-- **Contacts** — names (and nicknames) to recognise as participants
+- **Detection** — sensitivity threshold, custom trigger words, activity words, place words, custom names, and plan items
 - **Groups** — create and manage social groups; invite members by email
 - **Notifications** — toggle badge notifications on/off
 - **Account** — sign out
