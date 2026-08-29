@@ -9,22 +9,24 @@ const Auth = window.SupabaseClient.auth;
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
 
-// Not too strict on purpose: length + a letter + a number, no symbol/case
-// requirements. Longer minimum than Supabase's own default (6) rather than
-// piling on complexity rules, which is the direction most modern password
-// guidance (e.g. NIST) actually leans.
+// Standard-shape policy: length + uppercase + number. (Requiring uppercase
+// already guarantees a letter exists, so no separate "has a letter" check.)
+// Note: this is UX-only - Supabase's own server-side minimum password
+// length is still whatever's set in Authentication > Providers > Email in
+// the dashboard, so someone hitting the API directly can bypass this
+// entirely unless that's raised to match. See TODO.md.
 const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_HAS_LETTER = /[A-Za-z]/;
+const PASSWORD_HAS_UPPERCASE = /[A-Z]/;
 const PASSWORD_HAS_NUMBER = /\d/;
 
 function passwordError(password) {
-  if (password.length < PASSWORD_MIN_LENGTH) {
-    return `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
-  }
-  if (!PASSWORD_HAS_LETTER.test(password) || !PASSWORD_HAS_NUMBER.test(password)) {
-    return 'Password must include at least one letter and one number.';
-  }
-  return null;
+  const missing = [];
+  if (password.length < PASSWORD_MIN_LENGTH) missing.push(`at least ${PASSWORD_MIN_LENGTH} characters`);
+  if (!PASSWORD_HAS_UPPERCASE.test(password)) missing.push('an uppercase letter');
+  if (!PASSWORD_HAS_NUMBER.test(password)) missing.push('a number');
+
+  if (missing.length === 0) return null;
+  return 'Password must include ' + missing.join(', ') + '.';
 }
 
 const usernameInput  = el('signup-username');
