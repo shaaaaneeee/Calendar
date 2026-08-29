@@ -12,8 +12,8 @@ during signup testing. It also sends from a generic
 - No custom domain yet — start with Resend's default shared sending address (`onboarding@resend.dev`-style); upgrading to a real `noreply@planwise.app`-style address later is just adding DNS records, no config rework needed.
 
 **Steps, in order:**
-1. **Link the `landing/` site to Vercel via GitHub** (in progress as of this note) — Add New Project on vercel.com → import `shaaaaneeee/Calendar` → set **Root Directory to `landing`** → deploy. Gives every push to `main` an auto-deploy, and a stable URL.
-2. Once that URL exists, update **Supabase Dashboard → Authentication → URL Configuration → Site URL** (currently wrong — defaults to `http://localhost:3000`, which is why the "Confirm your mail" email link led nowhere useful).
+1. ~~Link the `landing/` site to Vercel via GitHub~~ **Done** — live at https://planwise-eosin.vercel.app/, linked to `shaaaaneeee/Calendar` with Root Directory `landing`, auto-deploys on every push to `main`.
+2. Update **Supabase Dashboard → Authentication → URL Configuration → Site URL** to `https://planwise-eosin.vercel.app` (currently wrong — defaults to `http://localhost:3000`, which is why the "Confirm your mail" email link led nowhere useful). Add `https://planwise-eosin.vercel.app/*` to Redirect URLs too if there's a separate allow-list field. **Not yet confirmed done — verify in dashboard.**
 3. Sign up for Resend, get an API key.
 4. In Supabase Dashboard → Authentication → Settings → SMTP Settings: enable custom SMTP, plug in Resend's SMTP host/port/credentials.
 5. Send a test signup through `extension/signup/signup.html` and confirm the email arrives from Resend, not Supabase's default sender.
