@@ -1,0 +1,105 @@
+<!--
+  PlanWise — "Confirm signup" email template
+
+  Where this goes: Supabase Dashboard → Authentication → Email Templates
+  → Confirm signup. Paste this into the "Message body" field, replacing
+  the default template. Suggested Subject line:
+
+    Confirm your PlanWise account
+
+  Supabase template variables used below (all standard, no config needed):
+    {{ .ConfirmationURL }}  — the confirm link
+    {{ .Data.username }}    — the username passed at signup (extension/signup/signup.js
+                               passes it via options.data.username); falls back to a
+                               generic greeting if absent (e.g. accounts created before
+                               usernames existed, or a signup path that skipped it)
+
+  This is plain inline-styled HTML (no external stylesheet, no webfonts) on
+  purpose — email clients strip <link> tags and inconsistently support
+  <style> blocks, so system-font fallbacks + inline styles is what actually
+  renders consistently across Gmail/Outlook/Apple Mail.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Confirm your PlanWise account</title>
+</head>
+<body style="margin:0; padding:0; background-color:#F9F9F9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9F9F9;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px; width:100%; background-color:#ffffff; border:1px solid #1A1C1C;">
+
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding:36px 32px 8px;">
+              <div style="font-family:'Courier New',Courier,monospace; font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#4C4546; line-height:1;">Plan</div>
+              <div style="font-size:26px; font-weight:800; letter-spacing:-0.5px; text-transform:uppercase; color:#1A1C1C; line-height:1.2; margin-top:4px;">Wise</div>
+            </td>
+          </tr>
+
+          <!-- Accent rule -->
+          <tr>
+            <td style="padding:20px 32px 0;">
+              <div style="height:3px; width:36px; background-color:#00D1FF; margin:0 auto;"></div>
+            </td>
+          </tr>
+
+          <!-- Heading + body -->
+          <tr>
+            <td style="padding:24px 32px 8px;">
+              <h1 style="margin:0 0 12px; font-size:20px; font-weight:800; color:#1A1C1C; text-align:center;">Confirm your email</h1>
+              <p style="margin:0 0 4px; font-size:14px; line-height:1.6; color:#4C4546; text-align:center;">
+                {{ if .Data.username }}Hey @{{ .Data.username }},{{ else }}Hey there,{{ end }}
+              </p>
+              <p style="margin:0; font-size:14px; line-height:1.6; color:#4C4546; text-align:center;">
+                One more step before PlanWise can start turning your messages into calendar plans automatically. Confirm your email to activate your account.
+              </p>
+            </td>
+          </tr>
+
+          <!-- CTA button -->
+          <tr>
+            <td align="center" style="padding:28px 32px 8px;">
+              <a href="{{ .ConfirmationURL }}"
+                 style="display:inline-block; background-color:#1A1C1C; color:#ffffff; text-decoration:none; font-family:'Courier New',Courier,monospace; font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:14px 32px;">
+                Confirm your email
+              </a>
+            </td>
+          </tr>
+
+          <!-- Fallback link -->
+          <tr>
+            <td style="padding:12px 32px 32px;">
+              <p style="margin:0; font-size:11px; line-height:1.6; color:#4C4546; text-align:center; word-break:break-all;">
+                Button not working? Paste this into your browser:<br />
+                <a href="{{ .ConfirmationURL }}" style="color:#4C4546;">{{ .ConfirmationURL }}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 32px;">
+              <div style="height:1px; background-color:#E5E5E5;"></div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 32px 32px;">
+              <p style="margin:0; font-size:11px; line-height:1.6; color:#8A8585; text-align:center;">
+                You're getting this because someone signed up for PlanWise with this email address.
+                If that wasn't you, you can safely ignore this — no account will be activated without confirmation.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
