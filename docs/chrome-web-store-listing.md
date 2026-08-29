@@ -56,13 +56,23 @@ fill out the Web Store's data disclosure form to match:
 
 ## Screenshots
 
-Web Store requires 1-5 screenshots, 1280×800 or 640×400. Suggested set (none
-captured yet):
-1. Popup showing a detected plan card with fields filled in.
-2. Settings → Detection tab (custom trigger/activity/place words).
-3. Calendar dashboard, month view, with a few events.
-4. Groups / shared event with RSVPs.
-5. Tasks kanban board.
+Web Store requires 1-5 screenshots, 1280×800 or 640×400. Captured, all at
+1280×800, in [store-assets/screenshots/](store-assets/screenshots/):
+1. `1-popup-detected-plan.png` — popup showing a detected plan card, composited onto a branded backdrop with a mock browser toolbar for context.
+2. `2-settings-detection.png` — Settings → Detection tab (custom trigger/activity/place words).
+3. `3-dashboard-month-view.png` — calendar dashboard, month view, with a few events.
+4. `4-groups-rsvp.png` — shared event's RSVP panel with a group member and status.
+5. `5-tasks-kanban.png` — Tasks kanban board.
+
+Captured via `node scripts/capture-store-screenshots.js` — launches the
+unpacked extension in a real Chrome window, waits for a manual sign-in, seeds
+temporary sample data (group/events/tasks) through the in-page Supabase
+client, takes the screenshots, then deletes everything it seeded. Re-run it
+any time the UI changes enough that these go stale.
+
+**Note:** screenshot 4 shows a real username from whatever account was
+signed in when it was captured (`davefromrussia`) — swap to a throwaway
+test-account username before submitting if that shouldn't be public.
 
 Also needed: a 440×280 (or 1400×560) promotional tile image — not yet made.
 
@@ -70,7 +80,7 @@ Also needed: a 440×280 (or 1400×560) promotional tile image — not yet made.
 
 - [x] Fill in the `[DATE]` and `[CONTACT EMAIL]` placeholders in `landing/public/privacy.html` — done, contact is `planwisecalendar@gmail.com`.
 - [x] Deploy the landing site so `privacy.html` resolves at a real public URL — live at https://planwise-eosin.vercel.app/privacy.html, auto-deploys on push to `main`.
-- [ ] Capture the 5 screenshots above from a real signed-in session.
+- [x] Capture the 5 screenshots above from a real signed-in session — done, see `store-assets/screenshots/`.
 - [ ] Make the 440×280 promo tile.
 - [ ] Chrome Web Store developer account (one-time $5 registration fee) if not already set up.
 - [ ] Finish the Phase 0 reliability sweep (silent-failure pattern) — a buggy first impression is worse than a slightly later submission.
