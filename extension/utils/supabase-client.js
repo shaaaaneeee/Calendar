@@ -314,14 +314,14 @@ const SupabaseGroups = {
     return group;
   },
 
-  async sendGroupInvite(groupId, email) {
+  async sendGroupInvite(groupId, username) {
     const session = await SupabaseAuth._restoreSession();
     if (!session) throw new Error('Not signed in');
 
     const { data: users, error: lookupErr } = await db
-      .rpc('get_user_id_by_email', { email_input: email });
+      .rpc('get_user_id_by_username', { username_input: username });
     if (lookupErr) throw lookupErr;
-    if (!users || users.length === 0) throw new Error('No PlanWise account found for that email.');
+    if (!users || users.length === 0) throw new Error('No PlanWise account found for that username.');
 
     const inviteeId = users[0].id;
     if (inviteeId === session.user.id) throw new Error("You can't invite yourself.");
@@ -404,76 +404,6 @@ const SupabaseGroups = {
 
 
 // ─────────────────────────────────────────────
-// EQUIPMENT
-// ─────────────────────────────────────────────
-
-const SupabaseEquipment = {
-
-  async getAll() {
-    const { data, error } = await db
-      .from('equipment')
-      .select('*, shared_equipment(group_id, groups(colour, name))')
-      .order('created_at', { ascending: true });
-
-    if (error) throw error;
-
-    return (data || []).map(item => {
-      const firstShare = item.shared_equipment?.[0];
-      return {
-        ...item,
-        group_id:     firstShare?.group_id         ?? null,
-        group_colour: firstShare?.groups?.colour   ?? null,
-        group_name:   firstShare?.groups?.name     ?? null,
-      };
-    });
-  },
-
-  async create(item) {
-    const user = await SupabaseAuth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { data, error } = await db
-      .from('equipment')
-      .insert({
-        user_id:     user.id,
-        name:        item.name        || 'Equipment',
-        status:      item.status,
-        target_date: item.targetDate  || null,
-        notes:       item.notes       || '',
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async update(id, updates) {
-    const { data, error } = await db
-      .from('equipment')
-      .update({
-        name:        updates.name,
-        status:      updates.status,
-        target_date: updates.targetDate,
-        notes:       updates.notes,
-        updated_at:  new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async delete(id) {
-    const { error } = await db.from('equipment').delete().eq('id', id);
-    if (error) throw error;
-  },
-};
-
-
-// ─────────────────────────────────────────────
 // SOCIAL — shared events, RSVP, comments, notifications
 // ─────────────────────────────────────────────
 
@@ -499,31 +429,6 @@ const SupabaseSocial = {
       .from('shared_events')
       .select('group_id')
       .eq('event_id', eventId);
-    if (error) throw error;
-    return (data || []).map(r => r.group_id);
-  },
-
-  async shareEquipment(equipmentId, groupIds) {
-    const session = await SupabaseAuth._restoreSession();
-    if (!session) throw new Error('Not signed in');
-
-    const rows = groupIds.map(gid => ({
-      equipment_id: equipmentId,
-      group_id:     gid,
-      shared_by:    session.user.id,
-    }));
-
-    const { error } = await db
-      .from('shared_equipment')
-      .upsert(rows, { onConflict: 'equipment_id,group_id' });
-    if (error) throw error;
-  },
-
-  async getSharedGroupsForEquipment(equipmentId) {
-    const { data, error } = await db
-      .from('shared_equipment')
-      .select('group_id')
-      .eq('equipment_id', equipmentId);
     if (error) throw error;
     return (data || []).map(r => r.group_id);
   },
@@ -718,7 +623,6 @@ if (typeof window !== 'undefined') {
     db,
     auth:      SupabaseAuth,
     events:    SupabaseEvents,
-    equipment: SupabaseEquipment,
     settings:  SupabaseSettings,
     groups:    SupabaseGroups,
     social:    SupabaseSocial,

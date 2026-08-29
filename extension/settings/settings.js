@@ -574,19 +574,19 @@ function renderGroupsList(groups) {
       inviteWrap.className = 'flex gap-1 shrink-0';
 
       const inviteInput = document.createElement('input');
-      inviteInput.type = 'email';
-      inviteInput.placeholder = 'Invite email';
+      inviteInput.type = 'text';
+      inviteInput.placeholder = 'Invite username';
       inviteInput.className = 'border border-outline px-2 py-1 text-xs bg-surface focus:outline-none w-36';
 
       const inviteBtn = document.createElement('button');
       inviteBtn.className = 'px-3 py-1 border border-outline font-mono text-[9px] font-bold tracking-wider uppercase hover:bg-surface-mid';
       inviteBtn.textContent = 'Invite';
       inviteBtn.addEventListener('click', async () => {
-        const email = inviteInput.value.trim();
-        if (!email) return;
+        const username = inviteInput.value.trim();
+        if (!username) return;
         inviteBtn.textContent = '...';
         try {
-          await Groups.sendGroupInvite(group.id, email);
+          await Groups.sendGroupInvite(group.id, username);
           inviteInput.value = '';
           inviteBtn.textContent = 'Invited!';
           setTimeout(() => { inviteBtn.textContent = 'Invite'; }, 2000);
@@ -650,10 +650,10 @@ function wireGroupsSection() {
     try {
       const group = await Groups.createGroup(name, selectedColour);
 
-      const email = el('new-group-invite').value.trim();
-      if (email) {
+      const username = el('new-group-invite').value.trim();
+      if (username) {
         try {
-          await Groups.sendGroupInvite(group.id, email);
+          await Groups.sendGroupInvite(group.id, username);
         } catch (err) {
           showToast(`Group created, but invite failed: ${friendlyError(err.message)}`);
         }
