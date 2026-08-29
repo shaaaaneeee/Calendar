@@ -12,17 +12,25 @@ const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
 const usernameInput  = el('signup-username');
 const usernameStatus = el('username-status');
 const emailInput     = el('signup-email');
+const emailStatus    = el('email-status');
 const passwordInput  = el('signup-password');
 const confirmInput   = el('signup-confirm');
 const form           = el('signup-form');
 const submitBtn      = el('btn-signup-submit');
 
 let usernameCheckToken = 0;
+let emailCheckToken = 0;
 
 usernameInput.addEventListener('blur', checkUsernameLive);
 usernameInput.addEventListener('input', () => {
   usernameStatus.textContent = '';
   usernameStatus.className = 'text-xs font-mono min-h-[1em]';
+});
+
+emailInput.addEventListener('blur', checkEmailLive);
+emailInput.addEventListener('input', () => {
+  emailStatus.textContent = '';
+  emailStatus.className = 'text-xs font-mono min-h-[1em]';
 });
 
 async function checkUsernameLive() {
@@ -48,6 +56,26 @@ async function checkUsernameLive() {
     if (token !== usernameCheckToken) return;
     console.warn('[PlanWise] Username availability check failed:', err.message);
     usernameStatus.textContent = '';
+  }
+}
+
+async function checkEmailLive() {
+  const email = emailInput.value.trim();
+  if (!email || !emailInput.checkValidity()) return;
+
+  const token = ++emailCheckToken;
+  emailStatus.textContent = 'Checking...';
+  emailStatus.className = 'text-xs font-mono min-h-[1em] text-on-muted';
+
+  try {
+    const available = await Auth.checkEmailAvailable(email);
+    if (token !== emailCheckToken) return; // a newer check superseded this one
+    emailStatus.textContent = available ? '✓ Available' : '✗ Already registered';
+    emailStatus.className = 'text-xs font-mono min-h-[1em] ' + (available ? 'text-status-ok' : 'text-error');
+  } catch (err) {
+    if (token !== emailCheckToken) return;
+    console.warn('[PlanWise] Email availability check failed:', err.message);
+    emailStatus.textContent = '';
   }
 }
 
@@ -82,9 +110,16 @@ form.addEventListener('submit', async (e) => {
   submitBtn.textContent = 'Checking username...';
 
   try {
-    const available = await Auth.checkUsernameAvailable(username);
-    if (!available) {
+    const usernameAvailable = await Auth.checkUsernameAvailable(username);
+    if (!usernameAvailable) {
       setError('That username is already taken.');
+      return;
+    }
+
+    submitBtn.textContent = 'Checking email...';
+    const emailAvailable = await Auth.checkEmailAvailable(email);
+    if (!emailAvailable) {
+      setError('That email is already registered. Try signing in instead.');
       return;
     }
 

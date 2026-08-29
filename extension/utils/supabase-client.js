@@ -99,6 +99,12 @@ const SupabaseAuth = {
     return data === true;
   },
 
+  async checkEmailAvailable(email) {
+    const { data, error } = await db.rpc('is_email_available', { check_email: email });
+    if (error) throw error;
+    return data === true;
+  },
+
   async setUsername(username) {
     const session = await this._restoreSession();
     if (!session) throw new Error('Not signed in');
