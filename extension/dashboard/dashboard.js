@@ -961,25 +961,28 @@ async function renderSharedEventPanel(event, container) {
 
   container.innerHTML = "";
 
-  // ── RSVP bar ── RSVPing only means something once other people can
-  // actually see the event, so the whole section is skipped for an
-  // unshared event rather than shown disabled.
-  if (isShared) {
-    const rsvpBar = document.createElement("div");
-    rsvpBar.className = "rsvp-bar";
-    const statuses = [
-      { key: "going", label: "Going" },
-      { key: "maybe", label: "Maybe" },
-      { key: "cant",  label: "Can't" },
-    ];
-    const countsEl = document.createElement("div");
-    countsEl.className = "rsvp-counts";
-    countsEl.textContent = `${rsvpData.counts.going} Going · ${rsvpData.counts.maybe} Maybe · ${rsvpData.counts.cant} Can't`;
+  // ── RSVP bar ──
+  const rsvpBar = document.createElement("div");
+  rsvpBar.className = "rsvp-bar";
+  const statuses = [
+    { key: "going", label: "Going" },
+    { key: "maybe", label: "Maybe" },
+    { key: "cant",  label: "Can't" },
+  ];
+  const countsEl = document.createElement("div");
+  countsEl.className = "rsvp-counts";
+  countsEl.textContent = `${rsvpData.counts.going} Going · ${rsvpData.counts.maybe} Maybe · ${rsvpData.counts.cant} Can't`;
 
-    for (const s of statuses) {
-      const btn = document.createElement("button");
-      btn.className = "rsvp-btn" + (rsvpData.myStatus === s.key ? " selected" : "");
-      btn.textContent = s.label;
+  for (const s of statuses) {
+    const btn = document.createElement("button");
+    btn.className = "rsvp-btn" + (rsvpData.myStatus === s.key ? " selected" : "");
+    btn.textContent = s.label;
+    if (!isShared) {
+      // RSVPing only means something once other people can actually see the
+      // event - same gate the comment input already applies below.
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+    } else {
       btn.addEventListener("click", async () => {
         try {
           await Social.upsertRsvp(event.id, s.key);
@@ -993,10 +996,18 @@ async function renderSharedEventPanel(event, container) {
           showToast("Could not save RSVP: " + err.message);
         }
       });
-      rsvpBar.appendChild(btn);
     }
-    container.appendChild(rsvpBar);
+    rsvpBar.appendChild(btn);
+  }
+  container.appendChild(rsvpBar);
+
+  if (isShared) {
     container.appendChild(countsEl);
+  } else {
+    const hint = document.createElement("div");
+    hint.className = "text-xs text-on-muted font-mono mt-1";
+    hint.textContent = "Share this event with a group to RSVP.";
+    container.appendChild(hint);
   }
 
   // ── Members list ──
