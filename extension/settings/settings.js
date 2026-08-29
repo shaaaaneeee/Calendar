@@ -41,17 +41,27 @@ async function init() {
       showUnauthMessage();
       return;
     }
-  } catch {
+  } catch (err) {
+    // Any Auth.getUser() failure (network blip, Supabase client hiccup,
+    // extension context invalidated after a reload) previously looked
+    // identical to "not signed in" with zero console trace, then this tab
+    // self-closed after 1.5s - log it so a real failure is diagnosable
+    // instead of just looking like the user got logged out.
+    console.error("[PlanWise] Session check failed:", err);
     showUnauthMessage();
     return;
   }
 
-  await loadSettings();
-  renderAll();
-  wireNav();
-  wireControls();
-  wireGroupsSection();
-  loadAccountInfo();
+  try {
+    await loadSettings();
+    renderAll();
+    wireNav();
+    wireControls();
+    wireGroupsSection();
+    loadAccountInfo();
+  } catch (err) {
+    console.error("[PlanWise] Settings page failed to initialize:", err);
+  }
 }
 
 

@@ -60,8 +60,17 @@ async function loadEvents() {
       allEvents = result.confirmedEvents || [];
     }
   } catch (err) {
-    console.warn("[PlanWise] Failed to load events:", err.message);
-    allEvents = [];
+    // Events.getAll() failing for a signed-in user (network blip, expired
+    // token) used to render a completely empty calendar even though a local
+    // copy may exist - fall back the same way a logged-out user would.
+    console.warn("[PlanWise] Failed to load events, falling back to local cache:", err.message);
+    try {
+      const result = await chrome.storage.local.get("confirmedEvents");
+      allEvents = result.confirmedEvents || [];
+    } catch (fallbackErr) {
+      console.error("[PlanWise] Local event fallback also failed:", fallbackErr);
+      allEvents = [];
+    }
   }
 
   // Merge in task deadlines as pseudo-events
@@ -877,7 +886,12 @@ async function renderShareSection(event, container) {
   let sharedGroupIds = [];
   try {
     sharedGroupIds = await Social.getSharedGroups(event.id);
-  } catch (_) {}
+  } catch (err) {
+    // Swallowing this used to make every group render as "not yet shared"
+    // even when some already were, with no trace of why - re-sharing is
+    // harmless (upsert), but the panel shouldn't silently lie about state.
+    console.warn("[PlanWise] Failed to load shared groups for event:", event.id, err);
+  }
 
   if (!calGroups.length) {
     container.innerHTML = '<div class="text-xs text-on-muted">No groups yet — create one in Settings.</div>';

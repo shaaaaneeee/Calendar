@@ -13,21 +13,9 @@ class TextBuffer {
     this.onFlush = options.onFlush || (() => {});
   }
 
-  push(text) {
-    if (!text || typeof text !== "string") return;
-
-    this.buffer = `${this.buffer} ${text}`.trim();
-    if (this.buffer.length > this.maxLength) {
-      this.buffer = this.buffer.slice(-this.maxLength);
-    }
-
-    clearTimeout(this.debounceTimer);
-    this.debounceTimer = setTimeout(() => this._flush(), this.debounceMs);
-  }
-
-  // Replace the outgoing (typed) portion of the buffer with the current input
-  // value. Unlike push(), this prevents partial keystroke states from
-  // accumulating when the full input value is pushed on every input event.
+  // Replace the buffer with the current input value on every keystroke -
+  // this is the only way text enters the buffer, so it only ever reflects
+  // what the user is actively typing into their own compose box.
   set(text) {
     if (!text || typeof text !== "string") return;
 

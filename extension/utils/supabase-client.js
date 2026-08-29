@@ -506,22 +506,25 @@ const SupabaseSocial = {
   },
 
   async getEventMembers(eventId) {
-    const { data: seRows } = await db
+    const { data: seRows, error: seError } = await db
       .from('shared_events')
       .select('group_id')
       .eq('event_id', eventId);
+    if (seError) throw seError;
     const groupIds = (seRows || []).map(r => r.group_id);
     if (!groupIds.length) return [];
 
-    const { data: members } = await db
+    const { data: members, error: membersError } = await db
       .from('group_members')
       .select('user_id')
       .in('group_id', groupIds);
+    if (membersError) throw membersError;
 
-    const { data: rsvps } = await db
+    const { data: rsvps, error: rsvpsError } = await db
       .from('rsvps')
       .select('user_id, status')
       .eq('event_id', eventId);
+    if (rsvpsError) throw rsvpsError;
 
     const rsvpMap = {};
     for (const r of rsvps || []) rsvpMap[r.user_id] = r.status;
@@ -534,10 +537,11 @@ const SupabaseSocial = {
       userIds.push(m.user_id);
     }
 
-    const { data: profiles } = await db
+    const { data: profiles, error: profilesError } = await db
       .from('profiles')
       .select('id, display_name')
       .in('id', userIds);
+    if (profilesError) throw profilesError;
     const profileMap = {};
     for (const p of profiles || []) profileMap[p.id] = p.display_name;
 

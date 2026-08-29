@@ -11,6 +11,18 @@
 // visible sign why. Capping it keeps that from ever happening again.
 const MAX_PENDING_EVENTS = 25;
 
+const DEFAULT_SETTINGS = {
+  triggerWords: [],
+  contacts: [],
+  priorityNames: [],
+  activityWords: [],
+  meetingWords: [],
+  items: [],
+  placeWords: [],
+  sensitivity: 2,
+  notificationsEnabled: true
+};
+
 const Storage = {
   async enqueuePendingEvent(event) {
     try {
@@ -37,6 +49,7 @@ const Storage = {
       const result = await chrome.storage.local.get("pendingEvents");
       return result.pendingEvents || [];
     } catch (err) {
+      console.error("[PlanWise] getPendingEvents failed:", err);
       return [];
     }
   },
@@ -60,38 +73,22 @@ const Storage = {
   },
 
   async getConfirmedEvents() {
-    const result = await chrome.storage.local.get("confirmedEvents");
-    return result.confirmedEvents || [];
+    try {
+      const result = await chrome.storage.local.get("confirmedEvents");
+      return result.confirmedEvents || [];
+    } catch (err) {
+      console.error("[PlanWise] getConfirmedEvents failed:", err);
+      return [];
+    }
   },
 
   async getSettings() {
     try {
       const result = await chrome.storage.local.get("settings");
-      return (
-        result.settings || {
-          triggerWords: [],
-          contacts: [],
-          priorityNames: [],
-          activityWords: [],
-          meetingWords: [],
-          items: [],
-          placeWords: [],
-          sensitivity: 2,
-          notificationsEnabled: true
-        }
-      );
+      return result.settings || { ...DEFAULT_SETTINGS };
     } catch (err) {
-      return {
-        triggerWords: [],
-        contacts: [],
-        priorityNames: [],
-        activityWords: [],
-        meetingWords: [],
-        items: [],
-        placeWords: [],
-        sensitivity: 2,
-        notificationsEnabled: true
-      };
+      console.error("[PlanWise] getSettings failed:", err);
+      return { ...DEFAULT_SETTINGS };
     }
   },
 
