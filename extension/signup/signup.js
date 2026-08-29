@@ -9,6 +9,24 @@ const Auth = window.SupabaseClient.auth;
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
 
+// Not too strict on purpose: length + a letter + a number, no symbol/case
+// requirements. Longer minimum than Supabase's own default (6) rather than
+// piling on complexity rules, which is the direction most modern password
+// guidance (e.g. NIST) actually leans.
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_HAS_LETTER = /[A-Za-z]/;
+const PASSWORD_HAS_NUMBER = /\d/;
+
+function passwordError(password) {
+  if (password.length < PASSWORD_MIN_LENGTH) {
+    return `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
+  }
+  if (!PASSWORD_HAS_LETTER.test(password) || !PASSWORD_HAS_NUMBER.test(password)) {
+    return 'Password must include at least one letter and one number.';
+  }
+  return null;
+}
+
 const usernameInput  = el('signup-username');
 const usernameStatus = el('username-status');
 const emailInput     = el('signup-email');
@@ -97,8 +115,9 @@ form.addEventListener('submit', async (e) => {
     setError('Email is required.');
     return;
   }
-  if (password.length < 6) {
-    setError('Password must be at least 6 characters.');
+  const pwError = passwordError(password);
+  if (pwError) {
+    setError(pwError);
     return;
   }
   if (password !== confirm) {
