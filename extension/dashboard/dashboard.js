@@ -977,23 +977,38 @@ async function renderSharedEventPanel(event, container) {
     const btn = document.createElement("button");
     btn.className = "rsvp-btn" + (rsvpData.myStatus === s.key ? " selected" : "");
     btn.textContent = s.label;
-    btn.addEventListener("click", async () => {
-      try {
-        await Social.upsertRsvp(event.id, s.key);
-        rsvpData.myStatus = s.key;
-        rsvpBar.querySelectorAll(".rsvp-btn").forEach((b, i) => {
-          b.classList.toggle("selected", statuses[i].key === s.key);
-        });
-        const fresh = await Social.getRsvpDetails(event.id);
-        countsEl.textContent = `${fresh.counts.going} Going · ${fresh.counts.maybe} Maybe · ${fresh.counts.cant} Can't`;
-      } catch (err) {
-        showToast("Could not save RSVP: " + err.message);
-      }
-    });
+    if (!isShared) {
+      // RSVPing only means something once other people can actually see the
+      // event - same gate the comment input already applies below.
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+    } else {
+      btn.addEventListener("click", async () => {
+        try {
+          await Social.upsertRsvp(event.id, s.key);
+          rsvpData.myStatus = s.key;
+          rsvpBar.querySelectorAll(".rsvp-btn").forEach((b, i) => {
+            b.classList.toggle("selected", statuses[i].key === s.key);
+          });
+          const fresh = await Social.getRsvpDetails(event.id);
+          countsEl.textContent = `${fresh.counts.going} Going · ${fresh.counts.maybe} Maybe · ${fresh.counts.cant} Can't`;
+        } catch (err) {
+          showToast("Could not save RSVP: " + err.message);
+        }
+      });
+    }
     rsvpBar.appendChild(btn);
   }
   container.appendChild(rsvpBar);
-  container.appendChild(countsEl);
+
+  if (isShared) {
+    container.appendChild(countsEl);
+  } else {
+    const hint = document.createElement("div");
+    hint.className = "text-xs text-on-muted font-mono mt-1";
+    hint.textContent = "Share this event with a group to RSVP.";
+    container.appendChild(hint);
+  }
 
   // ── Members list ──
   if (members.length) {
