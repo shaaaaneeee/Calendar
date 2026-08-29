@@ -51,4 +51,8 @@ export const PLATFORMS = [
   { name: 'Gmail', glyph: '✉' },
 ];
 
-export const FOOTER_LINKS = ['Privacy', 'Terms', 'Contact'];
+export const FOOTER_LINKS = [
+  { label: 'Privacy', href: '/privacy.html' },
+  { label: 'Terms', href: '#' },
+  { label: 'Contact', href: '#' },
+];

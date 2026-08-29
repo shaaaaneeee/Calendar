@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Privacy Policy — PlanWise</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="PlanWise privacy policy — what we read, what we store, and what never leaves your device." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #F9F9F9;
+    --text:      #1A1C1C;
+    --muted:     #4C4546;
+    --card:      #EEEEEE;
+    --line:      #1A1C1C;
+    --line-soft: #CFC4C5;
+    --accent:    #00D1FF;
+    --primary:   #000000;
+    --on-primary:#FFFFFF;
+    --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+  a { color: var(--text); }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .logo .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    display: inline-block;
+  }
+  .back-link {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--muted);
+  }
+  .back-link:hover { color: var(--text); }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  h1 {
+    font-size: clamp(32px, 5vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+  .updated {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0 0 40px;
+  }
+  .tldr {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 48px;
+  }
+  .tldr-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+  }
+  .tldr ul { margin: 0; padding-left: 20px; }
+  .tldr li { margin-bottom: 6px; }
+  .tldr li:last-child { margin-bottom: 0; }
+  h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 44px 0 14px;
+    padding-top: 4px;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 24px 0 8px;
+  }
+  p { margin: 0 0 14px; color: var(--text); }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 700; }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--card);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .placeholder {
+    background: #FFF3CD;
+    border: 1px solid #E8C468;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid var(--line-soft);
+    margin: 48px 0;
+  }
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 56px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/"><span class="dot" aria-hidden="true"></span>PlanWise</a>
+  <a class="back-link" href="/">← Back to home</a>
+</header>
+
+<main>
+  <p class="eyebrow">Legal</p>
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: <span class="placeholder">[DATE]</span></p>
+
+  <div class="tldr">
+    <p class="tldr-label">The short version</p>
+    <ul>
+      <li>PlanWise reads text <strong>only in your own compose box</strong> — WhatsApp Web, Telegram Web, or Gmail — as you type it, before you send it. It never reads messages from other people.</li>
+      <li>Every message it analyzes is checked <strong>on your device</strong>. Nothing is sent to our servers unless you explicitly confirm a detected plan.</li>
+      <li>We don't use advertising or tracking software, and we don't sell your data.</li>
+    </ul>
+  </div>
+
+  <h2>What PlanWise reads</h2>
+  <p>PlanWise is a browser extension that watches the text box you're typing into on supported sites (WhatsApp Web, Telegram Web, Gmail) and checks whether the message you're composing looks like you're proposing a plan — a time, a place, a person, an activity. It does this the moment you type, before you send anything, the same way a spell-checker reads your draft.</p>
+  <p><strong>It only ever reads your own compose box.</strong> It does not read, store, or transmit messages sent to you by anyone else, and it does not read any other content on the page.</p>
+
+  <h2>What we store, and where</h2>
+
+  <h3>On your device only</h3>
+  <p>Every message you type that PlanWise analyzes — whether or not it turns out to look like a plan — is logged locally in your browser's extension storage (<code>chrome.storage.local</code>), capped at the most recent 500 entries. This local log powers the optional Training page, where you can review and label past detections to help improve accuracy, or export/clear it at any time. <strong>This log never leaves your device</strong> — it is not transmitted to us or anyone else.</p>
+
+  <h3>Synced to our servers — only when you confirm a plan</h3>
+  <p>When PlanWise detects a plan, it shows you a card with the extracted details (title, date, time, location, people, notes) before anything is saved anywhere. Nothing is sent to our servers at this stage. Only if you click <strong>Add</strong> do we store that specific event — including the original message text for that one plan — in our database (hosted on Supabase), tied to your account.</p>
+
+  <h3>Account &amp; settings</h3>
+  <p>Creating an account requires an email and password, handled via Supabase Auth. Any custom words you configure (trigger words, activity words, place words, custom names, items) are stored locally immediately and synced to our servers when you save your settings, so they carry across devices.</p>
+
+  <h3>Groups &amp; sharing</h3>
+  <p>If you choose to share a confirmed event with a group you've created or joined, the event's details (not your original message text) become visible to that group's other members, along with any RSVP or comments you or they add.</p>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't read messages sent to you by other people.</li>
+    <li>We don't read anything outside the text box you're actively composing in.</li>
+    <li>We don't use advertising networks, third-party analytics, or tracking pixels.</li>
+    <li>We don't sell, rent, or share your data with third parties for marketing purposes.</li>
+  </ul>
+
+  <h2>Data security</h2>
+  <p>Confirmed events, account info, and settings are stored in a Postgres database on Supabase, protected by row-level security policies that restrict every query to the signed-in user's own data (and, where explicitly shared, their group members'). Unconfirmed message text never reaches this database at all — it stays in your browser's local storage.</p>
+
+  <h2>Your controls</h2>
+  <ul>
+    <li><strong>Local detection log:</strong> review, export, or clear it anytime from the Training page.</li>
+    <li><strong>Confirmed events:</strong> edit or delete them from the calendar dashboard.</li>
+    <li><strong>Account data:</strong> to request deletion of your account and associated data, contact us at <span class="placeholder">[CONTACT EMAIL]</span>.</li>
+  </ul>
+
+  <h2>Children's privacy</h2>
+  <p>PlanWise is not directed at, and we do not knowingly collect information from, children under 13.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If this policy changes, we'll update the date at the top of this page. Material changes will be noted in the extension's release notes.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy or your data can be sent to <span class="placeholder">[CONTACT EMAIL]</span>.</p>
+
+  <hr class="divider" />
+  <p style="font-family: var(--font-mono); font-size: 12px; color: var(--muted);">
+    This policy describes PlanWise's Chrome extension as of the date above. Future PlanWise apps on other platforms (desktop, iOS, Android) will link to their own version of this policy reflecting how they read text on that platform.
+  </p>
+</main>
+
+<footer>
+  © 2026 PlanWise.
+</footer>
+
+</body>
+</html>

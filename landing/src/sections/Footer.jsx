@@ -20,9 +20,9 @@ const Footer = memo(function Footer() {
         </div>
 
         <ul className="footer-links" role="list">
-          {FOOTER_LINKS.map((label) => (
+          {FOOTER_LINKS.map(({ label, href }) => (
             <li key={label}>
-              <a href="#" className="footer-link">{label}</a>
+              <a href={href} className="footer-link">{label}</a>
             </li>
           ))}
         </ul>

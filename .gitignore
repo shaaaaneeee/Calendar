@@ -4,3 +4,4 @@ test-screenshots/
 .env
 .env.local
 *.log
+landing/dist/
