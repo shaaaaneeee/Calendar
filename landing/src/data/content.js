@@ -8,7 +8,7 @@ export const HOW_STEPS = [
   {
     number: '01',
     title: 'Detect',
-    desc: "PlanWise watches your conversations in the background and flags dates, times, and places the moment they're typed.",
+    desc: "PlanWise reads the message you're composing — never messages from anyone else — and flags dates, times, and places the moment you write them.",
   },
   {
     number: '02',
@@ -26,7 +26,7 @@ export const FEATURES = [
   {
     label: 'DETECT',
     title: 'Automatic detection',
-    desc: 'No copy-paste. PlanWise parses natural language across chats in real time.',
+    desc: 'No copy-paste. PlanWise parses natural language as you type it, across WhatsApp, Telegram, and Gmail.',
   },
   {
     label: 'CALENDAR',

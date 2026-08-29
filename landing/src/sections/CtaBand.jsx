@@ -1,5 +1,4 @@
 import React from 'react';
-import { ACCENT, sh } from '../utils';
 
 export default function CtaBand({ wrapRef, anim, reducedMotion }) {
   const { ctaIn } = anim;
@@ -19,15 +18,11 @@ export default function CtaBand({ wrapRef, anim, reducedMotion }) {
           transform: visible ? 'none' : 'translateY(24px)',
         }}
       >
-        <p className="cta-eyebrow" style={{ color: ACCENT }}>
+        <p className="cta-eyebrow">
           GET PLANWISE
         </p>
         <h2 className="cta-title">Stop scrolling back to find the date.</h2>
-        <a
-          href="#"
-          className="cta-btn"
-          style={{ boxShadow: `4px 4px 0 ${ACCENT}` }}
-        >
+        <a href="#" className="cta-btn">
           Add to Chrome — it&apos;s free
         </a>
         <p className="cta-sub">

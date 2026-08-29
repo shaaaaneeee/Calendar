@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { NAV_LINKS } from '../data/content';
-import { sh } from '../utils';
 
 const Nav = memo(function Nav() {
   return (
@@ -19,11 +18,7 @@ const Nav = memo(function Nav() {
           ))}
         </ul>
 
-        <a
-          href="#cta"
-          className="nav-cta"
-          style={{ boxShadow: sh(2) }}
-        >
+        <a href="#cta" className="nav-cta">
           Add to Chrome
         </a>
       </div>

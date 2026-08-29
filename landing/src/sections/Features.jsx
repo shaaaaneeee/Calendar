@@ -1,7 +1,7 @@
 import React from 'react';
 import SectionHeader from '../components/SectionHeader';
 import { FEATURES } from '../data/content';
-import { clamp, lerp, stickyStyle, runwayHeight } from '../utils';
+import { clamp, lerp, stickyStyle, runwayHeight, easeOutCubic } from '../utils';
 
 export default function Features({ wrapRef, anim, reducedMotion }) {
   const { features, isMobile } = anim;
@@ -33,15 +33,17 @@ export default function Features({ wrapRef, anim, reducedMotion }) {
             const segStart = i * 0.2;
             const segEnd   = segStart + 0.45;
             const local    = clamp((p - segStart) / (segEnd - segStart), 0, 1);
-            const enter    = reducedMotion ? 1 : clamp(local * 1.3, 0, 1);
+            const enter    = reducedMotion ? 1 : easeOutCubic(clamp(local * 1.15, 0, 1));
 
+            // Once the entrance finishes, stop setting inline transform/clipPath
+            // so the CSS :hover lift (landing.css .feature-cell:hover) can take
+            // over that property - an inline style always beats a CSS class rule
+            // for the same property, entrance-complete or not.
+            const entranceDone = enter >= 1;
             const cellStyle = {
-              opacity:   enter,
-              transform: `scale(${lerp(0.92, 1, enter)})`,
-              // Clip from the bottom upward — gives a "reveal" feel
-              clipPath: reducedMotion
-                ? 'none'
-                : `inset(${(1 - enter) * 40}% 0 0 0)`,
+              opacity: enter,
+              ...(entranceDone ? {} : { transform: `scale(${lerp(0.92, 1, enter)})` }),
+              ...(entranceDone || reducedMotion ? {} : { clipPath: `inset(${(1 - enter) * 40}% 0 0 0)` }),
             };
 
             return (

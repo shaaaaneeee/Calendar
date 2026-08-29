@@ -1,10 +1,10 @@
 import React from 'react';
 import ChatDemo from '../components/ChatDemo';
-import { clamp, lerp, sh, stickyStyle, runwayHeight } from '../utils';
+import { clamp, lerp, stickyStyle, runwayHeight, easeInOutSine } from '../utils';
 
 export default function Hero({ wrapRef, anim, reducedMotion }) {
   const { hero, demoT, isMobile } = anim;
-  const p  = hero.progress;
+  const p  = easeInOutSine(hero.progress);
   const mo = reducedMotion ? 0 : (isMobile ? 0.55 : 1);
 
   // Hero content fades out and lifts as you scroll into its runway
@@ -44,12 +44,12 @@ export default function Hero({ wrapRef, anim, reducedMotion }) {
               highlighted automatically.
             </h1>
             <p className="hero-sub">
-              PlanWise reads WhatsApp, Telegram, and Gmail as you go. The moment
-              a date is mentioned, it&apos;s captured to one shared calendar with
-              RSVPs and live comments.
+              PlanWise reads the message you&apos;re typing in WhatsApp, Telegram,
+              or Gmail — never anyone else&apos;s. The moment you write a date,
+              it&apos;s captured to one shared calendar with RSVPs and live comments.
             </p>
             <div className="hero-cta-row">
-              <a href="#cta" className="btn-primary" style={{ boxShadow: sh(4) }}>
+              <a href="#cta" className="btn-primary">
                 Add to Chrome — it&apos;s free
               </a>
               <a href="#how" className="btn-secondary">

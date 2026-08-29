@@ -1,7 +1,7 @@
 import React from 'react';
 import SectionHeader from '../components/SectionHeader';
 import { PLATFORMS } from '../data/content';
-import { clamp, stickyStyle, runwayHeight } from '../utils';
+import { clamp, stickyStyle, runwayHeight, easeOutCubic } from '../utils';
 
 export default function Platforms({ wrapRef, anim, reducedMotion }) {
   const { platforms, isMobile } = anim;
@@ -33,17 +33,20 @@ export default function Platforms({ wrapRef, anim, reducedMotion }) {
             const segStart = i * 0.22;
             const segEnd   = segStart + 0.5;
             const local    = clamp((p - segStart) / (segEnd - segStart), 0, 1);
-            const enter    = reducedMotion ? 1 : clamp(local * 1.3, 0, 1);
+            const enter    = reducedMotion ? 1 : easeOutCubic(clamp(local * 1.15, 0, 1));
             // Alternate slide-in direction: left, right, left
             const dir = i % 2 === 0 ? -1 : 1;
+            const entranceDone = enter >= 1;
 
             return (
               <div
                 key={plat.name}
                 className="platform-card"
                 style={{
-                  opacity:   enter,
-                  transform: `translateX(${(1 - enter) * dir * 40 * mo}px)`,
+                  opacity: enter,
+                  // Stop setting inline transform once entrance finishes so
+                  // the CSS :hover lift (landing.css) can take over.
+                  ...(entranceDone ? {} : { transform: `translateX(${(1 - enter) * dir * 40 * mo}px)` }),
                 }}
               >
                 <span className="platform-glyph" aria-hidden="true">
