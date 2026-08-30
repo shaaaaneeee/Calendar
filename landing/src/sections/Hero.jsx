@@ -38,7 +38,7 @@ export default function Hero({ wrapRef, anim, reducedMotion }) {
         >
           {/* Left: copy */}
           <div className="hero-left">
-            <p className="eyebrow">CHROME EXTENSION — MV3</p>
+            <p className="hero-tagline">Wise planning. Planned wisely.</p>
             <h1 className="hero-headline">
               Every plan in your chats,<br />
               highlighted automatically.

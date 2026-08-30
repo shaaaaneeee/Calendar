@@ -28,7 +28,7 @@ const Footer = memo(function Footer() {
         </ul>
 
         <p className="footer-tag">
-          © 2026 PlanWise. Built for people who make plans in chat.
+          © 2026 PlanWise. Wise planning. Planned wisely.
         </p>
       </div>
     </footer>

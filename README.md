@@ -1,5 +1,7 @@
 # PlanWise
 
+*Wise planning. Planned wisely.*
+
 A Chrome extension that automatically detects plans in the messages **you write**, saves them to a shared social calendar, and lets you coordinate with groups — all without leaving your chat.
 
 ## What it does

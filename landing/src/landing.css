@@ -154,13 +154,17 @@ body { margin: 0; -webkit-font-smoothing: antialiased; }
   gap: 24px;
 }
 
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.08em;
+.hero-tagline {
+  font-family: var(--font-sans);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 16px;
   color: var(--secondary);
-  font-weight: 700;
   margin: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 .hero-headline {
