@@ -18,12 +18,23 @@ const DETECTION_RULES = {
       /\btonight\b/i,
       /\bnext\s+(week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
       /\bthis\s+(weekend|week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+      // Abbreviated weekdays ("next Fri", "this Sat") — qualified by
+      // next/this rather than bare, since bare 3-letter abbreviations like
+      // "sat"/"sun" collide with common words ("I sat down", "in the sun")
+      // and would false-positive the temporal score on unrelated text.
+      /\bnext\s+(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)\b/i,
+      /\bthis\s+(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)\b/i,
       /\b\d{1,2}(:\d{2})?\s*(am|pm)\b/i,
       /\b\d{1,2}\/\d{1,2}\b/,
       /\bin\s+\d+\s+(hours?|days?|weeks?)\b/i,
       /\bat\s+\d{1,2}\b/i,
       /\bnoon\b/i,
-      /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i
+      /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+      // Month-name dates ("March 3", "March 3-5", "15th of July") — narrow
+      // enough (month name directly adjacent to a day number) to be safe
+      // against false positives.
+      /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\s+\d{1,2}(st|nd|rd|th)?\b/i,
+      /\b\d{1,2}(st|nd|rd|th)?\s+(?:of\s+)?(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\b/i
     ]
   },
   action: {
@@ -125,6 +136,21 @@ const HARD_BLOCK_RULES = [
   /\blast\s+(night|week|month)\b/i,
   /\byesterday\b/i,
   /\bwas\s+supposed\s+to\b/i,
+
+  // Removing an existing plan from a calendar reads as a cancellation, not
+  // a new one — found independently in both CLINC150 ("take the 8am meeting
+  // ... off my calendar") and MASSIVE ("remove my office meeting event for
+  // next week"), which had been misclassified as CONFIRM via the "down for"/
+  // creation-phrase vote path.
+  /\b(remove|delete)\b.{0,40}\b(event|meeting|appointment)\b/i,
+  /\b(remove|take)\b.{0,100}\boff\s+(my\s+|the\s+)?calendar\b/i,
+  /\b(remove|delete)\b.{0,60}\b(from|on|in)\s+(my\s+|the\s+)?calendar\b/i,
+  // "delete lunch with steve", "remove lunch with sally" — same shape as
+  // the event/meeting/appointment pattern above but for a plain activity
+  // noun rather than those three specific words, still followed by a
+  // person ("with X") to keep it from over-matching unrelated "delete"/
+  // "remove" usage elsewhere.
+  /\b(remove|delete)\b.{0,20}\bwith\s+[a-z]+\b/i,
 
   // Past activity + past time marker
   /\b(had|ate|went|saw|was\s+at|were\s+at|watched|caught|visited)\b.{0,60}\b(yesterday|last\s+night|last\s+week|last\s+weekend|this\s+morning|earlier|already)\b/i,

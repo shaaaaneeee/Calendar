@@ -24,6 +24,40 @@ only the HTML body got updated to the branded template, not the subject.
 Changing it to "Confirm your PlanWise account" is free and may help
 marginally with spam placement.
 
+## Detection engine — review findings (2026-08-30)
+
+Found by running the full CLINC150 (github.com/clinc/oos-eval) and MASSIVE
+(github.com/alexa/massive) datasets through `analyzeIntent()`/`extractEvent()`
+as a bulk stress test (~40,000 utterances) — a mix of real bugs already
+fixed this session and some reviewed-and-accepted gaps. Recorded here so the
+review isn't lost, not because they're all urgent.
+
+**Worth doing later — recurring events (real feature, not just a detection
+fix):** `extractDateTime()` currently resolves "every Tuesday" to just the
+next occurrence with no recurrence info at all — `extension/detection/extractor.js`,
+see the `Recurring / range extraction — documented gaps` block in
+`tests/extractor.test.js` for the current baseline behavior. This needs
+support in **both** places to be useful: the detection/extraction side (a
+recurrence field, not just a single date) and the app side (calendar
+save/dashboard would need to actually understand and render a repeating
+event, not just a one-off `events` row). Bigger design question than a
+regex tweak — decide the data model before touching the regex.
+
+**Worth doing later — small, bounded fix:** `"mark my budget meeting down
+for every friday at two"` false-triggers because `down for` (a
+CREATION_PHRASES entry meaning "I'm available/willing") also matches inside
+the unrelated phrasal verb "mark it down for [date]" (meaning "note it").
+Narrow, low-frequency, but a real false positive in `rules.js`.
+
+**Reviewed and accepted, no action planned:**
+- Meta-questions about translation ("in spanish, meet me tomorrow is said how") misread as the plan they're quoting — fine to miss.
+- Proper-noun venue names ("Chili's", "Ruth's Steaks") aren't recognized as locations (`PLACE_LABELS` only has generic words) — fine, users can fill in location themselves before saving.
+- Location extraction has no recency/proximity preference architecturally (first match in the text wins) — same reasoning, not worth hardening since it's user-editable.
+- Flat negation anywhere in a long message can suppress an otherwise-real plan (a benign "not sure if..." aside far from the actual plan signal still applies a -3 penalty) — not considered a problem.
+- Bare "at 1-4" with no am/pm stays `null` rather than guessing — intentional (Phase 1a decision), same tradeoff as above.
+- No non-English support — the whole engine is English-regex-based, fails silently rather than wrong. Known, not planned.
+- A handful of dataset "false positives" that are actually defensible real plan-shaped content even in odd framing (e.g. "send chris an email say...want to go to dinner") — accepted as fine to trigger.
+
 ## Password requirements
 
 **Client-side: done.** `extension/signup/signup.js` now requires 8+

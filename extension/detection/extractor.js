@@ -22,6 +22,65 @@ const MONTH_INDEX = {
 
 const WRITTEN_NUM = "a|an|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen";
 
+const MONTH_NAMES_PATTERN = "january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec";
+
+// Abbreviated weekdays, so "next Fri" resolves the same as "next Friday" —
+// also used as the start-of-range token for date-range notes (see
+// extractNotes()), since neither adds a dateEnd field yet (single-date
+// return shape — see extractDateTime()'s range handling comment).
+const DAY_ABBREV = {
+  mon: "monday", tue: "tuesday", tues: "tuesday", wed: "wednesday",
+  thu: "thursday", thur: "thursday", thurs: "thursday",
+  fri: "friday", sat: "saturday", sun: "sunday",
+};
+const WEEKDAY_PATTERN = "mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday";
+
+function fullDayName(name) {
+  const lower = name.toLowerCase();
+  return DAY_ABBREV[lower] || lower;
+}
+
+// Spelled-out day-of-month ordinals ("march fifteenth", "the twenty third of
+// april") — real, common typed-chat phrasing that the numeric-only "15th"
+// cascade above doesn't cover. ONES covers 1st-9th standalone AND as the
+// second half of a compound tens word ("twenty-first"); the rest are
+// complete on their own.
+const ORDINAL_ONES = {
+  first: 1, second: 2, third: 3, fourth: 4, fifth: 5,
+  sixth: 6, seventh: 7, eighth: 8, ninth: 9,
+};
+const ORDINAL_WHOLE = {
+  ...ORDINAL_ONES,
+  tenth: 10, eleventh: 11, twelfth: 12, thirteenth: 13, fourteenth: 14,
+  fifteenth: 15, sixteenth: 16, seventeenth: 17, eighteenth: 18, nineteenth: 19,
+  twentieth: 20, thirtieth: 30,
+};
+const ORDINAL_ONES_PATTERN = Object.keys(ORDINAL_ONES).join("|");
+const ORDINAL_WHOLE_PATTERN = Object.keys(ORDINAL_WHOLE).join("|");
+// Matches either a compound ("twenty first"/"twenty-first"/"thirty second")
+// or a standalone ordinal word, as two alternatives so the caller can tell
+// which one matched from which capture groups are populated.
+const ORDINAL_DAY_WORD_PATTERN =
+  `(?:(twenty|thirty)[\\s-]?(${ORDINAL_ONES_PATTERN})|(${ORDINAL_WHOLE_PATTERN}))`;
+
+function ordinalWordToNum(tensWord, onesWord, wholeWord) {
+  if (wholeWord) return ORDINAL_WHOLE[wholeWord.toLowerCase()];
+  const tens = tensWord.toLowerCase() === "twenty" ? 20 : 30;
+  return tens + ORDINAL_ONES[onesWord.toLowerCase()];
+}
+
+// Spelled-out hours ("dinner at seven", "six thirty pm") — real typed-chat
+// phrasing, not just a voice-transcription artifact, though kept deliberately
+// narrow (whole hours + the 4 common quarter-marks only) rather than chasing
+// every ASR-style number-word combination ("seven hundred and thirty").
+const HOUR_WORDS = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6,
+  seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+};
+const MINUTE_WORDS = { fifteen: 15, thirty: 30, "forty five": 45, "forty-five": 45 };
+const HOUR_WORD_PATTERN = Object.keys(HOUR_WORDS).join("|");
+const MINUTE_WORD_PATTERN = "fifteen|thirty|forty[\\s-]five";
+
 function extractDateTime(text) {
   const now = new Date();
   let date = null;
@@ -49,12 +108,15 @@ function extractDateTime(text) {
     rawDate = "today";
 
   } else {
-    // next/this [weekday]
+    // next/this [weekday] — also matches the start of an abbreviated
+    // weekday range ("next Fri-Sun" resolves to next Friday; the "-Sun"
+    // half is picked up separately by extractNotes() below since this
+    // function only returns a single date, not a range).
     const qualifiedDay = text.match(
-      /\b(next|this)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i
+      new RegExp(`\\b(next|this)\\s+(${WEEKDAY_PATTERN})\\b`, "i")
     );
     if (qualifiedDay) {
-      date = resolveNamedDay(qualifiedDay[1], qualifiedDay[2]);
+      date = resolveNamedDay(qualifiedDay[1], fullDayName(qualifiedDay[2]));
       rawDate = qualifiedDay[0];
     }
 
@@ -120,26 +182,31 @@ function extractDateTime(text) {
       }
     }
 
-    // MM/DD
+    // MM/DD, optionally with an explicit year: "3/3", "3/3/2027", "3/3/27"
     if (!date) {
-      const explicit = text.match(/\b(\d{1,2})\/(\d{1,2})\b/);
+      const explicit = text.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/);
       if (explicit) {
         const month = parseInt(explicit[1], 10) - 1;
         const day   = parseInt(explicit[2], 10);
-        const d = new Date(now.getFullYear(), month, day);
-        if (d < now) d.setFullYear(d.getFullYear() + 1);
+        const explicitYear = explicit[3]
+          ? (explicit[3].length === 2 ? 2000 + parseInt(explicit[3], 10) : parseInt(explicit[3], 10))
+          : null;
+        const d = new Date(explicitYear || now.getFullYear(), month, day);
+        // Only roll forward to next year when the year was inferred, not typed —
+        // an explicit past year ("3/3/2020") means exactly that date, not a guess.
+        if (!explicitYear && d < now) d.setFullYear(d.getFullYear() + 1);
         date = toDateString(d);
         rawDate = explicit[0];
       }
     }
 
-    // Month name + day: "July 15th", "15th of July", "July 15"
+    // Month name + day, optionally with an explicit year: "July 15th",
+    // "15th of July", "July 15", "March 3, 2027", "3 March 2027"
     if (!date) {
-      const MONTH_NAMES = "january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec";
       const monthDay = text.match(
-        new RegExp(`\\b(${MONTH_NAMES})\\s+(\\d{1,2})(?:st|nd|rd|th)?\\b`, "i")
+        new RegExp(`\\b(${MONTH_NAMES_PATTERN})\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,?\\s+(\\d{4}))?\\b`, "i")
       ) || text.match(
-        new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?(${MONTH_NAMES})\\b`, "i")
+        new RegExp(`\\b(\\d{1,2})(?:st|nd|rd|th)?\\s+(?:of\\s+)?(${MONTH_NAMES_PATTERN})(?:,?\\s+(\\d{4}))?\\b`, "i")
       );
       if (monthDay) {
         let monthIdx, day;
@@ -151,11 +218,42 @@ function extractDateTime(text) {
           day = parseInt(monthDay[1], 10);
           monthIdx = MONTH_INDEX[monthDay[2].toLowerCase()];
         }
+        const explicitYear = monthDay[3] ? parseInt(monthDay[3], 10) : null;
+        if (monthIdx !== undefined && day >= 1 && day <= 31) {
+          const d = new Date(explicitYear || now.getFullYear(), monthIdx, day);
+          if (!explicitYear && d < now) d.setFullYear(d.getFullYear() + 1);
+          date = toDateString(d);
+          rawDate = monthDay[0];
+        }
+      }
+    }
+
+    // Month name + spelled-out day ordinal: "march fifteenth", "the twenty
+    // third of april", "twenty second march". No explicit-year support here
+    // (spelled-out years are an ASR-transcription artifact, not realistic
+    // typed-chat phrasing) — keep this bounded to what people actually type.
+    if (!date) {
+      const wordDay = text.match(
+        new RegExp(`\\b(${MONTH_NAMES_PATTERN})\\s+${ORDINAL_DAY_WORD_PATTERN}\\b`, "i")
+      ) || text.match(
+        new RegExp(`\\b${ORDINAL_DAY_WORD_PATTERN}\\s+(?:of\\s+)?(${MONTH_NAMES_PATTERN})\\b`, "i")
+      );
+      if (wordDay) {
+        let monthIdx, day;
+        if (MONTH_INDEX[wordDay[1]?.toLowerCase()] !== undefined) {
+          // "march fifteenth" — groups 1=month, 2=tens, 3=ones, 4=whole
+          monthIdx = MONTH_INDEX[wordDay[1].toLowerCase()];
+          day = ordinalWordToNum(wordDay[2], wordDay[3], wordDay[4]);
+        } else {
+          // "fifteenth of march" — groups 1=tens, 2=ones, 3=whole, 4=month
+          monthIdx = MONTH_INDEX[wordDay[4].toLowerCase()];
+          day = ordinalWordToNum(wordDay[1], wordDay[2], wordDay[3]);
+        }
         if (monthIdx !== undefined && day >= 1 && day <= 31) {
           const d = new Date(now.getFullYear(), monthIdx, day);
           if (d < now) d.setFullYear(d.getFullYear() + 1);
           date = toDateString(d);
-          rawDate = monthDay[0];
+          rawDate = wordDay[0];
         }
       }
     }
@@ -187,14 +285,62 @@ function extractDateTime(text) {
     rawTime = ampm[0];
   }
 
-  // bare "at N" — default to PM for 1-11
+  // Spelled-out hour with an explicit am/pm — "six pm", "seven thirty am".
+  // The am/pm marker makes this unambiguous, so (unlike the bare-hour-word
+  // case below) it doesn't need an "at" anchor to be safe from false
+  // positives.
+  if (!time) {
+    const wordAmpm = text.match(
+      new RegExp(`\\b(${HOUR_WORD_PATTERN})(?:[\\s-](${MINUTE_WORD_PATTERN}))?\\s*(a\\.?\\s*m\\.?|p\\.?\\s*m\\.?)\\b`, "i")
+    );
+    if (wordAmpm) {
+      let hours = HOUR_WORDS[wordAmpm[1].toLowerCase()];
+      const mins = wordAmpm[2] ? MINUTE_WORDS[wordAmpm[2].toLowerCase().replace(/-/, " ")] : 0;
+      const period = wordAmpm[3].replace(/[.\s]/g, "").toLowerCase();
+      if (period === "pm" && hours !== 12) hours += 12;
+      if (period === "am" && hours === 12) hours = 0;
+      time = `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+      rawTime = wordAmpm[0];
+    }
+  }
+
+  // bare "at N" — 5-11 is evening-shaped enough (dinner/drinks/calls) to
+  // guess PM safely, but 1-4 is genuinely ambiguous (could be 1-4am or
+  // 1-4pm with no other signal in the message) — silently guessing wrong
+  // there produces a calendar event at the wrong time with no warning, so
+  // leave it unset instead and let a later cascade (or the user) fill it in.
   if (!time) {
     const bare = text.match(/\bat\s+(\d{1,2})\b/i);
     if (bare) {
-      let hours = parseInt(bare[1], 10);
-      if (hours >= 1 && hours <= 11) hours += 12;
-      time = `${String(hours).padStart(2, "0")}:00`;
-      rawTime = bare[0];
+      const hours = parseInt(bare[1], 10);
+      if (hours >= 5 && hours <= 11) {
+        time = `${String(hours + 12).padStart(2, "0")}:00`;
+        rawTime = bare[0];
+      } else if (hours === 12 || hours >= 13) {
+        time = `${String(hours).padStart(2, "0")}:00`;
+        rawTime = bare[0];
+      }
+    }
+  }
+
+  // bare "at <hour word>" — word-form equivalent of the above, same
+  // evening-shaped-hours PM guess and same 1-4 ambiguity guard. Anchored on
+  // "at" (unlike the am/pm word case above) since a bare hour word with no
+  // marker either way needs that context to be a safe, low-false-positive match.
+  if (!time) {
+    const bareWord = text.match(
+      new RegExp(`\\bat\\s+(${HOUR_WORD_PATTERN})(?:[\\s-](${MINUTE_WORD_PATTERN}))?\\b`, "i")
+    );
+    if (bareWord) {
+      const hours = HOUR_WORDS[bareWord[1].toLowerCase()];
+      const mins = bareWord[2] ? MINUTE_WORDS[bareWord[2].toLowerCase().replace(/-/, " ")] : 0;
+      if (hours >= 5 && hours <= 11) {
+        time = `${String(hours + 12).padStart(2, "0")}:${String(mins).padStart(2, "0")}`;
+        rawTime = bareWord[0];
+      } else if (hours === 12) {
+        time = `12:${String(mins).padStart(2, "0")}`;
+        rawTime = bareWord[0];
+      }
     }
   }
 
@@ -313,6 +459,10 @@ const PARTICIPANT_IGNORE = new Set([
   "i", "me", "the", "a", "an", "and", "but", "or", "so", "we", "you", "he", "she",
   "they", "it", "this", "that", "my", "your", "his", "her", "our", "their", "its",
   "us", "him", "them",
+  // Prepositions that commonly sit right after an anchor cue ("meet at the
+  // gym", "meet in the lobby", "meet by/for/to/on/of ...") — without these,
+  // each one was getting title-cased and captured as a person's name.
+  "at", "in", "on", "by", "for", "to", "of",
   "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
   "tomorrow", "tonight", "today",
   "january", "february", "march", "april", "may", "june",
@@ -378,6 +528,20 @@ function extractParticipants(text) {
     }
   }
 
+  // Second, independent pattern: a capitalized name immediately followed by
+  // a presence-verb phrase ("Alex is coming too", "Sam's in", "Jordan said
+  // yes") has no ANCHOR_CUES word to anchor on above, so it's otherwise
+  // invisible. Unlike the anchor-cue path (which deliberately allows
+  // lowercase names — see its comment), this path requires capitalization
+  // as its own false-positive guard, since it has nothing else to anchor on.
+  const PRESENCE_VERB_RE =
+    /\b([A-Z][a-zA-Z']{1,})(?:'s|\s+is)\s+(?:coming|in|down|game)\b|\b([A-Z][a-zA-Z']{1,})\s+said\s+yes\b/g;
+  let presenceMatch;
+  while ((presenceMatch = PRESENCE_VERB_RE.exec(text)) !== null) {
+    const name = presenceMatch[1] || presenceMatch[2];
+    if (isParticipantCandidate(name)) found.add(name);
+  }
+
   return [...found];
 }
 
@@ -400,6 +564,29 @@ function extractNotes(text) {
       }
     }
   }
+
+  // Date ranges ("next Fri-Sun", "March 3-5") — extractDateTime() only
+  // returns a single start date, so the raw range text is preserved here
+  // rather than silently dropping the "through Sunday"/"-5" half.
+  const RANGE_PATTERNS = [
+    new RegExp(`\\b(?:next|this)\\s+(?:${WEEKDAY_PATTERN})\\s*(?:-|–|to)\\s*(?:${WEEKDAY_PATTERN})\\b`, "i"),
+    new RegExp(`\\b(?:${MONTH_NAMES_PATTERN})\\s+\\d{1,2}(?:st|nd|rd|th)?\\s*(?:-|–|to)\\s*\\d{1,2}(?:st|nd|rd|th)?\\b`, "i"),
+  ];
+  for (const pattern of RANGE_PATTERNS) {
+    const match = text.match(pattern);
+    if (match) {
+      notes.push(match[0]);
+      break;
+    }
+  }
+
+  // Group-size phrases ("the four of us", "six of us") — no specific name
+  // to extract, so this can't go in participants; note it instead of
+  // silently dropping the headcount.
+  const groupSize = text.match(
+    new RegExp(`\\b(?:the\\s+)?(?:\\d+|${WRITTEN_NUM})\\s+of\\s+us\\b`, "i")
+  );
+  if (groupSize) notes.push(groupSize[0]);
 
   // Exact dedup
   const unique = [...new Set(notes)];

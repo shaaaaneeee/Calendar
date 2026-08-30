@@ -35,6 +35,21 @@ const DAY_MONTH_NAMES = new Set([
   "September", "October", "November", "December", "Tomorrow", "Tonight", "Today"
 ]);
 
+// Words that sit right after a person-cue but are never names themselves -
+// mirrors extractor.js's PARTICIPANT_IGNORE, kept as its own small copy
+// since engine.js and extractor.js are deliberately standalone/independent.
+const PERSON_CUE_IGNORE = new Set([
+  "me", "you", "us", "them", "him", "her", "everyone", "everybody", "the",
+  "a", "an", "and", "at", "in", "on", "by", "for", "to", "of", "up",
+  "my", "your", "his", "our", "their", "its",
+]);
+// Deliberately just "with"/"meet" - "call"/"text"/"invite"/"join" were tried
+// too and reverted: they're common in totally unrelated contexts ("call my
+// bank", "text mom", "call gusto pizza about my reservation"), and against
+// the full CLINC150 + MASSIVE datasets they added far more false positives
+// than the real plan-shaped cases they caught were worth.
+const PERSON_CUE_WORDS = ["with", "meet"];
+
 // Cheap heuristic: does the text likely name a specific person? Used only to
 // gate the structural-confirm fallback below, not full participant extraction.
 function hasLikelyPersonName(text) {
@@ -42,6 +57,22 @@ function hasLikelyPersonName(text) {
   for (let i = 1; i < words.length; i += 1) {
     const word = words[i].replace(/[^a-zA-Z]/g, "");
     if (word.length > 1 && word[0] === word[0].toUpperCase() && !DAY_MONTH_NAMES.has(word)) {
+      return true;
+    }
+  }
+
+  // A capitalization-only check misses real, casually-typed messages where
+  // the name just isn't capitalized ("schedule a meeting with tom for
+  // 6pm") - identical in every other way to a capitalized version that DID
+  // trigger. extractor.js's ANCHOR_CUES already makes this same allowance
+  // deliberately for extraction; this mirrors it for the detection gate.
+  for (let i = 0; i < words.length - 1; i += 1) {
+    const cue = words[i].toLowerCase().replace(/[^a-z]/g, "");
+    if (!PERSON_CUE_WORDS.includes(cue)) continue;
+    const next = words[i + 1].replace(/[^a-zA-Z]/g, "").toLowerCase();
+    if (next.length > 1 && !PERSON_CUE_IGNORE.has(next) && !DAY_MONTH_NAMES.has(
+      next.charAt(0).toUpperCase() + next.slice(1)
+    )) {
       return true;
     }
   }
@@ -228,8 +259,31 @@ function classifyIntent(text, structuralMatches = {}) {
   );
   const hasLocationSignal = Boolean(structuralMatches.location || structuralMatches.placeWords);
 
+  // "gym" (and words like it) match BOTH the action and location categories,
+  // so a habitual statement like "gym every Tuesday at 6" was slipping past
+  // the habitual-statement guard this comment already describes above - it
+  // has action+temporal+location, same shape as a real one-time plan, and
+  // "every" was never actually checked for here. An explicit "let's do gym
+  // every Tuesday" still triggers fine via the CREATION_PHRASES vote path
+  // above; this only removes the *implicit* fallback's willingness to infer
+  // a specific plan from a stated routine.
+  const isHabitual = /\bevery\b/i.test(text);
+
+  // A question about an existing plan ("do I have a meeting with steve this
+  // week", "is my meeting with bob tomorrow at 3pm") has the exact same
+  // action+temporal+person shape as a real proposal, but it's asking, not
+  // proposing - found once hasLikelyPersonName started allowing lowercase
+  // names (needed for "schedule a meeting with tom at 6pm" to work), which
+  // also let these through since they say "meeting with <name>" too.
+  // Deliberately excludes can/could/would/will - those commonly prefix a
+  // genuine casual proposal ("can we meet at the gym tomorrow") that should
+  // still reach structural_confirm, not just a query about an existing plan.
+  const isQuestion = /^(do|does|did|is|are|was|were|have|has|when|what|who|how)\b/i.test(text.trim());
+
   if (
     votes.reject === 0 &&
+    !isHabitual &&
+    !isQuestion &&
     hasActionSignal &&
     structuralMatches.temporal &&
     (hasLocationSignal || hasLikelyPersonName(text))

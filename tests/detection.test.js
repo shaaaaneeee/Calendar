@@ -344,6 +344,39 @@ describe('False positives — should NOT trigger after hardening', () => {
     expect(r.triggered).toBe(false);
   });
 
+  // Found by running the full CLINC150 (github.com/clinc/oos-eval) and
+  // MASSIVE (github.com/alexa/massive) datasets through analyzeIntent() as
+  // a bulk false-positive sweep — both independently surfaced this exact
+  // failure mode: removing an existing plan was misread as proposing a new
+  // one, because "down for"/other creation-phrase votes don't know the verb
+  // is "remove", not "confirm".
+  test('"take X off my calendar" is a cancellation, not a new plan (found via CLINC150)', () => {
+    const r = detect("i want to take the 8am meeting with sam on monday the 5th off my calendar");
+    expect(r.triggered).toBe(false);
+    expect(r.intent).toBe(INTENT.REJECT);
+  });
+
+  test('"remove my ... meeting/event" is a cancellation, not a new plan (found via MASSIVE)', () => {
+    const r = detect("remove my office meeting event for next week");
+    expect(r.triggered).toBe(false);
+    expect(r.intent).toBe(INTENT.REJECT);
+  });
+
+  // The two patterns above only covered "remove" and only "off/from
+  // calendar" - re-sweeping the datasets after the lowercase-name fix below
+  // surfaced these two closely-related gaps in the same investigation.
+  test('"delete lunch with X" is a cancellation (found via CLINC150 re-sweep)', () => {
+    const r = detect("delete lunch with steve on friday please");
+    expect(r.triggered).toBe(false);
+    expect(r.intent).toBe(INTENT.REJECT);
+  });
+
+  test('"remove ... that is on my calendar" is a cancellation ("on", not just "from")', () => {
+    const r = detect("please remove lunch with sally that is on my calendar on tuesday the 8th");
+    expect(r.triggered).toBe(false);
+    expect(r.intent).toBe(INTENT.REJECT);
+  });
+
 });
 
 
@@ -383,6 +416,60 @@ describe('Structural confirm — no literal creation phrase, but a real plan', (
     const r = analyzeIntent('rehearsal tomorrow', customRules);
     expect(r.triggered).toBe(false);
     expect(r.reason).toBe('no_intent_signal_drop');
+  });
+
+  // Found by running the full CLINC150 + MASSIVE datasets through
+  // analyzeIntent(): hasLikelyPersonName() only recognized capitalized
+  // names, so "schedule a meeting with tom for 6pm" silently didn't
+  // trigger while the identical sentence with "Tom" did. First attempt at
+  // fixing this (allowing a lowercase word after ANY of
+  // with/meet/join/call/text/invite) caused a much bigger regression -
+  // "call"/"text" are common in totally unrelated contexts ("call my
+  // bank") - so this only allows it after with/meet specifically.
+  test('lowercase name after "with"/"meet" still triggers structural_confirm', () => {
+    const r = detect("schedule a meeting with tom for 6pm");
+    expect(r.triggered).toBe(true);
+    expect(r.reason).toBe('structural_confirm');
+  });
+
+  test('"call my mother" does not falsely gain a person signal from "my"', () => {
+    // Regression guard for the fix above - "call" is not a person-cue word,
+    // and even if it were, "my" must not be treated as the name.
+    const r = detect("remind me to call my mother saturday morning");
+    expect(r.triggered).toBe(false);
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// QUESTIONS ABOUT AN EXISTING PLAN — must not read as proposing a new one
+// ─────────────────────────────────────────────
+
+describe('Questions about an existing plan are not a new proposal', () => {
+
+  // Same investigation as above: once lowercase names could satisfy
+  // structural_confirm, questions like these (found in MASSIVE's
+  // calendar_query intent) started matching too, since "meeting with
+  // <name>" appears in both a proposal AND a question about one.
+  test('"do I have a meeting with X" does not trigger', () => {
+    const r = detect("do i have meeting with steve this week");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('"is my meeting with X at Y" does not trigger', () => {
+    const r = detect("is my meeting with bob tomorrow at three pm");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('"when is the meeting with X" does not trigger', () => {
+    const r = detect("when is that meeting with my boss next week");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('a genuine casual proposal starting with "can" still triggers (not treated as a question)', () => {
+    const r = detect("can we meet at the gym tomorrow");
+    expect(r.triggered).toBe(true);
   });
 
 });
@@ -431,6 +518,160 @@ describe('Must-trigger — should still trigger after hardening', () => {
   test('tmrw invitation with you in', () => {
     // you in (creation phrase) + gym (action) + tmrw + time (temporal)
     const r = detect("gym tmrw at 6pm, you in?");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// MULTI-DAY / DATE-RANGE PLANS
+// ─────────────────────────────────────────────
+
+describe('Multi-day / date-range plans', () => {
+
+  test('road trip with a weekday range still triggers', () => {
+    // "you in" (creation phrase) + trip (action) + "next Fri-Sun" (temporal) —
+    // extractor.js only pulls the start date out of the range, but detection
+    // itself doesn't depend on extraction, so this should trigger the same
+    // as a single-day plan.
+    const r = detect("road trip next Fri-Sun, you in?");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+  test('month-day range with a creation phrase still triggers', () => {
+    const r = detect("let's meet up March 3-5");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// GROUP PLANS (3+ people)
+// ─────────────────────────────────────────────
+
+describe('Group plans (3+ people)', () => {
+
+  test('a long comma-chained participant list does not prevent triggering', () => {
+    const r = detect("dinner tomorrow at 7 with Sarah, James, Priya, and Alex");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+  test('KNOWN GAP — an unrelated negation aside anywhere in a longer message tanks the score', () => {
+    // Real plan, real creation phrase ("let's"), but the flat-negation fallback
+    // in scoreText() (engine.js) applies its -3 penalty to ANY "not" in the
+    // text, not just one near the actual plan signals — proximity negation
+    // (the "smart" check) only kicks in when a negation word IS near a
+    // signal; when it isn't, this "dumb" fallback still fires unconditionally.
+    // Documenting current (arguably wrong) behavior rather than reworking
+    // engine.js's negation system here — see the detection-improvement plan,
+    // Phase 2 note on this exact case.
+    const r = detect(
+      "let's do dinner tomorrow at 7 with Sarah, James, Priya, and Alex - not sure if everyone's free though, we'll see"
+    );
+    expect(r.triggered).toBe(false);
+    expect(r.score).toBeLessThan(window.DETECTION_THRESHOLD);
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// RECURRING LANGUAGE — habitual statements should not read as one-time plans
+// ─────────────────────────────────────────────
+
+describe('Recurring language', () => {
+
+  test('"every weekend" — below threshold, no action/location signal', () => {
+    const r = detect("we hang out every weekend");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('"every Thursday night" — below threshold', () => {
+    const r = detect("class every Thursday night");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('"gym every Tuesday at 6" — has action+temporal+location, but "every" blocks the implicit structural-confirm fallback', () => {
+    const r = detect("gym every Tuesday at 6");
+    expect(r.triggered).toBe(false);
+    expect(r.reason).toBe('no_intent_signal_drop');
+  });
+
+  test('an explicit creation phrase still overrides the habitual guard', () => {
+    // "every" only suppresses the *implicit* structural_confirm fallback —
+    // an actual creation phrase should still win normally.
+    const r = detect("let's do gym every Tuesday at 6");
+    expect(r.triggered).toBe(true);
+    expect(r.intent).toBe(INTENT.CONFIRM);
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// NON-ENGLISH AND EMOJI TEXT — should fail safe (no crash, no false-positive)
+// ─────────────────────────────────────────────
+
+describe('Non-English and emoji text', () => {
+
+  test('non-English text does not crash and does not false-positive', () => {
+    // None of the engine's patterns are English-aware enough to match this —
+    // that's correct silent non-detection, not a bug, just undocumented
+    // until now. See the detection-improvement plan, Phase 4, on the ceiling
+    // of a pure-regex engine with non-English text.
+    const r = detect("cena mañana a las 8");
+    expect(r.triggered).toBe(false);
+  });
+
+  test('emoji-heavy excitement does not break or falsely suppress detection', () => {
+    // Score correctly reaches threshold (action+temporal), but with no
+    // creation phrase and no location/person for structural_confirm, this
+    // correctly does not trigger — same shape as any other bare
+    // action+temporal message, emoji doesn't change that.
+    const r = detect("dinner tomorrow 🎉🎉🎉");
+    expect(r.score).toBeGreaterThanOrEqual(window.DETECTION_THRESHOLD);
+    expect(r.triggered).toBe(false);
+    expect(r.reason).toBe('no_intent_signal_drop');
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// VERY SHORT VALID TEXTS — documented expected-misses, not regressions
+// ─────────────────────────────────────────────
+
+describe('Very short valid texts', () => {
+
+  test('"7pm?" alone has no action/location signal — correctly does not trigger', () => {
+    // In a real chat thread this could be a reply continuing an earlier
+    // plan conversation PlanWise has no visibility into (compose-box-only,
+    // no thread history) — a bare time with nothing else is genuinely not
+    // enough signal on its own. Documented so a future contributor doesn't
+    // "fix" this into a regression by loosening the threshold.
+    const r = detect("7pm?");
+    expect(r.triggered).toBe(false);
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// PLAN BURIED IN A LONG NOISY MESSAGE
+// ─────────────────────────────────────────────
+
+describe('Plan buried in a long noisy message', () => {
+
+  test('a real plan sentence still triggers despite unrelated surrounding chatter', () => {
+    const r = detect(
+      "omg guess what happened today, work was crazy busy, anyway are you free tomorrow at 7 for dinner? lmk!"
+    );
     expect(r.triggered).toBe(true);
     expect(r.intent).toBe(INTENT.CONFIRM);
   });

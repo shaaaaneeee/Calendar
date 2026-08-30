@@ -63,6 +63,50 @@ describe('Date extraction', () => {
     expect(r.rawDate).toBe('12/25');
   });
 
+  test('explicit date MM/DD/YYYY', () => {
+    const r = extractEvent("dinner on 3/3/2027");
+    expect(r.date).toBe('2027-03-03');
+  });
+
+  test('explicit date MM/DD/YY (2-digit year)', () => {
+    const r = extractEvent("dinner on 3/3/27");
+    expect(r.date).toBe('2027-03-03');
+  });
+
+  test('explicit past year is honored, not rolled forward', () => {
+    const r = extractEvent("we met on 3/3/2020");
+    expect(r.date).toBe('2020-03-03');
+  });
+
+  test('month name with explicit year', () => {
+    const r = extractEvent("let's do March 3, 2027");
+    expect(r.date).toBe('2027-03-03');
+  });
+
+  test('day-then-month with explicit year', () => {
+    const r = extractEvent("catch up on 3 March 2027");
+    expect(r.date).toBe('2027-03-03');
+  });
+
+  // Spelled-out day ordinals ("march fifteenth") — found via a real-world
+  // phrase-diversity check against the MASSIVE dataset's calendar-domain
+  // slot annotations (github.com/alexa/massive), which surfaced this as a
+  // common typed pattern the numeric-only "15th" cascade didn't cover.
+  test('month name with spelled-out ordinal day', () => {
+    const r = extractEvent("let's do march fifteenth");
+    expect(r.date).toBe('2027-03-15');
+  });
+
+  test('spelled-out ordinal day then month name', () => {
+    const r = extractEvent("catch up the twenty third of april");
+    expect(r.date).toBe('2027-04-23');
+  });
+
+  test('compound twenty-something ordinal, month first', () => {
+    const r = extractEvent("trip june twenty seventh");
+    expect(r.date).toBe('2027-06-27');
+  });
+
   test('relative — in 2 days', () => {
     const r = extractEvent("let's meet in 2 days");
     const expected = new Date();
@@ -94,6 +138,52 @@ describe('Date extraction', () => {
     expect(r.date).toBeNull();
   });
 
+  test('named day abbreviation — next Fri', () => {
+    const r = extractEvent("drinks next Fri");
+    expect(r.date).not.toBeNull();
+    expect(r.rawDate.toLowerCase()).toBe('next fri');
+  });
+
+  test('weekday range — start date extracted, range preserved in notes', () => {
+    const r = extractEvent("road trip next Fri-Sun, you in?");
+    expect(r.date).not.toBeNull();
+    expect(r.rawDate.toLowerCase()).toBe('next fri');
+    expect(r.notes.toLowerCase()).toContain('fri-sun');
+  });
+
+  test('month-day range — start date extracted, range preserved in notes', () => {
+    const r = extractEvent("trip March 3-5, you in?");
+    expect(r.date).not.toBeNull();
+    expect(r.notes).toContain('March 3-5');
+  });
+
+});
+
+
+// ─────────────────────────────────────────────
+// RECURRING EXTRACTION — documented gap, not fixed yet (deferred, see the
+// detection-improvement plan Phase 1d: bigger design question than a regex
+// tweak — does "every Tuesday" become one event or a recurrence the
+// calendar-save layer understands?)
+// ─────────────────────────────────────────────
+
+describe('Recurring / range extraction — documented gaps', () => {
+
+  test('"every Tuesday" resolves to just the next occurrence, no recurrence info', () => {
+    // Baseline snapshot of today's actual behavior, captured so a future
+    // regression here is visible even before recurrence support lands.
+    const r = extractEvent("gym every Tuesday");
+    expect(r.date).not.toBeNull(); // next Tuesday's date
+    expect(r.notes).toBe('');      // "every Tuesday" is NOT preserved anywhere
+    expect(r.title).toBe('Gym');
+  });
+
+  test('"every other Friday" is silently treated the same as a single "Friday"', () => {
+    const r = extractEvent("board game night every other Friday");
+    expect(r.date).not.toBeNull(); // resolves to next Friday, "every other" is lost
+    expect(r.notes).toBe('');
+  });
+
 });
 
 
@@ -123,14 +213,67 @@ describe('Time extraction', () => {
     expect(r.time).toBe('00:00');
   });
 
-  test('bare number defaults to PM heuristic', () => {
+  test('bare number 5-11 defaults to PM (evening-shaped hours)', () => {
     const r = extractEvent("dinner at 7 tomorrow");
     expect(r.time).toBe('19:00');
+  });
+
+  test('bare number 6 defaults to PM', () => {
+    const r = extractEvent("gym at 6");
+    expect(r.time).toBe('18:00');
+  });
+
+  test('bare number 1-4 is ambiguous — left null rather than guessed', () => {
+    const r = extractEvent("call me at 3");
+    expect(r.time).toBeNull();
+  });
+
+  test('bare number 1 is ambiguous — left null', () => {
+    const r = extractEvent("meet at 1");
+    expect(r.time).toBeNull();
+  });
+
+  test('bare number 12 still resolves to noon', () => {
+    const r = extractEvent("lunch at 12");
+    expect(r.time).toBe('12:00');
   });
 
   test('no time — returns null', () => {
     const r = extractEvent("dinner tomorrow");
     expect(r.time).toBeNull();
+  });
+
+  // Spelled-out hours ("dinner at seven", "six thirty pm") — same
+  // real-world-diversity check against MASSIVE's calendar/datetime/alarm
+  // slot annotations as the date tests above.
+  test('spelled-out hour with explicit pm — no "at" needed', () => {
+    const r = extractEvent("dinner tomorrow six pm");
+    expect(r.time).toBe('18:00');
+  });
+
+  test('spelled-out hour and minutes with explicit am', () => {
+    const r = extractEvent("meeting seven thirty am");
+    expect(r.time).toBe('07:30');
+  });
+
+  test('spelled-out hour with dotted am/pm ("p. m.")', () => {
+    const r = extractEvent("call at eight forty five p. m.");
+    expect(r.time).toBe('20:45');
+  });
+
+  test('bare spelled-out hour, evening-shaped, defaults PM', () => {
+    const r = extractEvent("dinner at six");
+    expect(r.time).toBe('18:00');
+  });
+
+  test('bare spelled-out hour, ambiguous 1-4, left null', () => {
+    const r = extractEvent("call me at three");
+    expect(r.time).toBeNull();
+  });
+
+  test('bare spelled-out hour with minutes, evening-shaped', () => {
+    const r = extractEvent("meet at six thirty");
+    expect(r.time).toBe('18:30');
   });
 
 });
@@ -243,6 +386,27 @@ describe('Participant extraction', () => {
     expect(r.participants).not.toContain('Excited');
   });
 
+  test('finds a name with no anchor cue word — "is coming"', () => {
+    const r = extractEvent("dinner tomorrow, Alex is coming too");
+    expect(r.participants).toContain('Alex');
+  });
+
+  test('finds a name with no anchor cue word — possessive "\'s in"', () => {
+    const r = extractEvent("dinner tomorrow, Sam's in");
+    expect(r.participants).toContain('Sam');
+  });
+
+  test('finds a name with no anchor cue word — "said yes"', () => {
+    const r = extractEvent("dinner tomorrow, Jordan said yes");
+    expect(r.participants).toContain('Jordan');
+  });
+
+  test('does not match a lowercase name via the presence-verb path', () => {
+    const r = extractEvent("dinner tomorrow, alex is coming too");
+    expect(r.participants).not.toContain('alex');
+    expect(r.participants).not.toContain('Alex');
+  });
+
   test('still finds a name preceded by "and"', () => {
     const r = extractEvent("lunch tomorrow with Sarah and James");
     expect(r.participants).toContain('Sarah');
@@ -260,6 +424,28 @@ describe('Participant extraction', () => {
     expect(r.participants).toContain('Weile');
     expect(r.participants).toContain('Kaden');
     expect(r.participants).toContain('John');
+  });
+
+  test('chains a larger 4-name comma-separated list (group plan)', () => {
+    const r = extractEvent("lunch with Weile, Kaden, John and Priya tomorrow");
+    expect(r.participants).toEqual(
+      expect.arrayContaining(['Weile', 'Kaden', 'John', 'Priya'])
+    );
+    expect(r.participants).toHaveLength(4);
+  });
+
+  test('does not hallucinate a preposition right after a cue word as a name — "at"', () => {
+    const r = extractEvent("let's meet at the gym tomorrow");
+    expect(r.participants).not.toContain('At');
+  });
+
+  test('does not hallucinate a preposition right after a cue word as a name — "in"/"by"/"on"/"for"/"to"/"of"', () => {
+    expect(extractEvent("meet in the lobby").participants).not.toContain('In');
+    expect(extractEvent("meet by the entrance").participants).not.toContain('By');
+    expect(extractEvent("meet on Friday").participants).not.toContain('On');
+    expect(extractEvent("meet for lunch").participants).not.toContain('For');
+    expect(extractEvent("meet to discuss").participants).not.toContain('To');
+    expect(extractEvent("meet of the club").participants).not.toContain('Of');
   });
 
   test('does not hallucinate a name from a bare "and" mid-sentence', () => {
@@ -291,6 +477,14 @@ describe('Location extraction', () => {
 
   test('no location — returns null', () => {
     expect(extractEvent("dinner tomorrow at 7").location).toBeNull();
+  });
+
+  test('prefers the real plan location over an unrelated place mentioned earlier in the message', () => {
+    // Verified this already works — PLACE_LABELS is a first-match loop with
+    // no recency preference, so this was worth locking in with a test
+    // rather than assuming it was broken.
+    const r = extractEvent("I was at the mall yesterday but let's meet at the gym tomorrow");
+    expect(r.location).toBe('Gym');
   });
 
   test('custom place word from settings', () => {
@@ -340,6 +534,16 @@ describe('Notes extraction', () => {
     expect(r.notes).toBe('');
   });
 
+  test('group-size phrase — numeric', () => {
+    const r = extractEvent("dinner tomorrow, the 4 of us");
+    expect(r.notes).toContain('4 of us');
+  });
+
+  test('group-size phrase — written number', () => {
+    const r = extractEvent("dinner tomorrow, six of us");
+    expect(r.notes).toContain('six of us');
+  });
+
 });
 
 
@@ -380,6 +584,17 @@ describe('Full extractEvent()', () => {
     const r = extractEvent("dinner tomorrow at 7, bring your ID");
     expect(r.title).toBe('Dinner');
     expect(r.notes).toContain('your ID');
+  });
+
+  test('emoji does not break time/date extraction', () => {
+    const r = extractEvent("dinner tomorrow 🍕 at 7pm");
+    expect(r.date).not.toBeNull();
+    expect(r.time).toBe('19:00');
+  });
+
+  test('emoji does not break participant extraction', () => {
+    const r = extractEvent("dinner tomorrow with Alex 🎉");
+    expect(r.participants).toContain('Alex');
   });
 
 });
