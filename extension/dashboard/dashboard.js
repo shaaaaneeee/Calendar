@@ -53,6 +53,11 @@ async function loadEvents() {
   try {
     const user = await Auth.getUser();
     if (user) {
+      try {
+        await Events.materializeRecurrences();
+      } catch (err) {
+        console.warn("[PlanWise] Failed to materialize recurring events:", err.message);
+      }
       allEvents = await Events.getAll();
     } else {
       // Not logged in - fall back to local confirmed events
