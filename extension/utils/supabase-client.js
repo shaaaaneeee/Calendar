@@ -232,6 +232,107 @@ const SupabaseEvents = {
 
     if (error) throw error;
   },
+
+  /**
+   * Create a new recurring series and immediately materialize its first
+   * batch of occurrences, so upcoming dates appear without waiting for
+   * the next dashboard load.
+   */
+  async createRecurring(series) {
+    const user = await SupabaseAuth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await db
+      .from('recurrences')
+      .insert({
+        user_id:        user.id,
+        day_of_week:    series.dayOfWeek,
+        interval_weeks: series.intervalWeeks,
+        title:          series.title        || 'Plan',
+        event_time:     series.time         || null,
+        location:       series.location     || null,
+        participants:   series.participants || [],
+        notes:          series.notes        || '',
+        source_text:    series.sourceText   || '',
+        platform:       series.platform     || '',
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await SupabaseEvents.materializeRecurrences();
+    return data;
+  },
+
+  /** Extend the current user's recurring series to the materialization horizon. */
+  async materializeRecurrences() {
+    const { error } = await db.rpc('materialize_recurrences');
+    if (error) throw error;
+  },
+
+  /**
+   * Edit a single occurrence without affecting the rest of its series.
+   * Detaches it (is_exception = true) so a later whole-series edit skips it.
+   */
+  async updateOccurrence(id, updates) {
+    const { data, error } = await db
+      .from('events')
+      .update({
+        title:        updates.title,
+        event_date:   updates.date,
+        event_time:   updates.time,
+        location:     updates.location,
+        participants: updates.participants,
+        notes:        updates.notes,
+        is_exception: true,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Edit every non-detached occurrence of a series: updates the series
+   * template (so future materialization uses the new values) and
+   * bulk-updates existing occurrence rows, skipping ones already detached
+   * via updateOccurrence().
+   */
+  async updateSeries(recurrenceId, updates) {
+    const { error: seriesErr } = await db
+      .from('recurrences')
+      .update({
+        title:        updates.title,
+        event_time:   updates.time,
+        location:     updates.location,
+        participants: updates.participants,
+        notes:        updates.notes,
+      })
+      .eq('id', recurrenceId);
+    if (seriesErr) throw seriesErr;
+
+    const { error: occErr } = await db
+      .from('events')
+      .update({
+        title:        updates.title,
+        event_time:   updates.time,
+        location:     updates.location,
+        participants: updates.participants,
+        notes:        updates.notes,
+      })
+      .eq('recurrence_id', recurrenceId)
+      .eq('is_exception', false);
+    if (occErr) throw occErr;
+  },
+
+  /** Delete an entire recurring series — cascades to every occurrence, including detached ones. */
+  async deleteSeries(recurrenceId) {
+    const { error } = await db.from('recurrences').delete().eq('id', recurrenceId);
+    if (error) throw error;
+  },
 };
 
 

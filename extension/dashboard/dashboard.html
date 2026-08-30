@@ -157,6 +157,17 @@
       </div>
     </div>
     <div id="modal-source" class="modal-quote px-5 py-3 border-t border-outline font-mono text-[11px] text-on-muted bg-surface-low italic hidden"></div>
+    <div id="modal-recurrence-scope" class="hidden px-5 py-2 border-t border-outline flex gap-4 items-center">
+      <span class="font-mono text-[9px] font-bold tracking-[0.14em] uppercase text-on-muted">Applies to</span>
+      <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+        <input type="radio" name="recurrence-scope" id="modal-scope-occurrence" value="occurrence" checked class="cursor-pointer" />
+        This event
+      </label>
+      <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+        <input type="radio" name="recurrence-scope" id="modal-scope-series" value="series" class="cursor-pointer" />
+        Entire series
+      </label>
+    </div>
     <p id="modal-error" class="hidden px-5 py-2 font-mono text-[10px] text-error bg-error-bg border-t border-error/30"></p>
     <div class="modal-foot flex gap-2 px-5 py-3 border-t border-outline">
       <button id="modal-save"   class="flex-1 py-2 font-mono text-[10px] font-bold tracking-wider uppercase bg-primary text-on-primary border border-primary shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none">Save</button>

@@ -35,6 +35,13 @@ const DAY_ABBREV = {
 };
 const WEEKDAY_PATTERN = "mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun|monday|tuesday|wednesday|thursday|friday|saturday|sunday";
 
+// 0=Sunday..6=Saturday — matches both JS Date.getDay() and Postgres
+// extract(dow from ...), so no conversion is needed at the Supabase layer.
+const DAY_INDEX = {
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+  thursday: 4, friday: 5, saturday: 6,
+};
+
 function fullDayName(name) {
   const lower = name.toLowerCase();
   return DAY_ABBREV[lower] || lower;
@@ -87,6 +94,8 @@ function extractDateTime(text) {
   let time = null;
   let rawDate = null;
   let rawTime = null;
+  let recurrenceDayOfWeek = null;
+  let recurrenceIntervalWeeks = null;
 
   // ── DATE ────────────────────────────────────────────────────────────────
 
@@ -108,6 +117,21 @@ function extractDateTime(text) {
     rawDate = "today";
 
   } else {
+    // every [other] [weekday] → recurring weekly/bi-weekly plan. Must run
+    // before the standalone-weekday check below, which would otherwise
+    // silently swallow "every Tuesday" down to just "tuesday" and lose
+    // the recurrence entirely (the documented gap this task closes).
+    const everyDay = text.match(
+      new RegExp(`\\bevery\\s+(other\\s+)?(${WEEKDAY_PATTERN})\\b`, "i")
+    );
+    if (everyDay) {
+      const dayName = fullDayName(everyDay[2]);
+      date = resolveStandaloneDay(dayName);
+      rawDate = everyDay[0];
+      recurrenceDayOfWeek = DAY_INDEX[dayName];
+      recurrenceIntervalWeeks = everyDay[1] ? 2 : 1;
+    }
+
     // next/this [weekday] — also matches the start of an abbreviated
     // weekday range ("next Fri-Sun" resolves to next Friday; the "-Sun"
     // half is picked up separately by extractNotes() below since this
@@ -369,7 +393,7 @@ function extractDateTime(text) {
     }
   }
 
-  return { date, time, rawDate, rawTime };
+  return { date, time, rawDate, rawTime, recurrenceDayOfWeek, recurrenceIntervalWeeks };
 }
 
 function shiftDate(base, amount, unitStr) {
@@ -650,7 +674,7 @@ function extractMatchedPriorityNames(text, priorityNames) {
 }
 
 function extractEvent(text, priorityNames = [], activityWords = [], placeWords = [], triggerWords = []) {
-  const { date, time, rawDate, rawTime } = extractDateTime(text);
+  const { date, time, rawDate, rawTime, recurrenceDayOfWeek, recurrenceIntervalWeeks } = extractDateTime(text);
   const title = extractTitle(text, activityWords, triggerWords);
   const location = extractLocation(text, placeWords);
   const matchedNames = extractMatchedPriorityNames(text, priorityNames);
@@ -667,6 +691,8 @@ function extractEvent(text, priorityNames = [], activityWords = [], placeWords =
     notes,
     rawDate,
     rawTime,
+    recurrenceDayOfWeek,
+    recurrenceIntervalWeeks,
     sourceText: text.trim()
   };
 }

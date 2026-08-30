@@ -132,6 +132,8 @@ async function showQueue() {
   renderEvent(currentEvent, pending.length);
 }
 
+const REPEAT_DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
 function renderEvent(event, totalPending) {
   show("event-card");
   hide("empty");
@@ -143,6 +145,16 @@ function renderEvent(event, totalPending) {
   el("field-location").value         = event.location || "";
   el("field-participants").value     = event.participants?.join(", ") || "";
   el("field-notes").value            = event.notes || "";
+
+  if (event.recurrenceDayOfWeek != null) {
+    const dayName = REPEAT_DAY_NAMES[event.recurrenceDayOfWeek];
+    const cadence = event.recurrenceIntervalWeeks === 2 ? "every other" : "every";
+    el("repeat-label").textContent = `Repeats ${cadence} ${dayName}`;
+    el("field-repeats").checked = true;
+    show("repeat-row");
+  } else {
+    hide("repeat-row");
+  }
 
   el("queue-info").textContent = totalPending > 1
     ? `${totalPending - 1} more plan${totalPending - 1 > 1 ? "s" : ""} waiting`
@@ -170,6 +182,8 @@ async function handleYes() {
     notes:        el("field-notes").value.trim(),
   };
 
+  const repeats = currentEvent.recurrenceDayOfWeek != null && el("field-repeats").checked;
+
   if (!overrideOverlap) {
     const conflicts = await checkOverlap(confirmed);
     if (conflicts.length) {
@@ -182,9 +196,25 @@ async function handleYes() {
   hideOverlapWarning();
 
   try {
-    await Events.save(confirmed);
+    if (repeats) {
+      await Events.createRecurring({
+        dayOfWeek:     currentEvent.recurrenceDayOfWeek,
+        intervalWeeks: currentEvent.recurrenceIntervalWeeks,
+        title:         confirmed.title,
+        time:          confirmed.time,
+        location:      confirmed.location,
+        participants:  confirmed.participants,
+        notes:         confirmed.notes,
+        sourceText:    confirmed.sourceText,
+      });
+    } else {
+      await Events.save(confirmed);
+    }
   } catch (err) {
-    // Supabase failed — save locally so the event isn't lost
+    // Supabase failed — save locally so the event isn't lost. Local fallback
+    // storage has no concept of a recurring series, so a failed recurring
+    // save degrades to one local one-off event for today's date, same as
+    // the existing non-recurring fallback.
     console.warn("[PlanWise] Supabase save failed, saving locally:", err.message);
     await PlanStorage.saveConfirmedEvent(confirmed);
   }

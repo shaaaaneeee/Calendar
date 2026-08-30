@@ -161,27 +161,33 @@ describe('Date extraction', () => {
 
 
 // ─────────────────────────────────────────────
-// RECURRING EXTRACTION — documented gap, not fixed yet (deferred, see the
-// detection-improvement plan Phase 1d: bigger design question than a regex
-// tweak — does "every Tuesday" become one event or a recurrence the
-// calendar-save layer understands?)
+// RECURRING EXTRACTION — weekly/bi-weekly only (Phase 1d). See
+// docs/superpowers/specs/2026-08-30-recurring-events-design.md for the
+// full data model this feeds into.
 // ─────────────────────────────────────────────
 
-describe('Recurring / range extraction — documented gaps', () => {
+describe('Recurring extraction', () => {
 
-  test('"every Tuesday" resolves to just the next occurrence, no recurrence info', () => {
-    // Baseline snapshot of today's actual behavior, captured so a future
-    // regression here is visible even before recurrence support lands.
+  test('"every Tuesday" sets recurrenceDayOfWeek and a weekly interval', () => {
     const r = extractEvent("gym every Tuesday");
     expect(r.date).not.toBeNull(); // next Tuesday's date
-    expect(r.notes).toBe('');      // "every Tuesday" is NOT preserved anywhere
+    expect(r.recurrenceDayOfWeek).toBe(2); // Tuesday
+    expect(r.recurrenceIntervalWeeks).toBe(1);
     expect(r.title).toBe('Gym');
   });
 
-  test('"every other Friday" is silently treated the same as a single "Friday"', () => {
+  test('"every other Friday" sets a bi-weekly interval', () => {
     const r = extractEvent("board game night every other Friday");
-    expect(r.date).not.toBeNull(); // resolves to next Friday, "every other" is lost
-    expect(r.notes).toBe('');
+    expect(r.date).not.toBeNull(); // resolves to next Friday
+    expect(r.recurrenceDayOfWeek).toBe(5); // Friday
+    expect(r.recurrenceIntervalWeeks).toBe(2);
+  });
+
+  test('a bare weekday with no "every" is not treated as recurring', () => {
+    const r = extractEvent("lunch tuesday");
+    expect(r.date).not.toBeNull();
+    expect(r.recurrenceDayOfWeek).toBeNull();
+    expect(r.recurrenceIntervalWeeks).toBeNull();
   });
 
 });

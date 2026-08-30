@@ -53,6 +53,11 @@ async function loadEvents() {
   try {
     const user = await Auth.getUser();
     if (user) {
+      try {
+        await Events.materializeRecurrences();
+      } catch (err) {
+        console.warn("[PlanWise] Failed to materialize recurring events:", err.message);
+      }
       allEvents = await Events.getAll();
     } else {
       // Not logged in - fall back to local confirmed events
@@ -495,6 +500,7 @@ function openModal(event) {
     el("modal-field-notes").value        = "";
     el("modal-source").classList.remove("visible");
     hide("modal-delete");
+    hide("modal-recurrence-scope");
   } else {
     // Edit mode
     if (labelEl) labelEl.textContent = "EDIT EVENT";
@@ -513,6 +519,13 @@ function openModal(event) {
       el("modal-source").classList.remove("visible");
     }
     show("modal-delete");
+
+    if (event.recurrence_id) {
+      el("modal-scope-occurrence").checked = true;
+      show("modal-recurrence-scope");
+    } else {
+      hide("modal-recurrence-scope");
+    }
   }
 
   show("modal-overlay");
@@ -564,7 +577,13 @@ async function handleModalSave() {
   try {
     let savedId;
     if (editingEvent) {
-      await Events.update(editingEvent.id, payload);
+      if (editingEvent.recurrence_id && el("modal-scope-series").checked) {
+        await Events.updateSeries(editingEvent.recurrence_id, payload);
+      } else if (editingEvent.recurrence_id) {
+        await Events.updateOccurrence(editingEvent.id, payload);
+      } else {
+        await Events.update(editingEvent.id, payload);
+      }
       savedId = editingEvent.id;
     } else {
       const newEvent = await Events.save(payload);
@@ -590,13 +609,20 @@ async function handleModalSave() {
 async function handleModalDelete() {
   if (!editingEvent) return;
 
+  const deleteSeries = editingEvent.recurrence_id && el("modal-scope-series").checked;
   const confirmed = window.confirm(
-    `Delete "${editingEvent.title}"? This cannot be undone.`
+    deleteSeries
+      ? `Delete the entire "${editingEvent.title}" series? This cannot be undone.`
+      : `Delete "${editingEvent.title}"? This cannot be undone.`
   );
   if (!confirmed) return;
 
   try {
-    await Events.delete(editingEvent.id);
+    if (deleteSeries) {
+      await Events.deleteSeries(editingEvent.recurrence_id);
+    } else {
+      await Events.delete(editingEvent.id);
+    }
     closeModal();
     closeDayPanel();
     await loadEvents();
