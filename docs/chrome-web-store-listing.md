@@ -42,6 +42,14 @@ fill out the Web Store's data disclosure form to match:
 
 ## Store listing copy
 
+**Tagline**: "Wise planning. Planned wisely." — used as the motto across
+the landing page (hero + footer) and README. Kept separate from the fields
+below rather than replacing them: the Store's short/detailed description
+fields need to stay functional (what the extension actually does) for
+reviewers, not wordplay. If you want it in the listing itself, the natural
+spot is as an opening italic line before the detailed description below,
+not in place of the short description.
+
 **Short description** (132 char max — reuse or lightly adapt the manifest description):
 > Detects plans in messages you type and adds them to your calendar. Only reads your own compose box - never other people's messages.
 
@@ -74,13 +82,21 @@ any time the UI changes enough that these go stale.
 signed in when it was captured (`davefromrussia`) — swap to a throwaway
 test-account username before submitting if that shouldn't be public.
 
-Also needed: a 440×280 (or 1400×560) promotional tile image — not yet made.
+Promo tile: `store-assets/promo-tile-440x280.png` — cropped from the chosen
+concept in `store-assets/promo-concepts/` (real brand colors: off-white
+`#f9f9f9`, black wordmark, `#00D1FF` blue accent, matching
+`extension/assets/logo-primary.svg`) via
+`node scripts/finalize-promo-tile.js <source-image>`, which center-crops to
+440x280 and flattens to opaque PNG (the Store rejects transparency).
+`scripts/generate-promo-tile.js` was an earlier from-scratch attempt with
+the wrong color scheme (dark bg, orange accent) — superseded, kept only in
+case that direction is revisited.
 
 ## Outstanding before this is actually submission-ready
 
 - [x] Fill in the `[DATE]` and `[CONTACT EMAIL]` placeholders in `landing/public/privacy.html` — done, contact is `planwisecalendar@gmail.com`.
 - [x] Deploy the landing site so `privacy.html` resolves at a real public URL — live at https://planwise-eosin.vercel.app/privacy.html, auto-deploys on push to `main`.
 - [x] Capture the 5 screenshots above from a real signed-in session — done, see `store-assets/screenshots/`.
-- [ ] Make the 440×280 promo tile.
+- [x] Make the 440×280 promo tile — done, see `store-assets/promo-tile-440x280.png`.
 - [ ] Chrome Web Store developer account (one-time $5 registration fee) if not already set up.
 - [ ] Finish the Phase 0 reliability sweep (silent-failure pattern) — a buggy first impression is worse than a slightly later submission.
