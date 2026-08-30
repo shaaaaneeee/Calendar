@@ -79,9 +79,12 @@
         <label class="font-mono text-[8px] font-bold tracking-[0.18em] uppercase text-on-muted">NOTES</label>
         <input type="text" id="field-notes" placeholder="Optional notes" class="border border-outline px-2.5 py-1.5 text-sm bg-surface focus:outline-none focus:bg-surface-low" />
       </div>
-      <div id="repeat-row" class="hidden flex items-center gap-2">
-        <input type="checkbox" id="field-repeats" class="w-3.5 h-3.5 cursor-pointer" />
-        <label for="field-repeats" id="repeat-label" class="font-mono text-[9px] tracking-wider uppercase text-on-muted cursor-pointer"></label>
+      <div id="repeat-row" class="hidden flex flex-col gap-0.5">
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="field-repeats" class="w-3.5 h-3.5 cursor-pointer" />
+          <label for="field-repeats" id="repeat-label" class="font-mono text-[9px] tracking-wider uppercase text-on-muted cursor-pointer"></label>
+        </div>
+        <p class="font-mono text-[8px] tracking-wide text-on-muted pl-5">Shown on the calendar up to 1 year ahead</p>
       </div>
     </div>
 
