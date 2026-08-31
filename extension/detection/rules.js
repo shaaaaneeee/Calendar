@@ -206,7 +206,10 @@ const CREATION_PHRASES = [
   /\bare\s+you\s+(free|available|around|down|up)\b/i,
   /\bdo\s+you\s+want\s+to\b/i,
   /\bcan\s+you\s+make\s+it\b/i,
-  /\bdown\s+for\b/i,
+  // Excludes "mark it down for [date]" / "write this down for [date]" — the
+  // phrasal verb meaning "note it", not "I'm available/willing" — without
+  // narrowing the legitimate "down for" (down\s+for) match itself.
+  /(?<!\bmark(?:ed)?\s+.{0,40})\bdown\s+for\b/i,
   /\bup\s+for\b/i,
   /\bsounds good\b/i,
   /\bworks for me\b/i,

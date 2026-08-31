@@ -515,6 +515,16 @@ describe('Must-trigger — should still trigger after hardening', () => {
     expect(r.intent).toBe(INTENT.CONFIRM);
   });
 
+  // Found in the 2026-08-30 CLINC150/MASSIVE stress-test review (see
+  // TODO.md): the "down for" creation phrase also matches inside the
+  // unrelated phrasal verb "mark it down for [date]" ("note it"), not just
+  // its "I'm available/willing" sense — a false CONFIRM vote either way,
+  // since "mark X down for Y" isn't someone proposing or agreeing to a plan.
+  test('"mark X down for Y" does not fire the "down for" creation-phrase vote', () => {
+    const r = classifyIntent("mark my budget meeting down for every friday at two");
+    expect(r.votes.reasons).not.toContain('create: "down for"');
+  });
+
   test('tmrw invitation with you in', () => {
     // you in (creation phrase) + gym (action) + tmrw + time (temporal)
     const r = detect("gym tmrw at 6pm, you in?");
