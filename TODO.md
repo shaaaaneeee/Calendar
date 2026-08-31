@@ -58,22 +58,15 @@ Narrow, low-frequency, but a real false positive in `rules.js`.
 - No non-English support — the whole engine is English-regex-based, fails silently rather than wrong. Known, not planned.
 - A handful of dataset "false positives" that are actually defensible real plan-shaped content even in odd framing (e.g. "send chris an email say...want to go to dinner") — accepted as fine to trigger.
 
-## Password requirements
+## Password requirements — done
 
-**Client-side: done.** `extension/signup/signup.js` now requires 8+
-characters, at least one uppercase letter, and at least one number
-(standard-shape policy). Specific, combined error message names exactly
-what's missing.
+**Client-side:** `extension/signup/signup.js` requires 8+ characters, at
+least one uppercase letter, and at least one number (standard-shape
+policy). Specific, combined error message names exactly what's missing.
 
-**Still outstanding — server-side enforcement:** the client-side check is
-UX-only. Supabase's own server-side minimum password length is still
-whatever the dashboard default is (typically 6), so someone hitting the
-API directly can bypass the client rule entirely. Need to raise
-**Supabase Dashboard → Authentication → minimum password length** to 8+ to
-match. Location wasn't found in the dashboard last session — try the
-dashboard's search bar (top of page) for "password", or check
-Authentication → Providers → Email. Note: Supabase's dashboard-level
-policy only supports a minimum length + character-class toggles (e.g.
-"require lowercase/uppercase/digits/symbols") — it won't perfectly mirror
-the client-side wording, but should be set to at least require length 8 +
-uppercase + digit to close the gap.
+**Server-side (2026-08-31):** Supabase Dashboard minimum password length
+set to 8, with uppercase and digit character-class requirements enabled.
+Lowercase/symbol requirements deliberately left off since the client-side
+check doesn't require them either — matching exactly, not exceeding,
+avoids a password that passes client-side validation getting rejected
+server-side.
