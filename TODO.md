@@ -40,11 +40,15 @@ this-event/entire-series edit-delete in the dashboard. Design at
 `docs/superpowers/plans/2026-08-30-recurring-events.md`. Materialization
 horizon is 1 year (rolling, extended on each dashboard load).
 
-**Worth doing later — small, bounded fix:** `"mark my budget meeting down
-for every friday at two"` false-triggers because `down for` (a
-CREATION_PHRASES entry meaning "I'm available/willing") also matches inside
-the unrelated phrasal verb "mark it down for [date]" (meaning "note it").
-Narrow, low-frequency, but a real false positive in `rules.js`.
+**"mark X down for Y" false positive — done (2026-09-01):** `"mark my
+budget meeting down for every friday at two"` was false-triggering
+because `down for` (a CREATION_PHRASES entry meaning "I'm
+available/willing") also matched inside the unrelated phrasal verb "mark
+it down for [date]" (meaning "note it"). Fixed in `rules.js` with a
+negative lookbehind excluding that specific phrasing, rather than
+narrowing the legitimate "down for" match — see the "down for gym
+tonight" test in `tests/detection.test.js` for the case that must keep
+working.
 
 **Reviewed and accepted, no action planned:**
 - Meta-questions about translation ("in spanish, meet me tomorrow is said how") misread as the plan they're quoting — fine to miss.
