@@ -17,12 +17,11 @@ not something fixable without a real domain. **Revisit before real users
 depend on this**: buy a domain, verify it in Resend, switch SMTP sender to
 `noreply@planwise.app`. Not needed for solo testing.
 
-**Small free win still on the table:** the email Subject line in
+**Small free win — done (2026-09-01):** the email Subject line in
 Supabase Dashboard -> Authentication -> Email Templates -> Confirm signup
-is still the default "Confirm Your Signup" (generic, phishing-pattern-y) -
-only the HTML body got updated to the branded template, not the subject.
-Changing it to "Confirm your PlanWise account" is free and may help
-marginally with spam placement.
+was the default "Confirm Your Signup" (generic, phishing-pattern-y) -
+only the HTML body had been updated to the branded template, not the
+subject. Changed to "Confirm your PlanWise account".
 
 ## Detection engine — review findings (2026-08-30)
 
@@ -32,16 +31,14 @@ as a bulk stress test (~40,000 utterances) — a mix of real bugs already
 fixed this session and some reviewed-and-accepted gaps. Recorded here so the
 review isn't lost, not because they're all urgent.
 
-**Worth doing later — recurring events (real feature, not just a detection
-fix):** `extractDateTime()` currently resolves "every Tuesday" to just the
-next occurrence with no recurrence info at all — `extension/detection/extractor.js`,
-see the `Recurring / range extraction — documented gaps` block in
-`tests/extractor.test.js` for the current baseline behavior. This needs
-support in **both** places to be useful: the detection/extraction side (a
-recurrence field, not just a single date) and the app side (calendar
-save/dashboard would need to actually understand and render a repeating
-event, not just a one-off `events` row). Bigger design question than a
-regex tweak — decide the data model before touching the regex.
+**Recurring events — done (2026-08-31):** weekly/biweekly recurrence
+("every Tuesday" / "every other Friday") shipped end-to-end — extraction
+in `extractor.js`, a `recurrences` table + `materialize_recurrences()` RPC
+in `supabase/migrations/016`/`017`, a Repeats toggle in the popup, and
+this-event/entire-series edit-delete in the dashboard. Design at
+`docs/superpowers/specs/2026-08-30-recurring-events-design.md`, plan at
+`docs/superpowers/plans/2026-08-30-recurring-events.md`. Materialization
+horizon is 1 year (rolling, extended on each dashboard load).
 
 **Worth doing later — small, bounded fix:** `"mark my budget meeting down
 for every friday at two"` false-triggers because `down for` (a
