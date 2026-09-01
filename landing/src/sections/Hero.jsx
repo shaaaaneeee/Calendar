@@ -8,9 +8,13 @@ export default function Hero({ wrapRef, anim, reducedMotion }) {
   const { hero, demoT, isMobile } = anim;
   const progress = easeInOutSine(hero.progress);
   const motionFactor = reducedMotion ? 0 : isMobile ? 0.55 : 1;
-  const opacity = reducedMotion ? 1 : clamp(1 - progress * 1.1);
-  const lift = reducedMotion ? 0 : -progress * 46 * motionFactor;
-  const scale = reducedMotion ? 1 : 1 - progress * 0.035 * motionFactor;
+  // Mobile drops the scroll-pin entirely (see utils.js stickyStyle) - fading
+  // the hero out based on that same progress can leave it stuck at a partial
+  // opacity there, so mobile skips the fade/lift/scale the same way
+  // reducedMotion does.
+  const opacity = reducedMotion || isMobile ? 1 : clamp(1 - progress * 1.1);
+  const lift = reducedMotion || isMobile ? 0 : -progress * 46 * motionFactor;
+  const scale = reducedMotion || isMobile ? 1 : 1 - progress * 0.035 * motionFactor;
   const height = runwayHeight(160, isMobile, reducedMotion);
   const chatRotation = reducedMotion ? 0 : lerp(4, -3, progress) * motionFactor;
   const chatLift = reducedMotion ? 0 : -progress * 55 * motionFactor;

@@ -22,7 +22,10 @@ export default function Platforms({ wrapRef, anim, reducedMotion }) {
             <div className="platforms-list">
               {PLATFORMS.map((platform, index) => {
                 const start = index * 0.22;
-                const enter = reducedMotion ? 1 : easeOutCubic(clamp((platforms.progress - start) / 0.5));
+                // Mobile drops the scroll-pin (see utils.js stickyStyle) - reveal
+                // animations tied to that progress can get stuck invisible there,
+                // so mobile gets the same "just show it" treatment as reducedMotion.
+                const enter = reducedMotion || isMobile ? 1 : easeOutCubic(clamp((platforms.progress - start) / 0.5));
                 const direction = index % 2 === 0 ? -1 : 1;
                 return (
                   <a

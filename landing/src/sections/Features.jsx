@@ -31,7 +31,10 @@ export default function Features({ wrapRef, anim, reducedMotion }) {
               {FEATURES.map((feature, index) => {
                 const Icon = ICONS[index];
                 const start = index * 0.18;
-                const enter = reducedMotion ? 1 : easeOutCubic(clamp((features.progress - start) / 0.48));
+                // Mobile drops the scroll-pin (see utils.js stickyStyle) - reveal
+                // animations tied to that progress can get stuck invisible there,
+                // so mobile gets the same "just show it" treatment as reducedMotion.
+                const enter = reducedMotion || isMobile ? 1 : easeOutCubic(clamp((features.progress - start) / 0.48));
                 return (
                   <article
                     key={feature.label}

@@ -30,7 +30,13 @@ export default function HowItWorks({ wrapRef, anim, reducedMotion }) {
               {HOW_STEPS.map((step, index) => {
                 const start = index / 3;
                 const local = clamp((progress - start) / (1 / 3 + 0.0001));
-                const enter = reducedMotion ? 1 : easeOutCubic(clamp(local * 1.18));
+                // Mobile drops the scroll-pin entirely (CSS forces the runway
+                // to its natural height, position:relative) - keeping these
+                // reveal animations tied to scroll progress here too meant
+                // content could stay stuck invisible, since the pin math no
+                // longer matches a runway CSS has already collapsed. Same
+                // "just show it" treatment as reducedMotion.
+                const enter = reducedMotion || isMobile ? 1 : easeOutCubic(clamp(local * 1.18));
                 const style = {
                   opacity: enter,
                   ...(enter >= 1 ? {} : { transform: `translateY(${(1 - enter) * 28 * motionFactor}px)` }),

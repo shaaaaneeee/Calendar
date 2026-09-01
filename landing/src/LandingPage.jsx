@@ -26,7 +26,7 @@ export default function LandingPage() {
     <div className="landing">
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
-      <Nav />
+      <Nav anim={anim} />
 
       <main id="main-content">
         <Hero

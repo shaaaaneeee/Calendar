@@ -3,10 +3,13 @@ import { ArrowUpRight, Menu, X } from 'lucide-react';
 import { NAV_LINKS, CHROME_STORE_URL } from '../data/content';
 import BrandMark from './BrandMark';
 
-export default function Nav() {
+// Order matters: this is reading order down the page, used below to pick
+// "the last section the scroll position has reached" as the active one.
+const SECTION_ORDER = ['#how', '#features', '#platforms'];
+
+export default function Nav({ anim }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState('#how');
   const menuButtonRef = useRef(null);
   const firstMenuLinkRef = useRef(null);
 
@@ -25,28 +28,28 @@ export default function Nav() {
     ? [...sectionLinks, { label: 'See it in detail', href: 'how-it-works.html' }]
     : sectionLinks;
 
+  // Driven directly by the same scroll-pin state (anim.how/features/platforms
+  // .mode) that already animates each section, rather than a separate
+  // IntersectionObserver guessing against those sections' runway wrappers -
+  // most of each runway is empty scroll space around the pinned content, so
+  // observing the wrapper's raw visibility never lined up with which section
+  // actually reads as "current." The active section is simply the last one
+  // in page order that scroll has already reached (mode !== 'before').
+  const modeByHref = {
+    '#how': anim?.how?.mode,
+    '#features': anim?.features?.mode,
+    '#platforms': anim?.platforms?.mode,
+  };
+  const activeSection = anim
+    ? SECTION_ORDER.reduce((current, href) => (modeByHref[href] !== 'before' ? href : current), '#how')
+    : null;
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 18);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  useEffect(() => {
-    if (!onHomepage) return;
-    const sections = NAV_LINKS.map(({ href }) => document.querySelector(href)).filter(Boolean);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible?.target.id) setActiveSection(`#${visible.target.id}`);
-      },
-      { rootMargin: '-22% 0px -62%', threshold: [0.1, 0.35, 0.7] }
-    );
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
-  }, [onHomepage]);
 
   useEffect(() => {
     if (!menuOpen) {

@@ -73,7 +73,12 @@ export function useScrollAnimation(refs) {
 
       const next = {
         demoT,
-        isMobile:  window.innerWidth < 768,
+        // Matches landing.css's `@media (max-width: 780px)` breakpoint, which
+        // is where the pin/scrub mechanic gets disabled (position:relative,
+        // runway height:auto). A mismatched threshold here would mean JS still
+        // thinks it's desktop for an 8-12px band where CSS already isn't -
+        // reveal animations could get stuck invisible in exactly that gap.
+        isMobile:  window.innerWidth <= 780,
         hero,
         how:       computePin(howRef?.current,       vh),
         features:  computePin(featuresRef?.current,  vh),
