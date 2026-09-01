@@ -6,7 +6,7 @@ import { clamp, easeOutCubic, runwayHeight, stickyStyle } from '../utils';
 
 export default function Platforms({ wrapRef, anim, reducedMotion }) {
   const { platforms, isMobile } = anim;
-  const height = runwayHeight(90, isMobile, reducedMotion);
+  const height = runwayHeight(160, isMobile, reducedMotion);
 
   return (
     <section ref={wrapRef} id="platforms" className="editorial-runway editorial-runway--warm" style={{ height }} aria-label="Supported platforms">

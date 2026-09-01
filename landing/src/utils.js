@@ -11,19 +11,31 @@ export const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
 /** Decelerating "settle into place" feel for discrete section reveals. */
 export const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
-/** Inline position styles for a scroll-pinned inner element. */
-export function stickyStyle(_mode) {
-  // Keep each runway in document flow. Native sticky positioning preserves the
-  // editorial scroll beat without fixed layers colliding at section boundaries.
-  return { position: 'sticky', top: 0, height: '100vh', zIndex: 1 };
-}
+/**
+ * Inline position styles for a scroll-pinned inner element.
+ * Deliberately NOT native `position: sticky` - `.landing` sets
+ * `overflow-x: hidden`, which per spec forces `overflow-y` to compute as
+ * `auto` too, making `.landing` the nearest scrolling ancestor and breaking
+ * sticky descendants (they release early / never stick reliably). Manually
+ * toggling fixed while pinned, then absolute+bottom pinned to the runway's
+ * own end once scrolled past, sidesteps that entirely and is what makes the
+ * content hold in view for the full length of its reveal animation instead
+ * of scrolling past before it finishes.
+ */
+export const stickyStyle = (mode) => ({
+  position: mode === 'pin' ? 'fixed' : 'absolute',
+  top:    mode === 'after' ? 'auto' : 0,
+  bottom: mode === 'after' ? 0 : 'auto',
+  left: 0,
+  width: '100%',
+  height: '100vh',
+});
 
 /**
  * Converts a scroll-runway multiplier to a CSS height string.
  * reducedMotion → collapses to one viewport so no scroll is needed.
  */
-export function runwayHeight(multiplier, isMobile, reducedMotion) {
-  if (reducedMotion) return 'auto';
-  const factor = isMobile ? 0.8 : 1;
-  return `calc(100vh + ${Math.round(multiplier * factor)}vh)`;
-}
+export const runwayHeight = (vhMult, isMobile, reducedMotion) => {
+  if (reducedMotion) return '100vh';
+  return isMobile ? `${Math.round(vhMult * 0.65)}vh` : `${vhMult}vh`;
+};

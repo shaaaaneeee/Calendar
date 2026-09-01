@@ -10,12 +10,12 @@ export const HOW_STEPS = [
   {
     number: '01',
     title: 'Detect',
-    desc: "PlanWise reads the message you're composing — never messages from anyone else — and flags dates, times, and places the moment you write them.",
+    desc: "PlanWise reads the message you're composing (never messages from anyone else) and flags dates, times, and places the moment you write them.",
   },
   {
     number: '02',
     title: 'Extract',
-    desc: 'One click pulls the plan into a clean event card — title, time, location — no retyping.',
+    desc: 'One click pulls the plan into a clean event card with title, time, and location already filled in, no retyping.',
   },
   {
     number: '03',
@@ -43,7 +43,7 @@ export const FEATURES = [
   {
     label: 'COMMENTS',
     title: 'Live comments',
-    desc: "Coordinate details — who's driving, what to bring — right on the event.",
+    desc: "Coordinate details like who's driving and what to bring, right on the event.",
   },
 ];
 

@@ -8,7 +8,7 @@ const ICONS = [ScanLine, CalendarDays, UsersRound, MessageCircleMore];
 
 export default function Features({ wrapRef, anim, reducedMotion }) {
   const { features, isMobile } = anim;
-  const height = runwayHeight(110, isMobile, reducedMotion);
+  const height = runwayHeight(200, isMobile, reducedMotion);
 
   return (
     <section ref={wrapRef} id="features" className="editorial-runway editorial-runway--mist" style={{ height }} aria-label="Features">

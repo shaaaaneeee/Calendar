@@ -8,7 +8,7 @@ export default function HowItWorks({ wrapRef, anim, reducedMotion }) {
   const { how, isMobile } = anim;
   const progress = how.progress;
   const motionFactor = reducedMotion ? 0 : isMobile ? 0.55 : 1;
-  const height = runwayHeight(110, isMobile, reducedMotion);
+  const height = runwayHeight(220, isMobile, reducedMotion);
 
   return (
     <section ref={wrapRef} id="how" className="editorial-runway" style={{ height }} aria-label="How it works">

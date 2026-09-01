@@ -15,7 +15,7 @@ export default function CtaBand({ wrapRef, anim, reducedMotion }) {
         </div>
         <div className="cta-band__action">
           <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer" className="button button--light">
-            <span>Add to Chrome — it&apos;s free</span>
+            <span>Add to Chrome, it&apos;s free</span>
             <ArrowUpRight size={17} strokeWidth={1.8} aria-hidden="true" />
           </a>
           <p>Free · Manifest V3 · No account required to start</p>

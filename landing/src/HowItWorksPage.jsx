@@ -9,21 +9,21 @@ const STEPS = [
   {
     number: '01',
     title: 'PlanWise watches for plans as you type',
-    desc: "The detection engine reads only the message you're composing — never anyone else's — and flags dates, times, and places the moment you write them. Trigger words and sensitivity are yours to tune in Settings.",
+    desc: "The detection engine reads only the message you're composing (never anyone else's) and flags dates, times, and places the moment you write them. Trigger words and sensitivity are yours to tune in Settings.",
     image: '/how-it-works/2-settings-detection.png',
     alt: 'PlanWise settings screen showing detection sensitivity and trigger words',
   },
   {
     number: '02',
     title: 'One click turns it into a real event',
-    desc: 'A plan gets flagged, the popup shows the extracted title, date, time, and location — already filled in and editable. No retyping, no switching tabs to open a calendar.',
+    desc: 'A plan gets flagged, and the popup shows the extracted title, date, time, and location, already filled in and editable. No retyping, no switching tabs to open a calendar.',
     image: '/how-it-works/1-popup-detected-plan.png',
     alt: 'PlanWise popup showing a detected plan ready to add to the calendar',
   },
   {
     number: '03',
     title: 'It lands on one shared calendar',
-    desc: 'Every confirmed plan shows up on the PlanWise dashboard — a real month view your whole group can see, alongside anything else you have coming up.',
+    desc: 'Every confirmed plan shows up on the PlanWise dashboard, a real month view your whole group can see, alongside anything else you have coming up.',
     image: '/how-it-works/3-dashboard-month-view.png',
     alt: 'PlanWise dashboard month view showing upcoming plans',
   },
@@ -78,7 +78,7 @@ export default function HowItWorksPage() {
 
         <section className="hiw-cta">
           <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer" className="button button--primary">
-            <span>Add to Chrome — it&apos;s free</span>
+            <span>Add to Chrome, it&apos;s free</span>
             <ArrowUpRight size={17} strokeWidth={1.8} aria-hidden="true" />
           </a>
         </section>
