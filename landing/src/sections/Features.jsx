@@ -1,59 +1,67 @@
 import React from 'react';
-import SectionHeader from '../components/SectionHeader';
+import { ArrowUpRight, ScanLine, CalendarDays, UsersRound, MessageCircleMore } from 'lucide-react';
 import { FEATURES } from '../data/content';
-import { clamp, lerp, stickyStyle, runwayHeight, easeOutCubic } from '../utils';
+import SectionHeader from '../components/SectionHeader';
+import { clamp, easeOutCubic, runwayHeight, stickyStyle } from '../utils';
+
+const ICONS = [ScanLine, CalendarDays, UsersRound, MessageCircleMore];
 
 export default function Features({ wrapRef, anim, reducedMotion }) {
   const { features, isMobile } = anim;
-  const p  = features.progress;
-  const mo = reducedMotion ? 0 : (isMobile ? 0.55 : 1);
-
-  const height = runwayHeight(200, isMobile, reducedMotion);
-
-  const innerStyle = reducedMotion
-    ? { position: 'relative', height: '100vh' }
-    : stickyStyle(features.mode);
+  const height = runwayHeight(110, isMobile, reducedMotion);
 
   return (
-    <section
-      ref={wrapRef}
-      id="features"
-      className="pin-wrap"
-      style={{ height }}
-      aria-label="Features"
-    >
-      <div className="features-sticky" style={innerStyle}>
-        <SectionHeader
-          eyebrow="FEATURES"
-          title="Built for groups that plan in chat."
-        />
-
-        <div className="features-grid">
-          {FEATURES.map((feat, i) => {
-            const segStart = i * 0.2;
-            const segEnd   = segStart + 0.45;
-            const local    = clamp((p - segStart) / (segEnd - segStart), 0, 1);
-            const enter    = reducedMotion ? 1 : easeOutCubic(clamp(local * 1.15, 0, 1));
-
-            // Once the entrance finishes, stop setting inline transform/clipPath
-            // so the CSS :hover lift (landing.css .feature-cell:hover) can take
-            // over that property - an inline style always beats a CSS class rule
-            // for the same property, entrance-complete or not.
-            const entranceDone = enter >= 1;
-            const cellStyle = {
-              opacity: enter,
-              ...(entranceDone ? {} : { transform: `scale(${lerp(0.92, 1, enter)})` }),
-              ...(entranceDone || reducedMotion ? {} : { clipPath: `inset(${(1 - enter) * 40}% 0 0 0)` }),
-            };
-
-            return (
-              <div key={feat.label} className="feature-cell" style={cellStyle}>
-                <span className="feature-label">{feat.label}</span>
-                <h3 className="feature-title">{feat.title}</h3>
-                <p className="feature-desc">{feat.desc}</p>
+    <section ref={wrapRef} id="features" className="editorial-runway editorial-runway--mist" style={{ height }} aria-label="Features">
+      <div className="section-sticky" style={reducedMotion ? { position: 'relative', minHeight: '100vh' } : stickyStyle(features.mode)}>
+        <div className="section-shell features-shell">
+          <div className="features-heading-row">
+            <SectionHeader
+              index="03"
+              eyebrow="FEATURES"
+              title="Built for groups that plan in chat."
+              intro="A small, focused toolkit for turning a passing idea into a plan everyone can see."
+            />
+            <a href="#platforms" className="section-jump" aria-label="Continue to platforms">
+              <span>CONTINUE</span>
+              <ArrowUpRight size={17} strokeWidth={1.8} aria-hidden="true" />
+            </a>
+          </div>
+          <div className="features-layout">
+            <div className="feature-grid">
+              {FEATURES.map((feature, index) => {
+                const Icon = ICONS[index];
+                const start = index * 0.18;
+                const enter = reducedMotion ? 1 : easeOutCubic(clamp((features.progress - start) / 0.48));
+                return (
+                  <article
+                    key={feature.label}
+                    className={`feature-tile feature-tile--${index + 1}`}
+                    style={{ opacity: enter, ...(enter >= 1 ? {} : { transform: `translateY(${(1 - enter) * 20}px)` }) }}
+                  >
+                    <div className="feature-tile__topline">
+                      <span className="feature-tile__index">0{index + 1}</span>
+                      <Icon size={18} strokeWidth={1.7} aria-hidden="true" />
+                    </div>
+                    <p className="feature-tile__label">{feature.label}</p>
+                    <h3>{feature.title}</h3>
+                    <p className="feature-tile__desc">{feature.desc}</p>
+                  </article>
+                );
+              })}
+            </div>
+            <div className="feature-visual">
+              <div className="feature-visual__art" aria-hidden="true">
+                <span className="feature-visual__art-rail" />
+                <span className="feature-visual__art-tab">PLAN / 01</span>
+                <span className="feature-visual__art-card">Saturday<br /><small>7:00 PM · Shared</small></span>
+                <span className="feature-visual__art-square" />
               </div>
-            );
-          })}
+              <div className="feature-visual__caption">
+                <span>THE GOOD STUFF</span>
+                <span>quietly in the right place</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

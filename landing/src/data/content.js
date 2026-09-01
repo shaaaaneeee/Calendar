@@ -1,3 +1,5 @@
+export const CHROME_STORE_URL = 'https://chromewebstore.google.com/search/PlanWise';
+
 export const NAV_LINKS = [
   { label: 'How it works', href: '#how' },
   { label: 'Features', href: '#features' },
@@ -46,13 +48,13 @@ export const FEATURES = [
 ];
 
 export const PLATFORMS = [
-  { name: 'WhatsApp Web', glyph: '◈' },
-  { name: 'Telegram Web', glyph: '▶' },
-  { name: 'Gmail', glyph: '✉' },
+  { name: 'WhatsApp Web', glyph: '◈', tone: 'moss' },
+  { name: 'Telegram Web', glyph: '▶', tone: 'clay' },
+  { name: 'Gmail', glyph: '✉', tone: 'vermilion' },
 ];
 
 export const FOOTER_LINKS = [
   { label: 'Privacy', href: '/privacy.html' },
-  { label: 'Terms', href: '#' },
-  { label: 'Contact', href: '#' },
+  { label: 'Terms', href: 'https://planwise.app/terms' },
+  { label: 'Contact', href: 'mailto:hello@planwise.app' },
 ];

@@ -1,70 +1,55 @@
 import React from 'react';
-import SectionHeader from '../components/SectionHeader';
+import { ArrowUpRight } from 'lucide-react';
 import { HOW_STEPS } from '../data/content';
-import { clamp, lerp, stickyStyle, runwayHeight, easeOutCubic } from '../utils';
+import SectionHeader from '../components/SectionHeader';
+import { clamp, easeOutCubic, runwayHeight, stickyStyle } from '../utils';
 
 export default function HowItWorks({ wrapRef, anim, reducedMotion }) {
   const { how, isMobile } = anim;
-  const p  = how.progress;
-  const mo = reducedMotion ? 0 : (isMobile ? 0.55 : 1);
-
-  const height = runwayHeight(220, isMobile, reducedMotion);
-
-  const innerStyle = reducedMotion
-    ? { position: 'relative', height: '100vh' }
-    : stickyStyle(how.mode);
+  const progress = how.progress;
+  const motionFactor = reducedMotion ? 0 : isMobile ? 0.55 : 1;
+  const height = runwayHeight(110, isMobile, reducedMotion);
 
   return (
-    <section
-      ref={wrapRef}
-      id="how"
-      className="pin-wrap"
-      style={{ height }}
-      aria-label="How it works"
-    >
-      <div className="how-sticky" style={innerStyle}>
-        <SectionHeader
-          eyebrow="HOW IT WORKS"
-          title="From a stray message to a synced plan."
-        />
-
-        <div className="how-track" role="list">
-          {HOW_STEPS.map((step, i) => {
-            // Each step animates in sequentially as progress advances
-            const segStart = i / 3;
-            const segEnd   = (i + 1) / 3;
-            const local    = clamp((p - segStart) / (segEnd - segStart + 0.0001), 0, 1);
-            const enter    = reducedMotion ? 1 : easeOutCubic(clamp(local * 1.2, 0, 1));
-            const numScale = reducedMotion ? 1 : lerp(0.7, 1, enter);
-            const entranceDone = enter >= 1;
-
-            // Stop setting inline transform once the entrance finishes so the
-            // CSS :hover lift can take over - an inline style always beats a
-            // CSS class rule for the same property.
-            const stepStyle = {
-              opacity: enter,
-              ...(entranceDone ? {} : { transform: `translateY(${(1 - enter) * 32 * mo}px)` }),
-            };
-
-            return (
-              <div
-                key={step.number}
-                className="how-step"
-                style={stepStyle}
-                role="listitem"
-              >
-                <span
-                  className="step-number"
-                  aria-hidden="true"
-                  style={{ transform: `scale(${numScale})` }}
-                >
-                  {step.number}
-                </span>
-                <h3 className="step-title">{step.title}</h3>
-                <p className="step-desc">{step.desc}</p>
-              </div>
-            );
-          })}
+    <section ref={wrapRef} id="how" className="editorial-runway" style={{ height }} aria-label="How it works">
+      <div className="section-sticky" style={reducedMotion ? { position: 'relative', minHeight: '100vh' } : stickyStyle(how.mode)}>
+        <div className="section-shell how-shell">
+          <SectionHeader
+            index="02"
+            eyebrow="HOW IT WORKS"
+            title="From a stray message to a synced plan."
+            intro="The quiet handoff between conversation and coordination."
+          />
+          <div className="how-content">
+            <div className="how-aside">
+              <span className="how-aside__line" aria-hidden="true" />
+              <p>Less tab-switching. More time in the moment.</p>
+              <a href="#features" className="text-link text-link--small">See what&apos;s included <ArrowUpRight size={14} strokeWidth={1.8} aria-hidden="true" /></a>
+            </div>
+            <div className="how-list" role="list">
+              {HOW_STEPS.map((step, index) => {
+                const start = index / 3;
+                const local = clamp((progress - start) / (1 / 3 + 0.0001));
+                const enter = reducedMotion ? 1 : easeOutCubic(clamp(local * 1.18));
+                const style = {
+                  opacity: enter,
+                  ...(enter >= 1 ? {} : { transform: `translateY(${(1 - enter) * 28 * motionFactor}px)` }),
+                };
+                return (
+                  <article key={step.number} className="how-step" style={style} role="listitem">
+                    <div className="how-step__topline">
+                      <span className="how-step__number">{step.number}</span>
+                      <span className="how-step__bar" aria-hidden="true" />
+                      <span className="how-step__verb">{index === 0 ? 'READ' : index === 1 ? 'SHAPE' : 'SHARE'}</span>
+                    </div>
+                    <h3>{step.title}</h3>
+                    <p>{step.desc}</p>
+                    <span className="how-step__marker" aria-hidden="true">↳</span>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </section>

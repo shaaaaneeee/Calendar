@@ -1,38 +1,23 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { FOOTER_LINKS } from '../data/content';
+import BrandMark from '../components/BrandMark';
 
-const Footer = memo(function Footer() {
+export default function Footer() {
   return (
-    <footer className="footer">
-      <div className="footer-inner">
-        <div className="footer-logo">
-          <span
-            style={{
-              width: 8, height: 8,
-              borderRadius: '50%',
-              background: 'var(--accent)',
-              display: 'inline-block',
-              flexShrink: 0,
-            }}
-            aria-hidden="true"
-          />
-          PlanWise
-        </div>
-
-        <ul className="footer-links" role="list">
-          {FOOTER_LINKS.map(({ label, href }) => (
-            <li key={label}>
-              <a href={href} className="footer-link">{label}</a>
-            </li>
+    <footer className="site-footer">
+      <div className="site-footer__topline" aria-hidden="true" />
+      <div className="site-footer__inner">
+        <a href="./" className="site-footer__brand" aria-label="PlanWise home">
+          <BrandMark compact />
+        </a>
+        <p className="site-footer__tag">Built for people who make plans in chat.</p>
+        <nav className="site-footer__links" aria-label="Footer navigation">
+          {FOOTER_LINKS.map((link) => (
+            <a key={link.label} href={link.href}>{link.label}</a>
           ))}
-        </ul>
-
-        <p className="footer-tag">
-          © 2026 PlanWise. Wise planning. Planned wisely.
-        </p>
+        </nav>
+        <p className="site-footer__copyright">© 2026 PlanWise</p>
       </div>
     </footer>
   );
-});
-
-export default Footer;
+}
