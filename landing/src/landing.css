@@ -484,6 +484,11 @@ a[href] {
   border-left: 1px solid var(--paper-line);
   transform: skewY(-4deg);
   transform-origin: right center;
+  /* Promotes this to its own GPU layer so the skewed edge gets properly
+     anti-aliased instead of rendering jagged/stepped. */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .hero-visual__caption {
@@ -517,6 +522,11 @@ a[href] {
   z-index: 3;
   width: min(82%, 500px);
   will-change: transform;
+  /* This is the element doing the continuous rotateY tilt as you scroll -
+     3D transforms like that commonly render with jagged/pixelated edges on
+     their content without this. */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .chat-demo {
