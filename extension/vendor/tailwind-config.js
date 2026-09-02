@@ -2,21 +2,25 @@ tailwind.config = {
   theme: {
     extend: {
       colors: {
-        'background':   '#f9f9f9',
-        'surface':      '#f9f9f9',
-        'surface-low':  '#f4f3f3',
-        'surface-mid':  '#eeeeee',
-        'surface-high': '#e8e8e8',
-        'surface-top':  '#e2e2e2',
-        'on-surface':   '#1a1c1c',
-        'on-muted':     '#4c4546',
-        'primary':      '#000000',
-        'on-primary':   '#ffffff',
-        'secondary':    '#5d5f5f',
-        'outline':      '#1a1c1c',
-        'outline-soft': '#cfc4c5',
-        'error':        '#ba1a1a',
-        'error-bg':     '#ffdad6',
+        // Theme-aware tokens - actual values come from theme.css's
+        // :root / [data-theme="dark"] custom properties.
+        'background':   'var(--c-bg)',
+        'surface':      'var(--c-bg)',
+        'surface-low':  'var(--c-bg-low)',
+        'surface-mid':  'var(--c-bg-mid)',
+        'surface-high': 'var(--c-bg-high)',
+        'surface-top':  'var(--c-bg-top)',
+        'on-surface':   'var(--c-text)',
+        'on-muted':     'var(--c-muted)',
+        'primary':      'var(--c-primary)',
+        'on-primary':   'var(--c-on-primary)',
+        'secondary':    'var(--c-muted)',
+        'outline':      'var(--c-outline)',
+        'outline-soft': 'var(--c-outline-soft)',
+        'error':        'var(--c-error)',
+        'error-bg':     'var(--c-error-bg)',
+        // PlanWise's signature accents - deliberately NOT theme-aware,
+        // identical in light and dark mode.
         'status-active':'#00D1FF',
         'status-ok':    '#1f6e35',
         'status-crit':  '#FF4D00',
@@ -30,9 +34,11 @@ tailwind.config = {
         mono: ['JetBrains Mono', 'monospace'],
       },
       boxShadow: {
-        'neo':    '4px 4px 0px 0px rgba(0,0,0,1)',
-        'neo-sm': '2px 2px 0px 0px rgba(0,0,0,1)',
-        'neo-xs': '1px 1px 0px 0px rgba(0,0,0,1)',
+        // Hard-offset shadows flip white-on-dark in dark mode via
+        // --c-shadow, keeping the same neo-brutalist silhouette.
+        'neo':    '4px 4px 0px 0px var(--c-shadow)',
+        'neo-sm': '2px 2px 0px 0px var(--c-shadow)',
+        'neo-xs': '1px 1px 0px 0px var(--c-shadow)',
       },
     },
   },

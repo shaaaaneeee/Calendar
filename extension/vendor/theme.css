@@ -1,0 +1,66 @@
+/* theme.css — PlanWise colour tokens as CSS custom properties.
+   Dark mode is a straight neo-brutalist polarity flip (black outlines/
+   shadows become white on a near-black surface) - the same hard-edge,
+   zero-blur visual language, just inverted. PlanWise's signature accents
+   (#00D1FF, #FF4D00, and the task-priority palette) are NOT redefined
+   here - they stay byte-identical in both themes on purpose.
+
+   Toggle by setting document.documentElement.dataset.theme = "dark" | "light".
+*/
+
+:root,
+:root[data-theme="light"] {
+  --c-bg:           #f9f9f9;
+  --c-bg-low:       #f4f3f3;
+  --c-bg-mid:       #eeeeee;
+  --c-bg-high:      #e8e8e8;
+  --c-bg-top:       #e2e2e2;
+  --c-text:         #1a1c1c;
+  --c-muted:        #4c4546;
+  --c-outline:      #1a1c1c;
+  --c-outline-soft: #cfc4c5;
+  --c-primary:      #000000;
+  --c-on-primary:   #ffffff;
+  --c-card:         #ffffff;
+  --c-error:        #ba1a1a;
+  --c-error-bg:     #ffdad6;
+  --c-hairline:        rgba(26, 28, 28, 0.2);
+  --c-cell-rest:        rgba(249, 249, 249, 0.92);
+  --c-cell-hover:       rgba(244, 243, 243, 0.92);
+  --c-cell-muted:       rgba(238, 238, 238, 0.92);
+  --c-cell-selected:    rgba(232, 232, 232, 0.92);
+  --c-today-bg:     #c4c4c4;
+  --c-shadow:       rgba(0, 0, 0, 1);
+  --c-grid-texture: #e2e2e2;
+}
+
+:root[data-theme="dark"] {
+  --c-bg:           #121212;
+  --c-bg-low:       #1c1c1c;
+  --c-bg-mid:       #242424;
+  --c-bg-high:      #2c2c2c;
+  --c-bg-top:       #333333;
+  --c-text:         #f2f2f0;
+  --c-muted:        #9a9490;
+  /* Softer than --c-text on purpose - a solid white 2px border on near-
+     black read as too harsh; structural borders get a mid-gray instead
+     while text itself stays bright for legibility. */
+  --c-outline:      #6b6b6b;
+  --c-outline-soft: #44403d;
+  --c-primary:      #ffffff;
+  --c-on-primary:   #000000;
+  --c-card:         #1e1e1e;
+  --c-error:        #ff6b6b;
+  --c-error-bg:     #3a1414;
+  --c-hairline:        rgba(242, 242, 240, 0.18);
+  --c-cell-rest:        rgba(30, 30, 30, 0.92);
+  --c-cell-hover:       rgba(40, 40, 40, 0.92);
+  --c-cell-muted:       rgba(20, 20, 20, 0.92);
+  --c-cell-selected:    rgba(50, 50, 50, 0.92);
+  --c-today-bg:     #3a3a3a;
+  --c-shadow:       rgba(255, 255, 255, 1);
+  /* Much closer to --c-bg than --c-bg-top - dark surfaces need a smaller
+     absolute delta than light ones for a texture to read as "barely
+     there" instead of a visible grid. */
+  --c-grid-texture: #1c1c1c;
+}
