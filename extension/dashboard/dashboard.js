@@ -41,6 +41,7 @@ async function init() {
   renderUpcoming();
   wireControls();
   loadGroupsFilter();
+  loadTasksPreview();
   initNotifFeed();
   loadUserInitials();
 }
@@ -1014,6 +1015,69 @@ function applyGroupFilter() {
     pill.style.opacity = hiddenGroups.has(gid) ? "0.15" : "1";
     pill.style.pointerEvents = hiddenGroups.has(gid) ? "none" : "";
   });
+}
+
+
+// ─────────────────────────────────────────────
+// TO DO PREVIEW (sidebar)
+// ─────────────────────────────────────────────
+
+async function loadTasksPreview() {
+  let tasks = [];
+  try {
+    const result = await chrome.storage.local.get("planwiseTasks");
+    tasks = result.planwiseTasks || [];
+  } catch (_) {
+    tasks = [];
+  }
+  renderTasksPreview(tasks);
+}
+
+function renderTasksPreview(tasks) {
+  const container = el("todo-preview");
+  if (!container) return;
+
+  const open = tasks
+    .filter(t => t.column !== "done")
+    .sort((a, b) => (a.date || "9999-99-99").localeCompare(b.date || "9999-99-99"))
+    .slice(0, 5);
+
+  container.innerHTML = "";
+
+  const label = document.createElement("div");
+  label.className = "groups-filter-label";
+  label.textContent = "To Do";
+  container.appendChild(label);
+
+  if (open.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "todo-preview-empty";
+    empty.textContent = "No open tasks.";
+    container.appendChild(empty);
+    return;
+  }
+
+  for (const task of open) {
+    const item = document.createElement("a");
+    item.href = "../tasks/tasks.html";
+    item.className = "todo-preview-item";
+
+    const title = document.createElement("div");
+    title.className = "todo-preview-title";
+    title.textContent = task.title;
+    item.appendChild(title);
+
+    if (task.date) {
+      const date = document.createElement("div");
+      date.className = "todo-preview-date";
+      date.textContent = new Date(task.date + "T00:00:00").toLocaleDateString("en-US", {
+        month: "short", day: "numeric"
+      });
+      item.appendChild(date);
+    }
+
+    container.appendChild(item);
+  }
 }
 
 
