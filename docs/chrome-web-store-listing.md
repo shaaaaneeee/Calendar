@@ -88,9 +88,9 @@ concept in `store-assets/promo-concepts/` (real brand colors: off-white
 `extension/assets/logo-primary.svg`) via
 `node scripts/finalize-promo-tile.js <source-image>`, which center-crops to
 440x280 and flattens to opaque PNG (the Store rejects transparency).
-`scripts/generate-promo-tile.js` was an earlier from-scratch attempt with
-the wrong color scheme (dark bg, orange accent) — superseded, kept only in
-case that direction is revisited.
+An earlier from-scratch attempt with the wrong color scheme (dark bg,
+orange accent) lived at `scripts/generate-promo-tile.js` — superseded by
+the crop-based approach above and removed during the 2026-09-03 cleanup.
 
 ## Outstanding before this is actually submission-ready
 
