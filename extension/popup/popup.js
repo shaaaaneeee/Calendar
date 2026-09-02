@@ -307,9 +307,7 @@ function clearBadge() {
   chrome.runtime.sendMessage({ type: "BADGE_CLEAR" });
 }
 
-function el(id)   { return document.getElementById(id); }
-function show(id) { el(id).classList.remove("hidden"); }
-function hide(id) { el(id).classList.add("hidden"); }
+// el/show/hide come from utils/dom-helpers.js
 
 
 // ─────────────────────────────────────────────

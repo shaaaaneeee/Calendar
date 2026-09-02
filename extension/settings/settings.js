@@ -776,28 +776,11 @@ function wireGroupsSection() {
 // HELPERS
 // ─────────────────────────────────────────────
 
-function el(id) { return document.getElementById(id); }
+// el/showToast (and its _toastTimer) come from utils/dom-helpers.js
 
 // ─────────────────────────────────────────────
 // TOAST
 // ─────────────────────────────────────────────
-
-let _toastTimer = null;
-
-function showToast(msg, type = 'error') {
-  const toast  = el('toast');
-  const msgEl  = el('toast-msg');
-  msgEl.textContent = msg;
-  toast.classList.toggle('bg-error-bg',    type === 'error');
-  toast.classList.toggle('border-error',   type === 'error');
-  toast.classList.toggle('bg-surface',     type !== 'error');
-  toast.classList.toggle('border-outline', type !== 'error');
-  msgEl.classList.toggle('text-error',      type === 'error');
-  msgEl.classList.toggle('text-on-surface', type !== 'error');
-  toast.classList.remove('hidden');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => toast.classList.add('hidden'), 4000);
-}
 
 el('toast-close').addEventListener('click', () => {
   clearTimeout(_toastTimer);

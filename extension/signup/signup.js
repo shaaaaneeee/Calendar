@@ -169,4 +169,4 @@ function setSuccess(msg) {
   msg ? p.classList.remove('hidden') : p.classList.add('hidden');
 }
 
-function el(id) { return document.getElementById(id); }
+// el comes from utils/dom-helpers.js

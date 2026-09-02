@@ -164,13 +164,8 @@ async function handleDelete() {
 // MODAL
 // ─────────────────────────────────────────────
 
-function todayStr() {
-  const date  = new Date();
-  const year  = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day   = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+// toDateString comes from utils/dom-helpers.js
+function todayStr() { return toDateString(new Date()); }
 
 function openAddModal(col) {
   addingToColumn = col;
@@ -236,8 +231,6 @@ function wireControls() {
 // HELPERS
 // ─────────────────────────────────────────────
 
-function el(id)   { return document.getElementById(id); }
-function show(id) { el(id).classList.remove('hidden'); }
-function hide(id) { el(id).classList.add('hidden'); }
+// el/show/hide come from utils/dom-helpers.js
 
 init();

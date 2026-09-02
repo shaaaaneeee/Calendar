@@ -594,9 +594,9 @@ function openModal(event) {
           const lbl = document.createElement("label");
           lbl.className = "flex items-center gap-2 cursor-pointer text-sm py-0.5";
           lbl.innerHTML = `
-            <input type="checkbox" data-group-id="${g.id}" ${alreadyShared ? "checked" : ""} ${alreadyShared && !isOwnShare ? "disabled" : ""} class="modal-group-cb w-3 h-3 cursor-pointer" />
-            <span class="w-2 h-2 flex-shrink-0" style="background:${g.colour}"></span>
-            <span class="text-on-surface">${g.name}</span>
+            <input type="checkbox" data-group-id="${escapeHtml(g.id)}" ${alreadyShared ? "checked" : ""} ${alreadyShared && !isOwnShare ? "disabled" : ""} class="modal-group-cb w-3 h-3 cursor-pointer" />
+            <span class="w-2 h-2 flex-shrink-0" style="background:${escapeHtml(g.colour)}"></span>
+            <span class="text-on-surface">${escapeHtml(g.name)}</span>
             ${alreadyShared && !isOwnShare ? '<span class="font-mono text-[8px] text-on-muted ml-auto">Shared</span>' : ""}
           `;
           groupsContainer.appendChild(lbl);
@@ -611,9 +611,9 @@ function openModal(event) {
         const lbl = document.createElement("label");
         lbl.className = "flex items-center gap-2 cursor-pointer text-sm py-0.5";
         lbl.innerHTML = `
-          <input type="checkbox" data-group-id="${g.id}" class="modal-group-cb w-3 h-3 cursor-pointer" />
-          <span class="w-2 h-2 flex-shrink-0" style="background:${g.colour}"></span>
-          <span class="text-on-surface">${g.name}</span>
+          <input type="checkbox" data-group-id="${escapeHtml(g.id)}" class="modal-group-cb w-3 h-3 cursor-pointer" />
+          <span class="w-2 h-2 flex-shrink-0" style="background:${escapeHtml(g.colour)}"></span>
+          <span class="text-on-surface">${escapeHtml(g.name)}</span>
         `;
         groupsContainer.appendChild(lbl);
       }
@@ -892,12 +892,7 @@ function updateTodayDisplay() {
   });
 }
 
-function toDateString(date) {
-  const year  = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day   = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+// toDateString comes from utils/dom-helpers.js
 
 function formatTime(timeStr) {
   if (!timeStr) return "";
@@ -907,30 +902,24 @@ function formatTime(timeStr) {
   return `${hour}:${String(m).padStart(2, "0")} ${period}`;
 }
 
-function el(id) { return document.getElementById(id); }
-function show(id) { el(id).classList.remove("hidden"); }
-function hide(id) { el(id).classList.add("hidden"); }
+// el/show/hide come from utils/dom-helpers.js
+
+// Escapes user-controlled text (group names, display names, notification
+// payload fields) before it's interpolated into an innerHTML template
+// literal. Event fields (title/notes/location) go through .textContent
+// elsewhere in this file and don't need this - this is only for the spots
+// that build markup via template strings.
+function escapeHtml(str) {
+  return String(str ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
 
 // ─────────────────────────────────────────────
 // TOAST
 // ─────────────────────────────────────────────
 
-let _toastTimer = null;
-
-function showToast(msg, type = "error") {
-  const toast = el("toast");
-  const msgEl = el("toast-msg");
-  msgEl.textContent = msg;
-  toast.classList.toggle("bg-error-bg",    type === "error");
-  toast.classList.toggle("border-error",   type === "error");
-  toast.classList.toggle("bg-surface",     type !== "error");
-  toast.classList.toggle("border-outline", type !== "error");
-  msgEl.classList.toggle("text-error",      type === "error");
-  msgEl.classList.toggle("text-on-surface", type !== "error");
-  toast.classList.remove("hidden");
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => toast.classList.add("hidden"), 4000);
-}
+// showToast (and its _toastTimer) come from utils/dom-helpers.js
 
 el("toast-close").addEventListener("click", () => {
   clearTimeout(_toastTimer);
@@ -1154,9 +1143,9 @@ async function renderShareSection(event, container) {
     const row = document.createElement("label");
     row.className = "share-group-cb-row";
     row.innerHTML = `
-      <input type="checkbox" data-group-id="${g.id}" ${alreadyShared ? "checked" : ""} ${alreadyShared && !isOwnShare ? "disabled" : ""} class="share-cb accent-primary w-3 h-3" />
-      <span class="share-group-dot" style="background:${g.colour}"></span>
-      <span>${g.name}</span>
+      <input type="checkbox" data-group-id="${escapeHtml(g.id)}" ${alreadyShared ? "checked" : ""} ${alreadyShared && !isOwnShare ? "disabled" : ""} class="share-cb accent-primary w-3 h-3" />
+      <span class="share-group-dot" style="background:${escapeHtml(g.colour)}"></span>
+      <span>${escapeHtml(g.name)}</span>
       ${alreadyShared && !isOwnShare ? '<span class="share-already-label">Shared</span>' : ""}
     `;
     container.appendChild(row);
@@ -1286,9 +1275,9 @@ async function renderSharedEventPanel(event, container) {
       const initials2 = m.displayName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
       const rsvpLabel = m.rsvpStatus ? m.rsvpStatus.charAt(0).toUpperCase() + m.rsvpStatus.slice(1) : "—";
       row.innerHTML = `
-        <div class="comment-avatar">${initials2}</div>
-        <span>${m.displayName}</span>
-        <span class="member-rsvp">${rsvpLabel}</span>
+        <div class="comment-avatar">${escapeHtml(initials2)}</div>
+        <span>${escapeHtml(m.displayName)}</span>
+        <span class="member-rsvp">${escapeHtml(rsvpLabel)}</span>
       `;
       memberList.appendChild(row);
     }
@@ -1315,11 +1304,11 @@ async function renderSharedEventPanel(event, container) {
     row.className = "comment-row";
     row.innerHTML = `
       <div class="comment-meta">
-        <div class="comment-avatar">${initials3}</div>
-        <span>${c.profiles?.display_name || "?"}</span>
-        <span>${time}</span>
+        <div class="comment-avatar">${escapeHtml(initials3)}</div>
+        <span>${escapeHtml(c.profiles?.display_name || "?")}</span>
+        <span>${escapeHtml(time)}</span>
       </div>
-      <div class="comment-body">${c.body.replace(/</g, "&lt;")}</div>
+      <div class="comment-body">${escapeHtml(c.body)}</div>
     `;
     commentsList.appendChild(row);
   }
@@ -1580,13 +1569,22 @@ async function renderNotifFeed() {
     }
 
     // ── Standard notifications ─────────────────────────────────────────────────
+    // p.* comes from a notification payload that mirrors user-controlled data
+    // (display names, event titles, group names, comment text) - escape before
+    // it goes into innerHTML below.
+    const actorName = escapeHtml(p.actor_name || "Someone");
+    const preview    = escapeHtml(p.preview || "an event");
+    const groupName  = escapeHtml(p.group_name || "a group");
+    const status     = escapeHtml(p.status || "going");
+    const commentTxt = escapeHtml(p.comment || "");
+
     let description = "";
     if (n.type === "event_shared") {
-      description = `${p.actor_name || "Someone"} shared "${p.preview || "an event"}" to ${p.group_name || "a group"}`;
+      description = `${actorName} shared "${preview}" to ${groupName}`;
     } else if (n.type === "rsvp_updated") {
-      description = `${p.actor_name || "Someone"} is ${p.status || "going"} to "${p.preview || "an event"}"`;
+      description = `${actorName} is ${status} to "${preview}"`;
     } else if (n.type === "comment_added") {
-      description = `${p.actor_name || "Someone"} commented on "${p.preview || "an event"}": "${p.comment || ""}"`;
+      description = `${actorName} commented on "${preview}": "${commentTxt}"`;
     }
 
     const item = document.createElement("div");
@@ -1595,7 +1593,7 @@ async function renderNotifFeed() {
       <div class="w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? "bg-transparent" : "bg-primary"}"></div>
       <div class="flex-1 min-w-0">
         <div class="text-xs leading-relaxed">${description}</div>
-        <div class="font-mono text-[9px] text-on-muted mt-0.5">${time}</div>
+        <div class="font-mono text-[9px] text-on-muted mt-0.5">${escapeHtml(time)}</div>
       </div>
     `;
     item.addEventListener("click", async () => {
