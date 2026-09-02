@@ -137,6 +137,23 @@ tasks/groups pages load essentially as-is. New addition: a "Detection
 Sources" section in Settings for viewing/editing the process allowlist (see
 below) — the one new piece of UI this component needs.
 
+**Security requirement, not an implementation detail to decide later:** every
+`BrowserWindow` in this app (the Dashboard/Tasks/Settings shell and the
+Notification/Confirm UI) must be created with `contextIsolation: true`,
+`nodeIntegration: false`, and `sandbox: true`, with a single minimal preload
+script as the only bridge between renderer and main (exposing just the
+`plan-detected` IPC event and the Supabase save call — nothing else of
+Node's API surface). This matters specifically because these renderers load
+the same pages that already had one stored-XSS bug this session (fixed, see
+`extension/dashboard/dashboard.js`'s `escapeHtml()`). In the Chrome
+extension, a DOM-based bug like that is contained to the extension's own
+sandboxed page. In a misconfigured Electron renderer (`nodeIntegration`
+enabled or `contextIsolation` off), the same class of bug stops being
+"attacker JS runs in a sandboxed page" and becomes "attacker JS runs with
+full Node.js access on the user's desktop" — filesystem, process spawning,
+everything. Stating this now so the implementation plan bakes it in from the
+first `BrowserWindow`, rather than retrofitting it after the fact.
+
 ### Allowlist Store (new, small) — shared between Components 1 and 5
 
 Persists the list of process names (e.g. `whatsapp.exe`, `telegram.exe`,
@@ -201,6 +218,15 @@ and the desktop app sees one unified calendar.
 - **macOS/Linux** are out of scope for this spec entirely — a future spec's
   concern, using that platform's own accessibility API (Accessibility API
   on macOS), not a code port of the Windows UIA Watcher.
+- **Password-masked fields** — the UIA Watcher subscribes generically to
+  "whatever element currently has keyboard focus" within an allowlisted
+  process, which includes any password/PIN field that app happens to show
+  (e.g. a re-auth prompt in Teams), not just its chat compose box. This is
+  expected to be a non-issue in practice: native Windows password controls
+  set `IsPassword` and don't expose their value via UIA's
+  `TextPattern`/`ValuePattern` at the OS level, regardless of what's reading
+  them. That expectation is not yet confirmed against real allowlisted
+  apps — see Testing.
 
 ---
 
@@ -220,7 +246,10 @@ against each allowlisted app and confirm live text is captured as typed;
 confirm a non-allowlisted app's focus produces no events; confirm a
 detected plan reaches the Notification UI and a confirmed plan appears on
 both the desktop dashboard and, on the same account, the Chrome extension's
-calendar.
+calendar; confirm that focusing a password/PIN field in an allowlisted app
+(e.g. a re-auth prompt) produces no `focus-text` event or an empty one,
+closing the loop on the Known Limitations note above instead of leaving it
+assumed.
 
 ---
 
