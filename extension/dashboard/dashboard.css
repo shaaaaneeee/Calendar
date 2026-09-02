@@ -19,28 +19,30 @@
   color: #4c4546;
   border-right: 2px solid #1a1c1c;
   border-bottom: 2px solid #1a1c1c;
-  background: #eeeeee;
+  background: rgba(238, 238, 238, 0.92);
   user-select: none;
 }
 
 .month-cell {
   border-right: 2px solid #1a1c1c;
   border-bottom: 2px solid #1a1c1c;
+  border-top: 2px solid transparent;
+  border-left: 2px solid transparent;
   padding: 4px;
   min-height: 80px;
   cursor: pointer;
-  background: #f9f9f9;
+  background: rgba(249, 249, 249, 0.92);
   vertical-align: top;
   overflow: hidden;
 }
-.month-cell:hover { background: #f4f3f3; }
+.month-cell:hover { background: rgba(244, 243, 243, 0.92); }
 .month-cell.today  { background: #c4c4c4; color: #1a1c1c; border-top: 2px solid #1a1c1c; }
-.month-cell.other-month { background: #eeeeee; color: #4c4546; }
+.month-cell.other-month { background: rgba(238, 238, 238, 0.92); color: #4c4546; }
 .month-cell.other-month .day-number { color: #4c4546; }
 
 .month-cell:hover,
 .month-cell.selected {
-  border: 2px solid #1a1c1c;
+  border-color: #1a1c1c;
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
   position: relative;
   z-index: 2;
@@ -75,20 +77,22 @@
 .week-cell {
   border-right: 2px solid #1a1c1c;
   border-bottom: 2px solid #1a1c1c;
+  border-top: 2px solid transparent;
+  border-left: 2px solid transparent;
   padding: 8px;
   min-height: 80px;
-  background: #f9f9f9;
+  background: rgba(249, 249, 249, 0.92);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
-.week-cell:hover  { background: #f4f3f3; }
+.week-cell:hover  { background: rgba(244, 243, 243, 0.92); }
 .week-cell.today  { background: #c4c4c4; color: #1a1c1c; border-top: 2px solid #1a1c1c; }
 
 .week-cell:hover,
 .week-cell.selected {
-  border: 2px solid #1a1c1c;
+  border-color: #1a1c1c;
   box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
   position: relative;
   z-index: 2;
@@ -395,6 +399,6 @@
   border: 1px solid transparent;
 }
 .mini-cal-day:hover { border-color: #1a1c1c; background: #f4f3f3; }
+.mini-cal-day.other-month { color: #cfc4c5; }
 .mini-cal-day.today { background: #1a1c1c; color: #f9f9f9; font-weight: 700; }
 .mini-cal-day.selected { border-color: #00D1FF; color: #00D1FF; font-weight: 700; }
-.mini-cal-day.other-month { color: #cfc4c5; }

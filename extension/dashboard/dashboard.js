@@ -27,6 +27,7 @@ let editingEvent = null; // Event currently open in modal
 let calGroups = []; // Cached groups for filter + share UI
 let hiddenGroups = new Set(); // Group IDs currently filtered out
 let activeCommentsChannel = null; // Realtime channel for live comments
+let lastAnimatedGridKey = null; // Last month/view key that ran the grid entrance animation
 
 
 // ─────────────────────────────────────────────
@@ -161,14 +162,14 @@ function renderMonth() {
   for (let i = 0; i < firstDay; i++) {
     const cell = makeMonthCell(
       year, month - 1, daysInPrev - firstDay + i + 1,
-      dateMap, today, true, selectedDay
+      dateMap, today, true
     );
     grid.appendChild(cell);
   }
 
   // Current month cells
   for (let d = 1; d <= daysInMonth; d++) {
-    const cell = makeMonthCell(year, month, d, dateMap, today, false, selectedDay);
+    const cell = makeMonthCell(year, month, d, dateMap, today, false);
     grid.appendChild(cell);
   }
 
@@ -176,7 +177,7 @@ function renderMonth() {
   const total = firstDay + daysInMonth;
   const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
   for (let d = 1; d <= trailing; d++) {
-    const cell = makeMonthCell(year, month + 1, d, dateMap, today, true, selectedDay);
+    const cell = makeMonthCell(year, month + 1, d, dateMap, today, true);
     grid.appendChild(cell);
   }
 
@@ -184,7 +185,13 @@ function renderMonth() {
   container.innerHTML = "";
   container.appendChild(grid);
 
-  if (typeof anime !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const gridKey = `month:${year}-${month}`;
+  if (
+    gridKey !== lastAnimatedGridKey &&
+    typeof anime !== "undefined" &&
+    !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  ) {
+    lastAnimatedGridKey = gridKey;
     anime({
       targets: ".month-cell",
       opacity: [0, 1],
@@ -197,7 +204,7 @@ function renderMonth() {
 }
 
 
-function makeMonthCell(year, month, day, dateMap, today, isOtherMonth, selectedDay) {
+function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
   // Normalise month overflow (JS Date handles it)
   const cellDate = new Date(year, month, day);
   const dateKey = toDateString(cellDate);
@@ -245,11 +252,7 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth, selectedD
   // it instead (toggle), so the persisted highlight matches "this cell is
   // currently open" rather than accumulating clicks with no way back.
   cell.addEventListener("click", () => {
-    if (dateKey === selectedDay) {
-      closeDayPanel();
-    } else {
-      openDayPanel(dateKey, events);
-    }
+    toggleDaySelection(dateKey, events);
   });
 
   return cell;
@@ -305,11 +308,11 @@ function renderMiniCalendar() {
       (dateKey === selectedDay ? " selected" : "");
     day.textContent = label;
     day.addEventListener("click", () => {
-      if (dateKey === selectedDay) {
-        closeDayPanel();
-      } else {
-        openDayPanel(dateKey, dateMap[dateKey] || []);
-      }
+      // Jump the main grid to whatever month/week contains the clicked date
+      // before toggling the panel, so the day is actually visible on the
+      // main grid (not just opened as a panel with no anchor in view).
+      currentDate = new Date(dateKey + "T00:00:00");
+      toggleDaySelection(dateKey, dateMap[dateKey] || []);
     });
     daysEl.appendChild(day);
   };
@@ -403,11 +406,7 @@ function renderWeek() {
     }
 
     cell.addEventListener("click", () => {
-      if (dateKey === selectedDay) {
-        closeDayPanel();
-      } else {
-        openDayPanel(dateKey, events);
-      }
+      toggleDaySelection(dateKey, events);
     });
     grid.appendChild(cell);
   }
@@ -532,6 +531,17 @@ function closeDayPanel() {
   hide("day-panel");
   selectedDay = null;
   render();
+}
+
+// Shared by the main grid (month + week cells) and the mini calendar:
+// clicking the already-selected day closes it, clicking any other day
+// opens it.
+function toggleDaySelection(dateKey, events) {
+  if (dateKey === selectedDay) {
+    closeDayPanel();
+  } else {
+    openDayPanel(dateKey, events);
+  }
 }
 
 
@@ -817,6 +827,9 @@ function wireControls() {
   el("view-week").addEventListener("click", () => {
     if (currentView === "week") return;
     currentView = "week";
+    // Force the month-grid entrance animation to replay next time we come
+    // back to month view, even if it lands on the same month as before.
+    lastAnimatedGridKey = null;
     el("view-week").classList.add("active");
     el("view-month").classList.remove("active");
     render();
