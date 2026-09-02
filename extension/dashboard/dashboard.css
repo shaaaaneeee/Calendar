@@ -395,6 +395,10 @@
 .comment-input-row { display: flex; gap: 6px; margin-top: 8px; }
 .comment-input {
   flex: 1;
+  min-width: 0; /* flex items default to a content-based min-width, which
+                   for a text input is wide enough to push .comment-send
+                   past the right edge of the 256px sidebar - this lets it
+                   actually shrink to fit. */
   border: 1px solid var(--c-outline);
   padding: 5px 8px;
   font-size: 12px;
