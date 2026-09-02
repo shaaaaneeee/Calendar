@@ -160,14 +160,14 @@ function renderMonth() {
   for (let i = 0; i < firstDay; i++) {
     const cell = makeMonthCell(
       year, month - 1, daysInPrev - firstDay + i + 1,
-      dateMap, today, true
+      dateMap, today, true, selectedDay
     );
     grid.appendChild(cell);
   }
 
   // Current month cells
   for (let d = 1; d <= daysInMonth; d++) {
-    const cell = makeMonthCell(year, month, d, dateMap, today, false);
+    const cell = makeMonthCell(year, month, d, dateMap, today, false, selectedDay);
     grid.appendChild(cell);
   }
 
@@ -175,7 +175,7 @@ function renderMonth() {
   const total = firstDay + daysInMonth;
   const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
   for (let d = 1; d <= trailing; d++) {
-    const cell = makeMonthCell(year, month + 1, d, dateMap, today, true);
+    const cell = makeMonthCell(year, month + 1, d, dateMap, today, true, selectedDay);
     grid.appendChild(cell);
   }
 
@@ -196,7 +196,7 @@ function renderMonth() {
 }
 
 
-function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
+function makeMonthCell(year, month, day, dateMap, today, isOtherMonth, selectedDay) {
   // Normalise month overflow (JS Date handles it)
   const cellDate = new Date(year, month, day);
   const dateKey = toDateString(cellDate);
@@ -205,7 +205,8 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
   const cell = document.createElement("div");
   cell.className = "month-cell" +
     (isOtherMonth ? " other-month" : "") +
-    (dateKey === today ? " today" : "");
+    (dateKey === today ? " today" : "") +
+    (dateKey === selectedDay ? " selected" : "");
 
   // Day number
   const num = document.createElement("div");
@@ -239,8 +240,16 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
     cell.appendChild(more);
   }
 
-  // Click cell to open day panel
-  cell.addEventListener("click", () => openDayPanel(dateKey, events));
+  // Click cell to open day panel — clicking the already-selected day closes
+  // it instead (toggle), so the persisted highlight matches "this cell is
+  // currently open" rather than accumulating clicks with no way back.
+  cell.addEventListener("click", () => {
+    if (dateKey === selectedDay) {
+      closeDayPanel();
+    } else {
+      openDayPanel(dateKey, events);
+    }
+  });
 
   return cell;
 }
@@ -278,7 +287,9 @@ function renderWeek() {
     const events = dateMap[dateKey] || [];
 
     const cell = document.createElement("div");
-    cell.className = "week-cell" + (dateKey === today ? " today" : "");
+    cell.className = "week-cell" +
+      (dateKey === today ? " today" : "") +
+      (dateKey === selectedDay ? " selected" : "");
 
     const header = document.createElement("div");
     header.className = "week-cell-header";
@@ -308,7 +319,13 @@ function renderWeek() {
       cell.appendChild(pill);
     }
 
-    cell.addEventListener("click", () => openDayPanel(dateKey, events));
+    cell.addEventListener("click", () => {
+      if (dateKey === selectedDay) {
+        closeDayPanel();
+      } else {
+        openDayPanel(dateKey, events);
+      }
+    });
     grid.appendChild(cell);
   }
 
@@ -324,6 +341,7 @@ function renderWeek() {
 
 function openDayPanel(dateKey, events) {
   selectedDay = dateKey;
+  render();
 
   const date = new Date(dateKey + "T00:00:00");
   el("day-panel-title").textContent = date.toLocaleDateString("en-US", {
@@ -430,6 +448,7 @@ function closeDayPanel() {
   if (activeCommentsChannel) { activeCommentsChannel.unsubscribe(); activeCommentsChannel = null; }
   hide("day-panel");
   selectedDay = null;
+  render();
 }
 
 
