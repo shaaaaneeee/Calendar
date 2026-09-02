@@ -4,8 +4,8 @@
 .month-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-top: 1px solid #1a1c1c;
-  border-left: 1px solid #1a1c1c;
+  border-top: 2px solid #1a1c1c;
+  border-left: 2px solid #1a1c1c;
   min-height: 100%;
 }
 
@@ -17,15 +17,15 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #4c4546;
-  border-right: 1px solid #1a1c1c;
-  border-bottom: 1px solid #1a1c1c;
+  border-right: 2px solid #1a1c1c;
+  border-bottom: 2px solid #1a1c1c;
   background: #eeeeee;
   user-select: none;
 }
 
 .month-cell {
-  border-right: 1px solid #1a1c1c;
-  border-bottom: 1px solid #1a1c1c;
+  border-right: 2px solid #1a1c1c;
+  border-bottom: 2px solid #1a1c1c;
   padding: 4px;
   min-height: 80px;
   cursor: pointer;
@@ -47,18 +47,26 @@
   line-height: 1.2;
 }
 
+/* ── Grid-paper texture behind the calendar (purely decorative) ── */
+#main {
+  background-image:
+    linear-gradient(to right, #e2e2e2 1px, transparent 1px),
+    linear-gradient(to bottom, #e2e2e2 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
 /* ── Week grid (created by renderWeek) ── */
 .week-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-top: 1px solid #1a1c1c;
-  border-left: 1px solid #1a1c1c;
+  border-top: 2px solid #1a1c1c;
+  border-left: 2px solid #1a1c1c;
   min-height: 100%;
 }
 
 .week-cell {
-  border-right: 1px solid #1a1c1c;
-  border-bottom: 1px solid #1a1c1c;
+  border-right: 2px solid #1a1c1c;
+  border-bottom: 2px solid #1a1c1c;
   padding: 8px;
   min-height: 80px;
   background: #f9f9f9;
@@ -102,7 +110,7 @@
   text-overflow: ellipsis;
   background: #ffffff;
   color: #1a1c1c;
-  border: 1px solid #1a1c1c;
+  border: 2px solid #1a1c1c;
   cursor: pointer;
   display: block;
 }
