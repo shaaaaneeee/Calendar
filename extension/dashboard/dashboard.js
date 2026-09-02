@@ -123,6 +123,7 @@ function render() {
   if (currentView === "month") renderMonth();
   else renderWeek();
   applyGroupFilter();
+  renderMiniCalendar();
 }
 
 
@@ -252,6 +253,88 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth, selectedD
   });
 
   return cell;
+}
+
+
+// ─────────────────────────────────────────────
+// MINI CALENDAR (sidebar)
+// ─────────────────────────────────────────────
+
+// Mirrors currentDate — no independent navigation state of its own, so it
+// can never disagree with what month the main grid is showing. Its own
+// chevrons mutate the same currentDate the top bar's prev/next buttons do.
+function renderMiniCalendar() {
+  const container = el("mini-cal");
+  if (!container) return;
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const monthLabel = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const today = toDateString(new Date());
+  const dateMap = buildDateMap(allEvents);
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrev = new Date(year, month, 0).getDate();
+
+  container.innerHTML = `
+    <div class="flex items-center justify-between mb-3">
+      <span class="font-mono text-[10px] font-bold tracking-[0.1em] uppercase">${monthLabel}</span>
+      <div class="flex gap-1">
+        <button id="mini-cal-prev" class="w-5 h-5 flex items-center justify-center hover:bg-surface-mid">
+          <span class="material-symbols-outlined text-[14px]">chevron_left</span>
+        </button>
+        <button id="mini-cal-next" class="w-5 h-5 flex items-center justify-center hover:bg-surface-mid">
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        </button>
+      </div>
+    </div>
+    <div class="grid grid-cols-7 gap-0.5 text-center mb-1">
+      ${["S", "M", "T", "W", "T", "F", "S"].map((d) => `<span class="font-mono text-[8px] text-on-muted">${d}</span>`).join("")}
+    </div>
+    <div class="grid grid-cols-7 gap-0.5" id="mini-cal-days"></div>
+  `;
+
+  const daysEl = el("mini-cal-days");
+
+  const addDay = (dateKey, label, isOtherMonth) => {
+    const day = document.createElement("span");
+    day.className = "mini-cal-day" +
+      (isOtherMonth ? " other-month" : "") +
+      (dateKey === today ? " today" : "") +
+      (dateKey === selectedDay ? " selected" : "");
+    day.textContent = label;
+    day.addEventListener("click", () => {
+      if (dateKey === selectedDay) {
+        closeDayPanel();
+      } else {
+        openDayPanel(dateKey, dateMap[dateKey] || []);
+      }
+    });
+    daysEl.appendChild(day);
+  };
+
+  for (let i = 0; i < firstDay; i++) {
+    const d = daysInPrev - firstDay + i + 1;
+    addDay(toDateString(new Date(year, month - 1, d)), d, true);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    addDay(toDateString(new Date(year, month, d)), d, false);
+  }
+  const total = firstDay + daysInMonth;
+  const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let d = 1; d <= trailing; d++) {
+    addDay(toDateString(new Date(year, month + 1, d)), d, true);
+  }
+
+  el("mini-cal-prev").addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    render();
+  });
+  el("mini-cal-next").addEventListener("click", () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    render();
+  });
 }
 
 

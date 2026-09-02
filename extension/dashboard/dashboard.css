@@ -384,3 +384,17 @@
 #notif-panel:not(.hidden) {
   display: flex;
 }
+
+/* ── Mini calendar (sidebar) ── */
+.mini-cal-day {
+  padding: 3px 0;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.mini-cal-day:hover { border-color: #1a1c1c; background: #f4f3f3; }
+.mini-cal-day.today { background: #1a1c1c; color: #f9f9f9; font-weight: 700; }
+.mini-cal-day.selected { border-color: #00D1FF; color: #00D1FF; font-weight: 700; }
+.mini-cal-day.other-month { color: #cfc4c5; }
