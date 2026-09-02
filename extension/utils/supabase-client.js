@@ -415,6 +415,18 @@ const SupabaseGroups = {
     return group;
   },
 
+  async updateGroup(groupId, { name, colour }) {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
+    const { error } = await db
+      .from('groups')
+      .update({ name, colour })
+      .eq('id', groupId)
+      .eq('created_by', session.user.id);
+    if (error) throw error;
+  },
+
   async sendGroupInvite(groupId, username) {
     const session = await SupabaseAuth._restoreSession();
     if (!session) throw new Error('Not signed in');
@@ -532,6 +544,30 @@ const SupabaseSocial = {
       .eq('event_id', eventId);
     if (error) throw error;
     return (data || []).map(r => r.group_id);
+  },
+
+  // Like getSharedGroups, but also returns who shared it — the share UI
+  // needs this to know which shares the current user is allowed to undo.
+  async getSharedGroupDetails(eventId) {
+    const { data, error } = await db
+      .from('shared_events')
+      .select('group_id, shared_by')
+      .eq('event_id', eventId);
+    if (error) throw error;
+    return data || [];
+  },
+
+  async unshareEvent(eventId, groupId) {
+    const session = await SupabaseAuth._restoreSession();
+    if (!session) throw new Error('Not signed in');
+
+    const { error } = await db
+      .from('shared_events')
+      .delete()
+      .eq('event_id', eventId)
+      .eq('group_id', groupId)
+      .eq('shared_by', session.user.id);
+    if (error) throw error;
   },
 
   async getRsvpDetails(eventId) {

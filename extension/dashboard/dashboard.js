@@ -14,6 +14,16 @@ const Events = window.SupabaseClient.events;
 const Groups = window.SupabaseClient.groups;
 const Social = window.SupabaseClient.social;
 
+// Task-deadline pseudo-events are colour-coded by the task's own priority
+// (same palette as the Tasks board) rather than one flat colour, so the
+// calendar shows urgency at a glance. "none" covers undated-priority tasks.
+const DEADLINE_PRIORITY_COLOURS = {
+  high:   "#D2601A",
+  medium: "#C99A2E",
+  low:    "#2F9E44",
+  none:   "#4c4546",
+};
+
 // ─────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────
@@ -28,6 +38,8 @@ let calGroups = []; // Cached groups for filter + share UI
 let hiddenGroups = new Set(); // Group IDs currently filtered out
 let activeCommentsChannel = null; // Realtime channel for live comments
 let lastAnimatedGridKey = null; // Last month/view key that ran the grid entrance animation
+let currentUserId = null; // Signed-in user's id, needed to know which shares are ours to undo
+let modalSharedDetails = []; // { group_id, shared_by }[] for the event currently open in the modal
 
 
 // ─────────────────────────────────────────────
@@ -54,6 +66,7 @@ async function init() {
 async function loadEvents() {
   try {
     const user = await Auth.getUser();
+    currentUserId = user?.id || null;
     if (user) {
       try {
         await Events.materializeRecurrences();
@@ -92,7 +105,7 @@ async function loadEvents() {
         event_date:    t.date,
         _isDeadline:   true,
         group_id:      "deadlines",
-        group_colour:  "#FF4D00",
+        group_colour:  DEADLINE_PRIORITY_COLOURS[t.priority] || DEADLINE_PRIORITY_COLOURS.none,
       }));
     allEvents = [...allEvents, ...deadlineEvents];
   } catch (_) {
@@ -567,17 +580,24 @@ function openModal(event) {
     if (event?.id) {
       // Edit mode: async-load existing shares, then mark already-shared rows
       groupsContainer.innerHTML = '<div class="font-mono text-[9px] text-on-muted tracking-wider">Loading...</div>';
-      Social.getSharedGroups(event.id).then(sharedIds => {
+      modalSharedDetails = [];
+      Social.getSharedGroupDetails(event.id).then(details => {
+        modalSharedDetails = details;
         groupsContainer.innerHTML = "";
         for (const g of calGroups) {
-          const alreadyShared = sharedIds.includes(g.id);
+          const share = details.find(s => s.group_id === g.id);
+          const alreadyShared = !!share;
+          // Only whoever shared it can unshare it (matches the DB's delete
+          // policy) - someone else's share renders as a locked "Shared"
+          // badge instead of a checkbox that would silently fail to uncheck.
+          const isOwnShare = alreadyShared && share.shared_by === currentUserId;
           const lbl = document.createElement("label");
           lbl.className = "flex items-center gap-2 cursor-pointer text-sm py-0.5";
           lbl.innerHTML = `
-            <input type="checkbox" data-group-id="${g.id}" ${alreadyShared ? "checked disabled" : ""} class="modal-group-cb w-3 h-3 cursor-pointer" />
+            <input type="checkbox" data-group-id="${g.id}" ${alreadyShared ? "checked" : ""} ${alreadyShared && !isOwnShare ? "disabled" : ""} class="modal-group-cb w-3 h-3 cursor-pointer" />
             <span class="w-2 h-2 flex-shrink-0" style="background:${g.colour}"></span>
             <span class="text-on-surface">${g.name}</span>
-            ${alreadyShared ? '<span class="font-mono text-[8px] text-on-muted ml-auto">Shared</span>' : ""}
+            ${alreadyShared && !isOwnShare ? '<span class="font-mono text-[8px] text-on-muted ml-auto">Shared</span>' : ""}
           `;
           groupsContainer.appendChild(lbl);
         }
@@ -585,6 +605,7 @@ function openModal(event) {
         groupsContainer.innerHTML = '<div class="font-mono text-[9px] text-on-muted">Could not load groups.</div>';
       });
     } else {
+      modalSharedDetails = [];
       // Create mode: all unchecked
       for (const g of calGroups) {
         const lbl = document.createElement("label");
@@ -682,10 +703,18 @@ async function handleModalSave() {
     notes:        el("modal-field-notes").value.trim(),
   };
 
-  // Collect newly-checked groups (skip disabled = already shared)
-  const selectedGroupIds = Array.from(
-    document.querySelectorAll(".modal-group-cb:checked:not([disabled])")
-  ).map(cb => cb.dataset.groupId);
+  const checkedGroupIds = new Set(
+    Array.from(document.querySelectorAll(".modal-group-cb:checked")).map(cb => cb.dataset.groupId)
+  );
+  const wasSharedGroupIds = new Set(modalSharedDetails.map(s => s.group_id));
+
+  const selectedGroupIds = [...checkedGroupIds].filter(id => !wasSharedGroupIds.has(id));
+  // Only ever unshare groups the current user shared themselves - the
+  // checkbox for someone else's share is disabled, so it can't appear
+  // "unchecked" here, but this stays defensive in case that ever changes.
+  const unshareGroupIds = modalSharedDetails
+    .filter(s => s.shared_by === currentUserId && !checkedGroupIds.has(s.group_id))
+    .map(s => s.group_id);
 
   try {
     let savedId;
@@ -704,6 +733,9 @@ async function handleModalSave() {
     }
     if (selectedGroupIds.length > 0 && savedId) {
       await Social.shareEvent(savedId, selectedGroupIds);
+    }
+    if (unshareGroupIds.length > 0 && savedId) {
+      for (const groupId of unshareGroupIds) await Social.unshareEvent(savedId, groupId);
     }
     closeModal();
     await loadEvents();
@@ -970,7 +1002,7 @@ function renderGroupsFilter() {
 
     const dot = document.createElement("span");
     dot.className = "group-filter-dot";
-    dot.style.background = "#FF4D00";
+    dot.style.background = DEADLINE_PRIORITY_COLOURS.none;
 
     const name = document.createElement("span");
     name.textContent = "Deadlines";
@@ -1076,6 +1108,13 @@ function renderTasksPreview(tasks) {
       item.appendChild(date);
     }
 
+    if (task.priority) {
+      const priority = document.createElement("span");
+      priority.className = `todo-preview-priority priority-${task.priority}`;
+      priority.textContent = task.priority.toUpperCase();
+      item.appendChild(priority);
+    }
+
     container.appendChild(item);
   }
 }
@@ -1088,9 +1127,9 @@ function renderTasksPreview(tasks) {
 async function renderShareSection(event, container) {
   container.innerHTML = '<div class="text-xs text-on-muted font-mono">Loading groups...</div>';
 
-  let sharedGroupIds = [];
+  let sharedDetails = [];
   try {
-    sharedGroupIds = await Social.getSharedGroups(event.id);
+    sharedDetails = await Social.getSharedGroupDetails(event.id);
   } catch (err) {
     // Swallowing this used to make every group render as "not yet shared"
     // even when some already were, with no trace of why - re-sharing is
@@ -1106,32 +1145,49 @@ async function renderShareSection(event, container) {
   container.innerHTML = "";
 
   for (const g of calGroups) {
-    const alreadyShared = sharedGroupIds.includes(g.id);
+    const share = sharedDetails.find(s => s.group_id === g.id);
+    const alreadyShared = !!share;
+    // Only whoever shared it can unshare it (matches the DB's delete policy) -
+    // a share made by someone else in the group renders as a locked "Shared"
+    // badge instead of a checkbox that would silently fail to uncheck.
+    const isOwnShare = alreadyShared && share.shared_by === currentUserId;
     const row = document.createElement("label");
     row.className = "share-group-cb-row";
     row.innerHTML = `
-      <input type="checkbox" data-group-id="${g.id}" ${alreadyShared ? "checked disabled" : ""} class="share-cb accent-primary w-3 h-3" />
+      <input type="checkbox" data-group-id="${g.id}" ${alreadyShared ? "checked" : ""} ${alreadyShared && !isOwnShare ? "disabled" : ""} class="share-cb accent-primary w-3 h-3" />
       <span class="share-group-dot" style="background:${g.colour}"></span>
       <span>${g.name}</span>
-      ${alreadyShared ? '<span class="share-already-label">Shared</span>' : ""}
+      ${alreadyShared && !isOwnShare ? '<span class="share-already-label">Shared</span>' : ""}
     `;
     container.appendChild(row);
   }
 
   const confirmBtn = document.createElement("button");
   confirmBtn.className = "mt-3 px-3 py-1.5 bg-primary text-on-primary font-mono text-[9px] font-bold tracking-wider uppercase hover:shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none";
-  confirmBtn.textContent = "Share";
-  confirmBtn.addEventListener("click", () => confirmShare(event, container));
+  confirmBtn.textContent = "Save";
+  confirmBtn.addEventListener("click", () => confirmShare(event, container, sharedDetails));
   container.appendChild(confirmBtn);
 }
 
-async function confirmShare(event, container) {
-  const cbs = container.querySelectorAll(".share-cb:not([disabled]):checked");
-  const groupIds = Array.from(cbs).map(cb => cb.dataset.groupId);
-  if (!groupIds.length) { showToast("Select at least one group."); return; }
+async function confirmShare(event, container, sharedDetails) {
+  const checked = new Set(
+    Array.from(container.querySelectorAll(".share-cb:checked")).map(cb => cb.dataset.groupId)
+  );
+  const wasShared = new Set(sharedDetails.map(s => s.group_id));
+
+  const toShare   = [...checked].filter(id => !wasShared.has(id));
+  // Only ever unshare groups the current user shared themselves - the
+  // checkbox for someone else's share is disabled, so it can't appear
+  // "unchecked" here, but this stays defensive in case that ever changes.
+  const toUnshare = sharedDetails
+    .filter(s => s.shared_by === currentUserId && !checked.has(s.group_id))
+    .map(s => s.group_id);
+
+  if (!toShare.length && !toUnshare.length) { showToast("No changes to share settings."); return; }
 
   try {
-    await Social.shareEvent(event.id, groupIds);
+    if (toShare.length) await Social.shareEvent(event.id, toShare);
+    for (const groupId of toUnshare) await Social.unshareEvent(event.id, groupId);
     await renderShareSection(event, container);
     render();
   } catch (e) {

@@ -32,10 +32,12 @@
   box-shadow: none;
 }
 
-/* Priority accent — left border strip */
-.task-card.priority-high   { border-left: 3px solid #FF4D00; }
-.task-card.priority-medium { border-left: 3px solid #00D1FF; }
-.task-card.priority-low    { border-left: 3px solid #7EFF00; }
+/* Priority accent — left border strip
+   Deliberately muted/earthy, distinct from the bright GROUP_COLOURS
+   palette in settings.js, so tasks never read as "another group". */
+.task-card.priority-high   { border-left: 3px solid #D2601A; }
+.task-card.priority-medium { border-left: 3px solid #C99A2E; }
+.task-card.priority-low    { border-left: 3px solid #2F9E44; }
 
 /* Done column: visual de-emphasis */
 #col-done .task-card {
@@ -79,9 +81,9 @@
   border: 1px solid currentColor;
 }
 
-.priority-high   .card-priority { color: #FF4D00; }
-.priority-medium .card-priority { color: #00D1FF; }
-.priority-low    .card-priority { color: #7EFF00; }
+.priority-high   .card-priority { color: #D2601A; }
+.priority-medium .card-priority { color: #C99A2E; }
+.priority-low    .card-priority { color: #2F9E44; }
 
 /* ── card-moves: div, className = 'card-moves' ── */
 .card-moves {

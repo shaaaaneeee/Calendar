@@ -514,6 +514,8 @@ function wireNav() {
 
 const Groups = window.SupabaseClient.groups;
 
+const GROUP_COLOURS = ['#00D1FF', '#7EFF00', '#FF4D00', '#A855F7', '#F59E0B', '#EC4899'];
+
 async function loadAndRenderGroups() {
   const container = el('groups-list');
   container.innerHTML = '<p style="font-size:12px;color:var(--text-muted)">Loading groups...</p>';
@@ -542,7 +544,11 @@ function renderGroupsList(groups) {
     const isOwner = group.created_by === currentUser?.id;
 
     const card = document.createElement('div');
-    card.className = 'border border-outline p-4 flex items-center justify-between gap-4';
+    card.className = 'border border-outline p-4 flex flex-col gap-4';
+
+    const viewRow = document.createElement('div');
+    viewRow.className = 'flex items-center justify-between gap-4';
+    card.appendChild(viewRow);
 
     const left = document.createElement('div');
     left.className = 'flex items-center gap-3 min-w-0';
@@ -566,7 +572,7 @@ function renderGroupsList(groups) {
     info.appendChild(name);
     info.appendChild(meta);
     left.appendChild(info);
-    card.appendChild(left);
+    viewRow.appendChild(left);
 
     // Invite form (owner only)
     if (isOwner) {
@@ -598,7 +604,100 @@ function renderGroupsList(groups) {
       });
       inviteWrap.appendChild(inviteInput);
       inviteWrap.appendChild(inviteBtn);
-      card.appendChild(inviteWrap);
+      viewRow.appendChild(inviteWrap);
+    }
+
+    // Edit form (owner only) — name + colour, hidden until "Edit" is clicked
+    let editRow = null;
+    if (isOwner) {
+      editRow = document.createElement('div');
+      editRow.className = 'hidden flex-col gap-3 border-t border-outline pt-4';
+
+      const nameField = document.createElement('div');
+      nameField.className = 'flex flex-col gap-1';
+      const nameLabel = document.createElement('label');
+      nameLabel.className = 'font-mono text-[9px] font-bold tracking-wider uppercase text-on-muted';
+      nameLabel.textContent = 'Name';
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.value = group.name;
+      nameInput.className = 'border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none';
+      nameField.appendChild(nameLabel);
+      nameField.appendChild(nameInput);
+      editRow.appendChild(nameField);
+
+      const colourField = document.createElement('div');
+      colourField.className = 'flex flex-col gap-2';
+      const colourLabel = document.createElement('label');
+      colourLabel.className = 'font-mono text-[9px] font-bold tracking-wider uppercase text-on-muted';
+      colourLabel.textContent = 'Colour';
+      const colourPicker = document.createElement('div');
+      colourPicker.className = 'flex gap-2';
+      let selectedEditColour = group.colour;
+      for (const c of GROUP_COLOURS) {
+        const swatch = document.createElement('button');
+        const isSelected = c.toLowerCase() === (group.colour || '').toLowerCase();
+        swatch.className = `colour-opt w-7 h-7 border-2 ${isSelected ? 'selected border-outline' : 'border-transparent hover:border-outline'}`;
+        swatch.style.background = c;
+        swatch.dataset.colour = c;
+        swatch.addEventListener('click', () => {
+          selectedEditColour = c;
+          colourPicker.querySelectorAll('.colour-opt').forEach(b => b.classList.remove('selected', 'border-outline'));
+          swatch.classList.add('selected', 'border-outline');
+        });
+        colourPicker.appendChild(swatch);
+      }
+      colourField.appendChild(colourLabel);
+      colourField.appendChild(colourPicker);
+      editRow.appendChild(colourField);
+
+      const editActions = document.createElement('div');
+      editActions.className = 'flex gap-2';
+
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'flex-1 py-1.5 bg-primary text-on-primary font-mono text-[9px] font-bold tracking-wider uppercase shadow-neo-xs active:translate-x-[1px] active:translate-y-[1px] active:shadow-none';
+      saveBtn.textContent = 'Save';
+      saveBtn.addEventListener('click', async () => {
+        const newName = nameInput.value.trim();
+        if (!newName) { showToast('Group name is required.'); return; }
+        saveBtn.textContent = 'Saving...';
+        try {
+          await Groups.updateGroup(group.id, { name: newName, colour: selectedEditColour });
+          loadAndRenderGroups();
+        } catch (err) {
+          showToast(`Failed to update group: ${friendlyError(err.message)}`);
+          saveBtn.textContent = 'Save';
+        }
+      });
+
+      const cancelEditBtn = document.createElement('button');
+      cancelEditBtn.className = 'px-4 py-1.5 border border-outline font-mono text-[9px] font-bold tracking-wider uppercase text-on-muted hover:bg-surface-mid';
+      cancelEditBtn.textContent = 'Cancel';
+      cancelEditBtn.addEventListener('click', () => {
+        nameInput.value = group.name;
+        selectedEditColour = group.colour;
+        colourPicker.querySelectorAll('.colour-opt').forEach(b => {
+          const match = b.dataset.colour.toLowerCase() === (group.colour || '').toLowerCase();
+          b.classList.toggle('selected', match);
+          b.classList.toggle('border-outline', match);
+          b.classList.toggle('border-transparent', !match);
+        });
+        editRow.classList.add('hidden');
+        editRow.classList.remove('flex');
+      });
+
+      editActions.appendChild(saveBtn);
+      editActions.appendChild(cancelEditBtn);
+      editRow.appendChild(editActions);
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'shrink-0 px-3 py-1 border border-outline font-mono text-[9px] font-bold tracking-wider uppercase hover:bg-surface-mid';
+      editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', () => {
+        editRow.classList.toggle('hidden');
+        editRow.classList.toggle('flex');
+      });
+      viewRow.appendChild(editBtn);
     }
 
     const leaveBtn = document.createElement('button');
@@ -614,8 +713,9 @@ function renderGroupsList(groups) {
         showToast(`Failed to ${action} group: ${friendlyError(err.message)}`);
       }
     });
-    card.appendChild(leaveBtn);
+    viewRow.appendChild(leaveBtn);
 
+    if (editRow) card.appendChild(editRow);
     container.appendChild(card);
   }
 }
