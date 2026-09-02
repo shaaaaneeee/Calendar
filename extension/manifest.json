@@ -46,15 +46,5 @@
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "PlanWise"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "vendor/supabase.js"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
-    }
-  ]
+  }
 }

@@ -17,7 +17,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "SHOW_NOTIF") {
     chrome.notifications.create({
       type:    "basic",
-      iconUrl: "popup/icon48.png",
+      iconUrl: "assets/icon-48.png",
       title:   message.title   || "PlanWise",
       message: message.message || "",
     });
