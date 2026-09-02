@@ -1,5 +1,13 @@
 # TODO
 
+## Review desktop app design spec — pending
+
+**Next session:** read through
+`docs/superpowers/specs/2026-09-03-desktop-app-design.md` (Windows desktop
+app, generic UI Automation detection — first step toward the
+universal-plan-detection vision) and confirm it before moving on to the
+implementation plan. Flag anything that needs to change.
+
 ## Custom SMTP for auth emails — done for now
 
 **Resolved:** switched to Gmail SMTP relay (`smtp.gmail.com:587`, App
