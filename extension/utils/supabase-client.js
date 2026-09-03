@@ -56,7 +56,7 @@ const SupabaseAuth = {
       await chrome.storage.local.remove(SESSION_KEY);
       _sessionPromise = Promise.resolve(null);
       if (typeof window !== "undefined" && window.DataStore) {
-        window.DataStore.clearAll();
+        await window.DataStore.clearAll();
       }
     }
   },
