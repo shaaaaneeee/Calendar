@@ -162,6 +162,15 @@ The fix here is narrower than the other three domains:
 consistency, even though its internals lean on the existing local-storage
 mechanism rather than introducing a new cache key.
 
+**Closing note (post-implementation):** a formal `DataStore.settings`
+object wrapping this in the `ready()`/`subscribe()`/`refresh()` interface
+was decided against and not built. `settings.js`'s existing local-storage +
+`subscribeSettings` mechanism already achieves the same functional outcome
+described above (instant local render, background remote merge, live
+Realtime updates), so adding a parallel `DataStore.settings` wrapper around
+it would have been indirection without benefit. `data-store.js` only
+exposes `events`, `groups`, and `notifications`.
+
 ---
 
 ## Realtime subscriptions
@@ -193,6 +202,13 @@ Pragmatic resolution, not a fully granular one:
 - `notifications`: reuse the existing `subscribeNotifications` helper —
   already filtered `user_id=eq.<my-id>`, already proven.
 - `settings`: new subscription, filtered `user_id=eq.<my-id>`.
+
+**Requirement easy to miss:** subscribing via `postgres_changes` is not
+sufficient on its own — Postgres only emits change events for tables that
+have been explicitly added to the `supabase_realtime` publication.
+`events`, `shared_events`, `groups`, `group_members`, and `settings` all
+need to be added; see
+`supabase/migrations/021_realtime_publication.sql`.
 
 ---
 
