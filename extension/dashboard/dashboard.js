@@ -916,6 +916,32 @@ function wireControls() {
   el("modal-overlay").addEventListener("click", (e) => {
     if (e.target === el("modal-overlay")) closeModal();
   });
+
+  initThemeToggle();
+}
+
+// Prototype dark-mode toggle - self-contained, not yet wired into Settings
+// or synced to the account. Just flips the CSS-variable theme. Moved here
+// from an inline <script> in dashboard.html, which MV3's mandatory
+// script-src 'self' CSP silently blocked - the toggle never actually
+// worked in the real extension, only when tested outside it.
+function initThemeToggle() {
+  const root = document.documentElement;
+  const icon = el("theme-toggle-icon");
+  const btn = el("btn-theme-toggle");
+  if (!icon || !btn) return;
+
+  function syncIcon() {
+    icon.textContent = root.dataset.theme === "dark" ? "light_mode" : "dark_mode";
+  }
+  syncIcon();
+
+  btn.addEventListener("click", () => {
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    root.dataset.theme = next;
+    syncIcon();
+    try { localStorage.setItem("planwise-theme", next); } catch (_) {}
+  });
 }
 
 
