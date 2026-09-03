@@ -193,12 +193,21 @@ async function startRealtimeSync() {
   notificationsStore._registerRealtimeChannel(notificationsChannel);
 }
 
+function clearAll() {
+  eventsStore._reset();
+  groupsStore._reset();
+  notificationsStore._reset();
+  _realtimeStarted = false;
+  return clearDataCache();
+}
+
 if (typeof window !== "undefined") {
   window.DataStore = {
     events: eventsStore,
     groups: groupsStore,
     notifications: notificationsStore,
     startRealtimeSync,
+    clearAll,
     _internal: { createNotifier, createDomainStore, _resetCacheChain },
   };
 }
