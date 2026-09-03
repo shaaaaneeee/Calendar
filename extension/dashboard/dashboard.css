@@ -121,16 +121,30 @@
   font-family: 'Geist', sans-serif;
   padding: 1px 5px;
   margin-top: 1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   background: var(--c-card);
   color: var(--c-text);
   border: 1px solid var(--c-outline);
   cursor: pointer;
-  display: block;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
 }
 .event-pill:hover { background: var(--c-bg-low); }
+.event-pill-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+/* One solid-colour bar per group an event is shared with, flush against
+   the pill's left edge (extends past its own border/padding), each one
+   beside the next - not a single stripe split into segments. */
+.event-pill-groupbar {
+  width: 3px;
+  flex-shrink: 0;
+  margin: -1px 0;
+}
+.event-pill-groupbar:first-child { margin-left: -5px; }
 
 /* ── Upcoming list items (created by renderUpcoming) ── */
 .upcoming-item {

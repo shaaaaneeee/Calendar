@@ -264,12 +264,9 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
   for (const event of visible) {
     const pill = document.createElement("div");
     pill.className = "event-pill";
-    pill.textContent = event.title || "Plan";
     const groupIds = pillGroupIds(event);
-    if (groupIds.length) {
-      pill.dataset.groupIds = groupIds.join(",");
-      applyGroupStripe(pill, event);
-    }
+    if (groupIds.length) pill.dataset.groupIds = groupIds.join(",");
+    renderPillContent(pill, event, event.title || "Plan");
     pill.addEventListener("click", (e) => {
       e.stopPropagation();
       if (!event._isDeadline) openModal(event);
@@ -514,14 +511,12 @@ function renderWeek() {
     for (const event of events) {
       const pill = document.createElement("div");
       pill.className = "event-pill";
-      pill.textContent = formatTime(event.event_time || event.time)
+      const titleText = formatTime(event.event_time || event.time)
         ? `${formatTime(event.event_time || event.time)} ${event.title}`
         : event.title;
       const groupIds = pillGroupIds(event);
-      if (groupIds.length) {
-        pill.dataset.groupIds = groupIds.join(",");
-        applyGroupStripe(pill, event);
-      }
+      if (groupIds.length) pill.dataset.groupIds = groupIds.join(",");
+      renderPillContent(pill, event, titleText);
       pill.addEventListener("click", (e) => {
         e.stopPropagation();
         if (!event._isDeadline) openModal(event);
@@ -1069,32 +1064,35 @@ function escapeHtml(str) {
   }[c]));
 }
 
-// An event shared to several groups gets a hard-edged multi-band left
-// stripe (one band per group colour) instead of one solid colour, so
-// sharing to multiple groups is visible at a glance without opening the
-// event. Falls back to a single solid colour for events in exactly one
-// group (or a deadline pseudo-event, which was never a shared_events row
-// and only ever has one colour). No blur/gradient - flat colour stops only,
-// matching the rest of the app's hard-edge style.
-function applyGroupStripe(pill, event) {
+// An event shared to several groups gets one solid-colour bar per group,
+// side by side at the pill's left edge - not a single stripe split into
+// segments. Falls back to the existing single border-left colour for
+// events in exactly one group (or a deadline pseudo-event, which was
+// never a shared_events row and only ever has one colour), so a normal
+// one-group pill looks exactly as it always has.
+function renderPillContent(pill, event, titleText) {
+  pill.innerHTML = "";
+
   const colours = (event.shared_groups?.length
     ? event.shared_groups.map(g => g.colour)
     : [event.group_colour]
   ).filter(Boolean);
 
-  if (!colours.length) return;
-
-  pill.style.borderLeft = "3px solid transparent";
-  if (colours.length === 1) {
+  if (colours.length > 1) {
+    for (const colour of colours) {
+      const bar = document.createElement("span");
+      bar.className = "event-pill-groupbar";
+      bar.style.background = colour;
+      pill.appendChild(bar);
+    }
+  } else if (colours.length === 1) {
     pill.style.borderLeft = `3px solid ${colours[0]}`;
-    return;
   }
 
-  const step = 100 / colours.length;
-  const stops = colours
-    .map((c, i) => `${c} ${i * step}%, ${c} ${(i + 1) * step}%`)
-    .join(", ");
-  pill.style.borderImage = `linear-gradient(to bottom, ${stops}) 1`;
+  const title = document.createElement("span");
+  title.className = "event-pill-title";
+  title.textContent = titleText;
+  pill.appendChild(title);
 }
 
 // Group filter (sidebar checkboxes) needs every group an event belongs to,
