@@ -76,7 +76,12 @@ async function loadEvents() {
       Events.materializeRecurrences().catch(err => {
         console.warn("[PlanWise] Failed to materialize recurring events:", err.message);
       });
-      allEvents = await Events.getAll();
+      allEvents = await DataStore.events.ready();
+      DataStore.events.subscribe((fresh) => {
+        allEvents = mergeEventsWithDeadlines(fresh, deadlineEvents);
+        render();
+        renderUpcoming();
+      });
     } else {
       // Not logged in - fall back to local confirmed events
       const result = await chrome.storage.local.get("confirmedEvents");
@@ -110,10 +115,17 @@ async function loadEvents() {
         group_id:      "deadlines",
         group_colour:  DEADLINE_PRIORITY_COLOURS[t.priority] || DEADLINE_PRIORITY_COLOURS.none,
       }));
-    allEvents = [...allEvents, ...deadlineEvents];
+    allEvents = mergeEventsWithDeadlines(allEvents, deadlineEvents);
   } catch (_) {
     deadlineEvents = [];
   }
+}
+
+// Extracted so both the initial load and the live-update subscriber can
+// build the same shape without duplicating the merge logic.
+function mergeEventsWithDeadlines(events, deadlines) {
+  const withoutOldDeadlines = events.filter(e => !e._isDeadline);
+  return [...withoutOldDeadlines, ...deadlines];
 }
 
 
@@ -978,11 +990,16 @@ async function loadUserInitials() {
 
 async function loadGroupsFilter() {
   try {
-    calGroups = await Groups.listGroups();
+    calGroups = await DataStore.groups.ready();
   } catch (_) {
     calGroups = [];
   }
   renderGroupsFilter();
+
+  DataStore.groups.subscribe((fresh) => {
+    calGroups = fresh;
+    renderGroupsFilter();
+  });
 }
 
 function renderGroupsFilter() {
@@ -1460,6 +1477,13 @@ async function initNotifFeed() {
       }).catch(() => {});
     }
   });
+
+  DataStore.notifications.subscribe(() => {
+    updateNotifBadge();
+    if (!panel.classList.contains("hidden")) renderNotifFeed();
+  });
+
+  DataStore.startRealtimeSync();
 }
 
 async function updateNotifBadge() {
@@ -1495,7 +1519,7 @@ async function renderNotifFeed() {
 
   let notifs;
   try {
-    notifs = await Social.getNotifications();
+    notifs = await DataStore.notifications.ready();
   } catch (_) {
     list.innerHTML = '<div class="px-4 py-3 font-mono text-xs text-error">Failed to load.</div>';
     return;
