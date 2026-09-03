@@ -31,35 +31,59 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
 
 const SESSION_KEY = 'planwise_session';
 
+// db.auth.setSession() is a real network round-trip (POST
+// /auth/v1/token?grant_type=refresh_token) every time it's called, not a
+// local/cached operation - and every page calls _restoreSession()
+// independently, sometimes several times (dashboard.js alone does it from
+// loadEvents, loadGroupsFilter, initNotifFeed, and loadUserInitials). A HAR
+// capture of a real dashboard load showed 4 of these calls firing mostly
+// sequentially, ~1.3s of the page's ~1.85s total load time - the single
+// largest cost by far, well ahead of any actual data query.
+//
+// Memoizing the in-flight/resolved promise for the lifetime of this page
+// collapses that to one round-trip; every other caller in the same page
+// load reuses it. _saveSession() resets the cache on sign-in/out so a
+// stale session is never reused.
+let _sessionPromise = null;
+
 const SupabaseAuth = {
   // Save session to chrome.storage.local after sign in
   async _saveSession(session) {
     if (session) {
       await chrome.storage.local.set({ [SESSION_KEY]: session });
+      _sessionPromise = Promise.resolve(session);
     } else {
       await chrome.storage.local.remove(SESSION_KEY);
+      _sessionPromise = Promise.resolve(null);
     }
   },
 
-  // Load session from chrome.storage.local and restore it into Supabase
+  // Load session from chrome.storage.local and restore it into Supabase.
+  // Memoized per page load - see _sessionPromise above.
   async _restoreSession() {
-    const result = await chrome.storage.local.get(SESSION_KEY);
-    const session = result[SESSION_KEY];
-    if (!session) return null;
+    if (_sessionPromise) return _sessionPromise;
 
-    // Tell the Supabase client about this session
-    const { data, error } = await db.auth.setSession({
-      access_token:  session.access_token,
-      refresh_token: session.refresh_token,
-    });
+    _sessionPromise = (async () => {
+      const result = await chrome.storage.local.get(SESSION_KEY);
+      const session = result[SESSION_KEY];
+      if (!session) return null;
 
-    if (error) {
-      // Session expired or invalid - clear it
-      await this._saveSession(null);
-      return null;
-    }
+      // Tell the Supabase client about this session
+      const { data, error } = await db.auth.setSession({
+        access_token:  session.access_token,
+        refresh_token: session.refresh_token,
+      });
 
-    return data.session;
+      if (error) {
+        // Session expired or invalid - clear it
+        await this._saveSession(null);
+        return null;
+      }
+
+      return data.session;
+    })();
+
+    return _sessionPromise;
   },
 
   async signUp(email, password, username) {
