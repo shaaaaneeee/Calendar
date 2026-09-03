@@ -85,6 +85,16 @@ Click the PlanWise icon in the toolbar, then **Sign up** — this opens a dedica
 ## Project structure
 
 ```
+extension/            the Chrome extension itself (see below)
+landing/              marketing site (Vite + React), deployed separately to Vercel
+supabase/             backend: SQL migrations + one-off admin scripts
+scripts/              one-off Node scripts (store screenshots/promo tile)
+tests/                Jest unit tests + Playwright E2E spec
+docs/                 design specs/plans, store listing copy, brand assets
+build.js              regenerates extension/vendor/supabase.js from node_modules
+```
+
+```
 extension/
   background/       service worker (badge, notifications)
   content/          DOM observer, text buffer, content script
@@ -94,14 +104,32 @@ extension/
   dashboard/        full-page calendar app
   tasks/            kanban board
   settings/         detection, groups, notifications, account
-  utils/            shared storage helpers + Supabase client
-  vendor/           bundled dependencies (supabase.js, tailwind, anime)
+  utils/            shared storage helpers, Supabase client, shared DOM helpers
+  vendor/           bundled dependencies (supabase.js, tailwind, anime, theme.css)
+```
 
+```
 supabase/
   migrations/       SQL files — run in order in the Supabase SQL Editor
+  scripts/          read-only admin queries (schema/RLS introspection, migration
+                     verification) — paste into the SQL Editor manually, not run
+                     automatically
+  email-templates/  HTML used in Supabase Dashboard → Auth → Email Templates
+```
 
+```
+docs/
+  superpowers/specs/    design specs (read before implementing a feature)
+  superpowers/plans/    step-by-step implementation plans
+  design-concepts/      early visual-direction explorations
+  store-assets/         Chrome Web Store screenshots/promo tile source
+  chrome-web-store-listing.md   store listing copy + submission checklist
+```
+
+```
 tests/
   detection.test.js       Jest unit tests for detection engine + extractor
+  extractor.test.js       Jest unit tests for the event extractor specifically
   extension-e2e.spec.js   Playwright E2E tests for the full extension flow
 ```
 

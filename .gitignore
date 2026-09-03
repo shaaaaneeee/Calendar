@@ -6,3 +6,8 @@ test-screenshots/
 *.log
 landing/dist/
 .playwright-mcp/
+
+# Bulk NLP datasets pulled in ad hoc for stress-testing the detection engine
+# (see TODO.md) - large, re-downloadable, never meant to be committed.
+/CLINC150/
+/MASSIVE/
