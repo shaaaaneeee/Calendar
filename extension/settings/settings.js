@@ -59,6 +59,8 @@ async function init() {
     wireNav();
     wireControls();
     wireGroupsSection();
+    syncRemoteSettings();
+    SupaSettings.subscribeSettings(currentUser.id, () => syncRemoteSettings());
     await loadAccountInfo();
   } catch (err) {
     console.error("[PlanWise] Settings page failed to initialize:", err);
@@ -84,32 +86,43 @@ const MERGE_AS_UNION_IF_LOCAL_EMPTY = [
 async function loadSettings() {
   const local = await LocalStorage.getSettings();
   settings = { ...settings, ...local };
+}
 
+async function syncRemoteSettings() {
+  if (!currentUser) return;
   try {
-    if (currentUser) {
-      const remote = await SupaSettings.load();
-      if (remote) {
-        const remoteMapped = {
-          triggerWords:         remote.trigger_words         || [],
-          contacts:             remote.contacts              || [],
-          sensitivity:          remote.sensitivity           ?? 2,
-          notificationsEnabled: remote.notifications_enabled ?? true,
-          priorityNames:        remote.priority_names        || [],
-          activityWords:        remote.activity_words        || [],
-          meetingWords:         remote.meeting_words         || [],
-          items:                remote.items                 || [],
-          placeWords:           remote.place_words           || [],
-        };
+    const remote = await SupaSettings.load();
+    if (!remote) return;
 
-        for (const key of MERGE_AS_UNION_IF_LOCAL_EMPTY) {
-          if (!settings[key]?.length && remoteMapped[key].length) {
-            settings[key] = remoteMapped[key];
-          }
-        }
-        settings.sensitivity          = remoteMapped.sensitivity;
-        settings.notificationsEnabled = remoteMapped.notificationsEnabled;
+    const remoteMapped = {
+      triggerWords:         remote.trigger_words         || [],
+      contacts:             remote.contacts              || [],
+      sensitivity:          remote.sensitivity           ?? 2,
+      notificationsEnabled: remote.notifications_enabled ?? true,
+      priorityNames:        remote.priority_names        || [],
+      activityWords:        remote.activity_words        || [],
+      meetingWords:         remote.meeting_words         || [],
+      items:                remote.items                 || [],
+      placeWords:           remote.place_words           || [],
+    };
+
+    let changed = false;
+    for (const key of MERGE_AS_UNION_IF_LOCAL_EMPTY) {
+      if (!settings[key]?.length && remoteMapped[key].length) {
+        settings[key] = remoteMapped[key];
+        changed = true;
       }
     }
+    if (settings.sensitivity !== remoteMapped.sensitivity) {
+      settings.sensitivity = remoteMapped.sensitivity;
+      changed = true;
+    }
+    if (settings.notificationsEnabled !== remoteMapped.notificationsEnabled) {
+      settings.notificationsEnabled = remoteMapped.notificationsEnabled;
+      changed = true;
+    }
+
+    if (changed) renderAll();
   } catch (err) {
     console.warn('[PlanWise] Could not load remote settings:', err.message);
   }
