@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { useReducedMotion }   from './hooks/useReducedMotion';
 import { useScrollAnimation } from './hooks/useScrollAnimation';
+import { useDocumentHead } from './hooks/useDocumentHead';
 import Nav        from './components/Nav';
 import Hero       from './sections/Hero';
 import HowItWorks from './sections/HowItWorks';
@@ -11,6 +12,11 @@ import Footer     from './sections/Footer';
 import './landing.css';
 
 export default function LandingPage() {
+  useDocumentHead({
+    title: 'PlanWise: Wise planning. Planned wisely.',
+    description: "PlanWise reads WhatsApp, Telegram, and Gmail as you go. The moment a date is mentioned, it's captured to one shared calendar with RSVPs and live comments.",
+  });
+
   const heroRef      = useRef(null);
   const howRef       = useRef(null);
   const featuresRef  = useRef(null);

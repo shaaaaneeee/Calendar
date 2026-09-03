@@ -3,6 +3,7 @@ import { ArrowUpRight } from 'lucide-react';
 import Nav from './components/Nav';
 import Footer from './sections/Footer';
 import { CHROME_STORE_URL } from './data/content';
+import { useDocumentHead } from './hooks/useDocumentHead';
 import './landing.css';
 
 const STEPS = [
@@ -30,6 +31,11 @@ const STEPS = [
 ];
 
 export default function HowItWorksPage() {
+  useDocumentHead({
+    title: 'How it works: PlanWise',
+    description: 'See exactly how PlanWise turns a message in WhatsApp, Telegram, or Gmail into a shared calendar event, step by step.',
+  });
+
   return (
     <div className="landing">
       <a href="#main-content" className="skip-link">Skip to main content</a>
