@@ -134,7 +134,19 @@ function _resetCacheChain() {
   _cacheChain = Promise.resolve();
 }
 
+// ─────────────────────────────────────────────
+// DOMAINS: events, groups, notifications
+// ─────────────────────────────────────────────
+
+const eventsStore = createDomainStore("events", () => window.SupabaseClient.events.getAll());
+const groupsStore = createDomainStore("groups", () => window.SupabaseClient.groups.listGroups());
+const notificationsStore = createDomainStore("notifications", () => window.SupabaseClient.social.getNotifications());
+
 if (typeof window !== "undefined") {
-  window.DataStore = window.DataStore || {};
-  window.DataStore._internal = { createNotifier, createDomainStore, _resetCacheChain };
+  window.DataStore = {
+    events: eventsStore,
+    groups: groupsStore,
+    notifications: notificationsStore,
+    _internal: { createNotifier, createDomainStore },
+  };
 }
