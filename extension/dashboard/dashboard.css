@@ -127,7 +127,6 @@
   cursor: pointer;
   display: flex;
   align-items: stretch;
-  gap: 2px;
 }
 .event-pill:hover { background: var(--c-bg-low); }
 .event-pill-title {
@@ -135,10 +134,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  margin-left: 3px;
 }
+.event-pill-title:first-child { margin-left: 0; }
 /* One solid-colour bar per group an event is shared with, flush against
-   the pill's left edge (extends past its own border/padding), each one
-   beside the next - not a single stripe split into segments. */
+   each other (no gap) and against the pill's left edge (extends past its
+   own border/padding - the pill's own border-left is removed in JS when
+   there's more than one bar, so no black line shows before the colours
+   start, same as the single-group case never showing one either). */
 .event-pill-groupbar {
   width: 3px;
   flex-shrink: 0;

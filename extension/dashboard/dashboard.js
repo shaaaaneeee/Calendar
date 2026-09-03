@@ -1079,6 +1079,10 @@ function renderPillContent(pill, event, titleText) {
   ).filter(Boolean);
 
   if (colours.length > 1) {
+    // Remove the pill's own black border-left entirely, same as the
+    // single-colour branch below does by overwriting it - otherwise the
+    // default 1px outline shows as a black line before the bars start.
+    pill.style.borderLeft = "0";
     for (const colour of colours) {
       const bar = document.createElement("span");
       bar.className = "event-pill-groupbar";
