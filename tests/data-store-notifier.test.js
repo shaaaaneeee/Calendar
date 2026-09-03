@@ -126,41 +126,24 @@ describe("createDomainStore", () => {
     expect(cache.groups.data).toEqual([{ id: 2, name: "group" }]);
   });
 
-  test("a failure in one queued cache operation does not break the chain for subsequent operations", async () => {
-    // Create a store that will fail on its first refresh, then succeed
+  test("a failure in one queued cache operation does not block a later queued operation", async () => {
+    const originalSet = global.chrome.storage.local.set;
     let callCount = 0;
-    const flakeyFetchFn = () => {
+    global.chrome.storage.local.set = (obj) => {
       callCount++;
-      if (callCount === 1) {
-        return Promise.reject(new Error("temporary failure"));
-      }
-      return Promise.resolve([{ id: 99, name: "recovered" }]);
+      if (callCount === 1) return Promise.reject(new Error("storage write failed"));
+      return originalSet(obj);
     };
 
-    const flakeyStore = window.DataStore._internal.createDomainStore("flakey", flakeyFetchFn);
+    const store1 = window.DataStore._internal.createDomainStore("events", () => Promise.resolve([{ id: "a" }]));
+    const store2 = window.DataStore._internal.createDomainStore("groups", () => Promise.resolve([{ id: "b" }]));
 
-    // First refresh fails
-    await flakeyStore.refresh();
+    await store1.refresh(); // its writeCache's set() rejects (1st call) - refresh() already catches this internally, doesn't throw
+    await store2.refresh(); // this queued write must still complete despite the prior rejection
 
-    // Create another store and refresh it - should still work despite the previous error
-    const healthyStore = window.DataStore._internal.createDomainStore(
-      "healthy",
-      () => Promise.resolve([{ id: 100, name: "healthy" }])
-    );
-
-    await healthyStore.refresh();
-
-    // Now try the flakey store again - should succeed this time
-    const received = [];
-    flakeyStore.subscribe((data) => received.push(data));
-    await flakeyStore.refresh();
-
-    expect(received[received.length - 1]).toEqual([{ id: 99, name: "recovered" }]);
-
-    // Verify cache has both the healthy data and the recovered flakey data
     const result = await global.chrome.storage.local.get("planwise_data_cache");
-    const cache = result["planwise_data_cache"];
-    expect(cache.healthy.data).toEqual([{ id: 100, name: "healthy" }]);
-    expect(cache.flakey.data).toEqual([{ id: 99, name: "recovered" }]);
+    expect(result.planwise_data_cache.groups.data).toEqual([{ id: "b" }]);
+
+    global.chrome.storage.local.set = originalSet;
   });
 });
