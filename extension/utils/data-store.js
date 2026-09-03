@@ -40,24 +40,41 @@ function createNotifier() {
 // domain name. Separate from confirmedEvents/planwiseTasks/planwise_session
 // (existing keys, untouched) and from `settings` (handled differently -
 // see Task 6, it already has its own local-storage mechanism).
+//
+// All cache I/O is serialized through _cacheChain to prevent read-modify-write
+// races when multiple domain stores refresh concurrently. Without this, store A
+// and store B reading/writing around the same time can cause A's stale snapshot
+// to overwrite B's write, silently dropping data.
 
 const CACHE_KEY = "planwise_data_cache";
+let _cacheChain = Promise.resolve();
+
+function _enqueueCacheOp(fn) {
+  _cacheChain = _cacheChain.then(fn, fn); // Chain on both resolve and reject paths
+  return _cacheChain;
+}
 
 async function readCache(domain) {
-  const result = await chrome.storage.local.get(CACHE_KEY);
-  const cache = result[CACHE_KEY] || {};
-  return cache[domain]?.data ?? null;
+  return _enqueueCacheOp(async () => {
+    const result = await chrome.storage.local.get(CACHE_KEY);
+    const cache = result[CACHE_KEY] || {};
+    return cache[domain]?.data ?? null;
+  });
 }
 
 async function writeCache(domain, data) {
-  const result = await chrome.storage.local.get(CACHE_KEY);
-  const cache = result[CACHE_KEY] || {};
-  cache[domain] = { data, updatedAt: new Date().toISOString() };
-  await chrome.storage.local.set({ [CACHE_KEY]: cache });
+  return _enqueueCacheOp(async () => {
+    const result = await chrome.storage.local.get(CACHE_KEY);
+    const cache = result[CACHE_KEY] || {};
+    cache[domain] = { data, updatedAt: new Date().toISOString() };
+    await chrome.storage.local.set({ [CACHE_KEY]: cache });
+  });
 }
 
 async function clearDataCache() {
-  await chrome.storage.local.remove(CACHE_KEY);
+  return _enqueueCacheOp(async () => {
+    await chrome.storage.local.remove(CACHE_KEY);
+  });
 }
 
 // ─────────────────────────────────────────────
@@ -113,7 +130,11 @@ function createDomainStore(domain, fetchFn) {
   return { ready, subscribe, refresh, _registerRealtimeChannel, _reset };
 }
 
+function _resetCacheChain() {
+  _cacheChain = Promise.resolve();
+}
+
 if (typeof window !== "undefined") {
   window.DataStore = window.DataStore || {};
-  window.DataStore._internal = { createNotifier, createDomainStore };
+  window.DataStore._internal = { createNotifier, createDomainStore, _resetCacheChain };
 }

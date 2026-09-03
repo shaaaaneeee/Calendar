@@ -59,6 +59,8 @@ describe("createDomainStore", () => {
         },
       },
     };
+    // Reset the cache chain to ensure tests don't interfere with each other
+    window.DataStore._internal._resetCacheChain?.();
   });
 
   test("ready() resolves with an empty array when there's no cache yet", async () => {
@@ -87,5 +89,78 @@ describe("createDomainStore", () => {
     const store = window.DataStore._internal.createDomainStore("events", fetchFn);
 
     await expect(store.refresh()).resolves.not.toThrow();
+  });
+
+  test("concurrent refreshes from two domains both persist correctly (no read-modify-write race)", async () => {
+    const store1 = window.DataStore._internal.createDomainStore(
+      "events",
+      () => Promise.resolve([{ id: 1, name: "event" }])
+    );
+    const store2 = window.DataStore._internal.createDomainStore(
+      "groups",
+      () => Promise.resolve([{ id: 2, name: "group" }])
+    );
+
+    // Trigger both refreshes concurrently without awaiting individually
+    const promise1 = store1.refresh();
+    const promise2 = store2.refresh();
+
+    await Promise.all([promise1, promise2]);
+
+    // Both should have notified their subscribers
+    const received1 = [];
+    const received2 = [];
+    store1.subscribe((data) => received1.push(data));
+    store2.subscribe((data) => received2.push(data));
+
+    // Refresh again to trigger notifications
+    await Promise.all([store1.refresh(), store2.refresh()]);
+
+    expect(received1[received1.length - 1]).toEqual([{ id: 1, name: "event" }]);
+    expect(received2[received2.length - 1]).toEqual([{ id: 2, name: "group" }]);
+
+    // Verify cache has both domains' data by reading it back
+    const result = await global.chrome.storage.local.get("planwise_data_cache");
+    const cache = result["planwise_data_cache"];
+    expect(cache.events.data).toEqual([{ id: 1, name: "event" }]);
+    expect(cache.groups.data).toEqual([{ id: 2, name: "group" }]);
+  });
+
+  test("a failure in one queued cache operation does not break the chain for subsequent operations", async () => {
+    // Create a store that will fail on its first refresh, then succeed
+    let callCount = 0;
+    const flakeyFetchFn = () => {
+      callCount++;
+      if (callCount === 1) {
+        return Promise.reject(new Error("temporary failure"));
+      }
+      return Promise.resolve([{ id: 99, name: "recovered" }]);
+    };
+
+    const flakeyStore = window.DataStore._internal.createDomainStore("flakey", flakeyFetchFn);
+
+    // First refresh fails
+    await flakeyStore.refresh();
+
+    // Create another store and refresh it - should still work despite the previous error
+    const healthyStore = window.DataStore._internal.createDomainStore(
+      "healthy",
+      () => Promise.resolve([{ id: 100, name: "healthy" }])
+    );
+
+    await healthyStore.refresh();
+
+    // Now try the flakey store again - should succeed this time
+    const received = [];
+    flakeyStore.subscribe((data) => received.push(data));
+    await flakeyStore.refresh();
+
+    expect(received[received.length - 1]).toEqual([{ id: 99, name: "recovered" }]);
+
+    // Verify cache has both the healthy data and the recovered flakey data
+    const result = await global.chrome.storage.local.get("planwise_data_cache");
+    const cache = result["planwise_data_cache"];
+    expect(cache.healthy.data).toEqual([{ id: 100, name: "healthy" }]);
+    expect(cache.flakey.data).toEqual([{ id: 99, name: "recovered" }]);
   });
 });
