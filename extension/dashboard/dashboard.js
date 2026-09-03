@@ -1097,12 +1097,10 @@ function renderTasksPreview(tasks) {
       item.appendChild(date);
     }
 
-    if (task.priority) {
-      const priority = document.createElement("span");
-      priority.className = `todo-preview-priority priority-${task.priority}`;
-      priority.textContent = task.priority.toUpperCase();
-      item.appendChild(priority);
-    }
+    const priority = document.createElement("span");
+    priority.className = `todo-preview-priority priority-${task.priority || "none"}`;
+    priority.textContent = task.priority ? task.priority.toUpperCase() : "No priority set";
+    item.appendChild(priority);
 
     container.appendChild(item);
   }

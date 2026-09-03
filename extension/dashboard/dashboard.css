@@ -301,6 +301,7 @@
 .todo-preview-priority.priority-high   { color: #D2601A; }
 .todo-preview-priority.priority-medium { color: #C99A2E; }
 .todo-preview-priority.priority-low    { color: #2F9E44; }
+.todo-preview-priority.priority-none   { color: var(--c-muted); }
 
 /* ── Share section (shown inline within a day event card) ── */
 .share-section {
