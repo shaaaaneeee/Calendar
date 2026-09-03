@@ -31,6 +31,7 @@ const DEADLINE_PRIORITY_COLOURS = {
 let allEvents = []; // All loaded events
 let deadlineEvents = []; // Deadline pseudo-events from tasks
 let currentDate = new Date(); // Drives which month/week is shown
+let miniCalDate = new Date(); // Independent of currentDate - lets the mini calendar browse to a distant month without moving the main grid; only reconciled with currentDate when a day is actually clicked (a "jump")
 let currentView = "month"; // 'month' | 'week'
 let selectedDay = null; // Currently open day panel date string 'YYYY-MM-DD'
 let editingEvent = null; // Event currently open in modal
@@ -264,9 +265,10 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
     const pill = document.createElement("div");
     pill.className = "event-pill";
     pill.textContent = event.title || "Plan";
-    if (event.group_id) {
-      pill.dataset.groupId = event.group_id;
-      pill.style.borderLeft = `3px solid ${event.group_colour || "transparent"}`;
+    const groupIds = pillGroupIds(event);
+    if (groupIds.length) {
+      pill.dataset.groupIds = groupIds.join(",");
+      applyGroupStripe(pill, event);
     }
     pill.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -299,16 +301,18 @@ function makeMonthCell(year, month, day, dateMap, today, isOtherMonth) {
 // MINI CALENDAR (sidebar)
 // ─────────────────────────────────────────────
 
-// Mirrors currentDate — no independent navigation state of its own, so it
-// can never disagree with what month the main grid is showing. Its own
-// chevrons mutate the same currentDate the top bar's prev/next buttons do.
+// Independent of currentDate (see the miniCalDate declaration up top) - its
+// own chevrons only move itself, so you can browse it to a distant month
+// without disturbing whatever month the main grid is showing. Clicking an
+// actual day still jumps the main grid, and re-syncs miniCalDate to match
+// at that point, since after a jump both are showing the same place anyway.
 function renderMiniCalendar() {
   const container = el("mini-cal");
   if (!container) return;
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const monthLabel = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const year = miniCalDate.getFullYear();
+  const month = miniCalDate.getMonth();
+  const monthLabel = miniCalDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   const today = toDateString(new Date());
   const dateMap = buildDateMap(allEvents);
 
@@ -318,7 +322,7 @@ function renderMiniCalendar() {
 
   container.innerHTML = `
     <div class="flex items-center justify-between mb-3">
-      <span class="font-mono text-[10px] font-bold tracking-[0.1em] uppercase">${monthLabel}</span>
+      <button id="mini-cal-label" class="font-mono text-[10px] font-bold tracking-[0.1em] uppercase hover:text-primary">${monthLabel}</button>
       <div class="flex gap-1">
         <button id="mini-cal-prev" class="w-5 h-5 flex items-center justify-center hover:bg-surface-mid">
           <span class="material-symbols-outlined text-[14px]">chevron_left</span>
@@ -347,7 +351,10 @@ function renderMiniCalendar() {
       // Jump the main grid to whatever month/week contains the clicked date
       // before toggling the panel, so the day is actually visible on the
       // main grid (not just opened as a panel with no anchor in view).
+      // Re-sync miniCalDate too - after a jump both should agree, until the
+      // user browses the mini calendar independently again.
       currentDate = new Date(dateKey + "T00:00:00");
+      miniCalDate = new Date(dateKey + "T00:00:00");
       toggleDaySelection(dateKey, dateMap[dateKey] || []);
     });
     daysEl.appendChild(day);
@@ -367,13 +374,93 @@ function renderMiniCalendar() {
   }
 
   el("mini-cal-prev").addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    render();
+    miniCalDate.setMonth(miniCalDate.getMonth() - 1);
+    renderMiniCalendar();
   });
   el("mini-cal-next").addEventListener("click", () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    render();
+    miniCalDate.setMonth(miniCalDate.getMonth() + 1);
+    renderMiniCalendar();
   });
+  el("mini-cal-label").addEventListener("click", (e) => {
+    openMonthYearPicker(e.currentTarget, miniCalDate, (y, m) => {
+      miniCalDate = new Date(y, m, 1);
+      renderMiniCalendar();
+    });
+  });
+}
+
+// ─────────────────────────────────────────────
+// MONTH/YEAR QUICK PICKER
+// ─────────────────────────────────────────────
+// Shared by the main header title and the mini calendar's own label -
+// clicking either opens this instead of requiring repeated prev/next clicks
+// to reach a month that's far away. onPick(year, monthIndex) fires once,
+// on a month click; clicking outside just closes it with no change.
+
+let closeActiveMonthYearPicker = null;
+
+const MONTH_ABBR = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+function openMonthYearPicker(anchorEl, date, onPick) {
+  closeActiveMonthYearPicker?.();
+
+  let pickerYear = date.getFullYear();
+  const currentMonth = date.getMonth();
+  const currentYear = date.getFullYear();
+
+  const popover = document.createElement("div");
+  popover.className = "month-year-picker border border-outline shadow-neo-xs bg-surface";
+
+  const rect = anchorEl.getBoundingClientRect();
+  popover.style.position = "fixed";
+  popover.style.top = `${rect.bottom + 4}px`;
+  popover.style.left = `${rect.left}px`;
+
+  function renderPicker() {
+    popover.innerHTML = `
+      <div class="flex items-center justify-between px-2 py-1.5 border-b border-outline-soft">
+        <button id="myp-prev-year" class="w-5 h-5 flex items-center justify-center hover:bg-surface-mid">
+          <span class="material-symbols-outlined text-[14px]">chevron_left</span>
+        </button>
+        <span class="font-mono text-[10px] font-bold tracking-wider">${pickerYear}</span>
+        <button id="myp-next-year" class="w-5 h-5 flex items-center justify-center hover:bg-surface-mid">
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        </button>
+      </div>
+      <div class="grid grid-cols-3 gap-0.5 p-1.5">
+        ${MONTH_ABBR.map((label, i) => {
+          const isActive = pickerYear === currentYear && i === currentMonth;
+          return `<button type="button" data-month="${i}" class="myp-month font-mono text-[9px] font-bold tracking-wider px-2 py-1.5${isActive ? " active" : ""}">${label}</button>`;
+        }).join("")}
+      </div>
+    `;
+
+    popover.querySelector("#myp-prev-year").addEventListener("click", () => { pickerYear--; renderPicker(); });
+    popover.querySelector("#myp-next-year").addEventListener("click", () => { pickerYear++; renderPicker(); });
+    popover.querySelectorAll(".myp-month").forEach(btn => {
+      btn.addEventListener("click", () => {
+        onPick(pickerYear, Number(btn.dataset.month));
+        close();
+      });
+    });
+  }
+
+  function onOutsideClick(e) {
+    if (!popover.contains(e.target) && e.target !== anchorEl) close();
+  }
+
+  function close() {
+    document.removeEventListener("click", onOutsideClick, true);
+    popover.remove();
+    closeActiveMonthYearPicker = null;
+  }
+
+  renderPicker();
+  document.body.appendChild(popover);
+  // Capture-phase + next tick so the click that opened this doesn't also
+  // immediately close it via the same event.
+  setTimeout(() => document.addEventListener("click", onOutsideClick, true), 0);
+  closeActiveMonthYearPicker = close;
 }
 
 
@@ -430,9 +517,10 @@ function renderWeek() {
       pill.textContent = formatTime(event.event_time || event.time)
         ? `${formatTime(event.event_time || event.time)} ${event.title}`
         : event.title;
-      if (event.group_id) {
-        pill.dataset.groupId = event.group_id;
-        pill.style.borderLeft = `3px solid ${event.group_colour || "transparent"}`;
+      const groupIds = pillGroupIds(event);
+      if (groupIds.length) {
+        pill.dataset.groupIds = groupIds.join(",");
+        applyGroupStripe(pill, event);
       }
       pill.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -863,6 +951,14 @@ function renderUpcoming() {
 // ─────────────────────────────────────────────
 
 function wireControls() {
+  el("cal-title").classList.add("cursor-pointer", "hover:text-primary");
+  el("cal-title").addEventListener("click", (e) => {
+    openMonthYearPicker(e.currentTarget, currentDate, (y, m) => {
+      currentDate = new Date(y, m, 1);
+      render();
+    });
+  });
+
   el("btn-prev").addEventListener("click", () => {
     if (currentView === "month") {
       currentDate.setMonth(currentDate.getMonth() - 1);
@@ -971,6 +1067,43 @@ function escapeHtml(str) {
   return String(str ?? "").replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
+}
+
+// An event shared to several groups gets a hard-edged multi-band left
+// stripe (one band per group colour) instead of one solid colour, so
+// sharing to multiple groups is visible at a glance without opening the
+// event. Falls back to a single solid colour for events in exactly one
+// group (or a deadline pseudo-event, which was never a shared_events row
+// and only ever has one colour). No blur/gradient - flat colour stops only,
+// matching the rest of the app's hard-edge style.
+function applyGroupStripe(pill, event) {
+  const colours = (event.shared_groups?.length
+    ? event.shared_groups.map(g => g.colour)
+    : [event.group_colour]
+  ).filter(Boolean);
+
+  if (!colours.length) return;
+
+  pill.style.borderLeft = "3px solid transparent";
+  if (colours.length === 1) {
+    pill.style.borderLeft = `3px solid ${colours[0]}`;
+    return;
+  }
+
+  const step = 100 / colours.length;
+  const stops = colours
+    .map((c, i) => `${c} ${i * step}%, ${c} ${(i + 1) * step}%`)
+    .join(", ");
+  pill.style.borderImage = `linear-gradient(to bottom, ${stops}) 1`;
+}
+
+// Group filter (sidebar checkboxes) needs every group an event belongs to,
+// not just the first, so hiding one group doesn't misfire on an event
+// that's ALSO shared to a group that's still visible.
+function pillGroupIds(event) {
+  return event.shared_groups?.length
+    ? event.shared_groups.map(g => g.group_id)
+    : event.group_id ? [event.group_id] : [];
 }
 
 // ─────────────────────────────────────────────
@@ -1089,10 +1222,14 @@ function renderGroupsFilter() {
 }
 
 function applyGroupFilter() {
-  document.querySelectorAll(".event-pill[data-group-id]").forEach(pill => {
-    const gid = pill.dataset.groupId;
-    pill.style.opacity = hiddenGroups.has(gid) ? "0.15" : "1";
-    pill.style.pointerEvents = hiddenGroups.has(gid) ? "none" : "";
+  document.querySelectorAll(".event-pill[data-group-ids]").forEach(pill => {
+    const gids = pill.dataset.groupIds.split(",");
+    // Fade only if EVERY group this event belongs to is hidden - an event
+    // shared to two groups should stay visible as long as at least one of
+    // them is still checked.
+    const allHidden = gids.every(gid => hiddenGroups.has(gid));
+    pill.style.opacity = allHidden ? "0.15" : "1";
+    pill.style.pointerEvents = allHidden ? "none" : "";
   });
 }
 

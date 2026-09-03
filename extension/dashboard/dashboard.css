@@ -482,3 +482,18 @@
 .mini-cal-day.other-month { color: var(--c-outline-soft); }
 .mini-cal-day.today { background: var(--c-text); color: var(--c-bg); font-weight: 700; }
 .mini-cal-day.selected { border-color: #00D1FF; color: #00D1FF; font-weight: 700; }
+
+/* ── Month/year quick picker (popover) ── */
+.month-year-picker {
+  z-index: 40;
+  width: 168px;
+  background: var(--c-bg);
+}
+.myp-month {
+  text-align: center;
+  color: var(--c-text);
+  background: transparent;
+  cursor: pointer;
+}
+.myp-month:hover { background: var(--c-bg-low); }
+.myp-month.active { background: var(--c-primary); color: var(--c-on-primary); }

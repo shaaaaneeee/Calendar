@@ -225,14 +225,23 @@ const SupabaseEvents = {
 
     if (error) throw error;
 
-    // Flatten first group share into top-level fields for the calendar pill colouring
+    // Flatten first group share into top-level fields (kept for anything
+    // that only cares about "a" group, e.g. the single-colour swatch in
+    // notification payloads) - plus the full list, so the calendar can show
+    // every group an event is shared with, not just the first.
     return (data || []).map(e => {
-      const firstShare = e.shared_events?.[0];
+      const shares = e.shared_events || [];
+      const firstShare = shares[0];
       return {
         ...e,
-        group_id:     firstShare?.group_id         ?? null,
-        group_colour: firstShare?.groups?.colour   ?? null,
-        group_name:   firstShare?.groups?.name     ?? null,
+        group_id:      firstShare?.group_id       ?? null,
+        group_colour:  firstShare?.groups?.colour ?? null,
+        group_name:    firstShare?.groups?.name   ?? null,
+        shared_groups: shares.map(s => ({
+          group_id: s.group_id,
+          colour:   s.groups?.colour ?? null,
+          name:     s.groups?.name   ?? null,
+        })),
       };
     });
   },
