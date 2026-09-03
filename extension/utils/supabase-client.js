@@ -399,6 +399,17 @@ const SupabaseSettings = {
 
     if (error) throw error;
   },
+
+  subscribeSettings(userId, onChange) {
+    return db
+      .channel(`settings:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'settings', filter: `user_id=eq.${userId}` },
+        (payload) => onChange(payload.new)
+      )
+      .subscribe();
+  },
 };
 
 
