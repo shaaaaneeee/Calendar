@@ -125,7 +125,7 @@ function createDomainStore(domain, fetchFn) {
   }
 
   function ready() {
-    if (readyPromise) return readyPromise.then(() => current);
+    if (readyPromise) return readyPromise.then(() => current ?? []);
     readyPromise = (async () => {
       try {
         const cached = await readCache(domain);
@@ -137,7 +137,7 @@ function createDomainStore(domain, fetchFn) {
       refresh(); // fire-and-forget background refresh + realtime-driven updates land via subscribe()
       return current;
     })();
-    return readyPromise.then(() => current);
+    return readyPromise.then(() => current ?? []);
   }
 
   function subscribe(cb) {
