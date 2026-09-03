@@ -60,7 +60,7 @@ async function init() {
     wireControls();
     wireGroupsSection();
     syncRemoteSettings();
-    SupaSettings.subscribeSettings(currentUser.id, () => syncRemoteSettings());
+    SupaSettings.subscribeSettings(currentUser.id, () => syncRemoteSettings(true));
     await loadAccountInfo();
   } catch (err) {
     console.error("[PlanWise] Settings page failed to initialize:", err);
@@ -88,7 +88,15 @@ async function loadSettings() {
   settings = { ...settings, ...local };
 }
 
-async function syncRemoteSettings() {
+// `fromLiveUpdate` distinguishes the two callers:
+//  - page-load merge (default, false): adopt a remote word-list only if the
+//    local copy is currently empty, so an unsaved local edit made just
+//    before reopening Settings isn't clobbered by an older remote copy.
+//  - a live Realtime push (true): this is by definition news from
+//    elsewhere, so union any remote words not already present locally
+//    instead of only-if-empty - otherwise a word added on another device
+//    would never appear here whenever you already have any words locally.
+async function syncRemoteSettings(fromLiveUpdate = false) {
   if (!currentUser) return;
   try {
     const remote = await SupaSettings.load();
@@ -108,7 +116,14 @@ async function syncRemoteSettings() {
 
     let changed = false;
     for (const key of MERGE_AS_UNION_IF_LOCAL_EMPTY) {
-      if (!settings[key]?.length && remoteMapped[key].length) {
+      if (fromLiveUpdate) {
+        const existing = settings[key] || [];
+        const additions = remoteMapped[key].filter((w) => !existing.includes(w));
+        if (additions.length) {
+          settings[key] = [...existing, ...additions];
+          changed = true;
+        }
+      } else if (!settings[key]?.length && remoteMapped[key].length) {
         settings[key] = remoteMapped[key];
         changed = true;
       }
@@ -122,7 +137,16 @@ async function syncRemoteSettings() {
       changed = true;
     }
 
-    if (changed) renderAll();
+    if (changed) {
+      renderAll();
+      // Persist the adopted remote values locally so the detection content
+      // scripts (which read chrome.storage.local directly, live) pick them
+      // up too - without this they'd keep using the stale on-disk copy
+      // indefinitely. Local-only save: LocalStorage.saveSettings(), not
+      // syncToCloud(), since re-syncing here would just echo the change
+      // right back to Supabase.
+      LocalStorage.saveSettings(settings);
+    }
   } catch (err) {
     console.warn('[PlanWise] Could not load remote settings:', err.message);
   }
