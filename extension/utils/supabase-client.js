@@ -56,7 +56,12 @@ const SupabaseAuth = {
       await chrome.storage.local.remove(SESSION_KEY);
       _sessionPromise = Promise.resolve(null);
       if (typeof window !== "undefined" && window.DataStore) {
-        await window.DataStore.clearAll();
+        // Awaited so the clear reliably lands before a caller like
+        // settings.js's window.close() can tear the page down - but a
+        // storage failure here must never abort sign-out itself.
+        await window.DataStore.clearAll().catch(err => {
+          console.warn("[PlanWise] Failed to clear DataStore cache on sign-out:", err.message);
+        });
       }
     }
   },

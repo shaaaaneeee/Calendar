@@ -118,10 +118,17 @@ function createDomainStore(domain, fetchFn) {
       current = fresh;
       await writeCache(domain, fresh);
       notifier.notify(fresh);
+      return current;
     } catch (err) {
       console.warn(`[PlanWise:DataStore] ${domain} refresh failed:`, err.message);
+      // null (not `current`) so a caller that specifically wants to know
+      // whether THIS refresh succeeded - e.g. showing a toast after a
+      // save/delete - can tell a real failure apart from a legitimate
+      // empty/unchanged result. Fire-and-forget callers (ready()'s
+      // background refresh, the realtime handlers below) already ignore
+      // the return value entirely, so this doesn't change their behavior.
+      return null;
     }
-    return current;
   }
 
   function ready() {
@@ -231,6 +238,26 @@ function clearAll() {
   notificationsStore._reset();
   _realtimeStarted = false;
   return clearDataCache();
+}
+
+// clearAll() above only clears THIS page's in-memory state. Without this,
+// signing out in one open tab (e.g. Settings) leaves another open tab (e.g.
+// Dashboard) holding a live session, live realtime channels, and an
+// unguarded refresh() path - any refresh it runs after the sign-out would
+// write that account's data back into the shared cache, right past the
+// clear. chrome.storage.onChanged fires in every extension page, including
+// the one that didn't initiate the sign-out, so listening for the session
+// key's removal here propagates the clear across tabs for free.
+if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
+  chrome.storage.onChanged.addListener((changes, area) => {
+    // Must match SESSION_KEY in supabase-client.js. Not imported directly -
+    // that file's `const SESSION_KEY` is a separate classic-script global,
+    // and duplicating the literal here keeps this listener from silently
+    // depending on load order to resolve a shared binding.
+    if (area === "local" && "planwise_session" in changes && !changes.planwise_session.newValue) {
+      clearAll();
+    }
+  });
 }
 
 if (typeof window !== "undefined") {

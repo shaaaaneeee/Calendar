@@ -118,7 +118,12 @@ async function syncRemoteSettings(fromLiveUpdate = false) {
     for (const key of MERGE_AS_UNION_IF_LOCAL_EMPTY) {
       if (fromLiveUpdate) {
         const existing = settings[key] || [];
-        const additions = remoteMapped[key].filter((w) => !existing.includes(w));
+        // Case-insensitive: most word-list fields already lowercase on add,
+        // but priorityNames preserves case and dedupes case-insensitively
+        // (see addPriorityName below) - matching that here avoids a live
+        // push inserting a same-name, different-case duplicate.
+        const existingLower = existing.map((w) => w.toLowerCase());
+        const additions = remoteMapped[key].filter((w) => !existingLower.includes(w.toLowerCase()));
         if (additions.length) {
           settings[key] = [...existing, ...additions];
           changed = true;

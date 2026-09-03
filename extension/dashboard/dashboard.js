@@ -763,8 +763,13 @@ async function handleModalSave() {
     // Reconcile the local view eagerly rather than waiting on a Realtime
     // push to correct it - DataStore.events.refresh() re-fetches and, via
     // the subscription registered once in init(), updates allEvents and
-    // re-renders before this await resolves.
-    await DataStore.events.refresh();
+    // re-renders before this await resolves. The save itself already
+    // succeeded server-side at this point - a failed refresh only means
+    // the calendar hasn't reconciled yet, not that anything was lost.
+    const refreshed = await DataStore.events.refresh();
+    if (refreshed === null) {
+      showToast("Saved, but the calendar couldn't refresh — reload to see it.");
+    }
     if (selectedDay) {
       const dateMap = buildDateMap(allEvents);
       openDayPanel(selectedDay, dateMap[selectedDay] || []);
@@ -796,7 +801,10 @@ async function handleModalDelete() {
     closeDayPanel();
     // See handleModalSave() - refresh() reconciles allEvents and re-renders
     // via the init()-registered subscription before this await resolves.
-    await DataStore.events.refresh();
+    const refreshed = await DataStore.events.refresh();
+    if (refreshed === null) {
+      showToast("Deleted, but the calendar couldn't refresh — reload to see it.");
+    }
   } catch (err) {
     console.warn("[PlanWise] Delete failed:", err.message);
     showToast("Delete failed: " + err.message);
