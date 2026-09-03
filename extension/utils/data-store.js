@@ -142,11 +142,63 @@ const eventsStore = createDomainStore("events", () => window.SupabaseClient.even
 const groupsStore = createDomainStore("groups", () => window.SupabaseClient.groups.listGroups());
 const notificationsStore = createDomainStore("notifications", () => window.SupabaseClient.social.getNotifications());
 
+// ─────────────────────────────────────────────
+// REALTIME
+// ─────────────────────────────────────────────
+// Realtime's filter syntax only supports simple column equality - it can't
+// express the OR/join logic events' RLS uses for group-shared events. So
+// events/shared_events/groups/group_members all just trigger a full
+// refresh() on any change rather than patching the cache from the partial
+// payload - the underlying query costs <1ms server-side (measured against
+// the live database), so this is cheap and simpler than partial patching.
+
+let _realtimeStarted = false;
+
+async function startRealtimeSync() {
+  if (_realtimeStarted) return;
+  _realtimeStarted = true;
+
+  const user = await window.SupabaseClient.auth.getUser();
+  if (!user) return;
+
+  const db = window.SupabaseClient.db;
+
+  const eventsChannel = db
+    .channel("data-store:events")
+    .on("postgres_changes",
+      { event: "*", schema: "public", table: "events", filter: `user_id=eq.${user.id}` },
+      () => eventsStore.refresh())
+    .subscribe();
+  eventsStore._registerRealtimeChannel(eventsChannel);
+
+  const sharedEventsChannel = db
+    .channel("data-store:shared_events")
+    .on("postgres_changes",
+      { event: "*", schema: "public", table: "shared_events" },
+      () => eventsStore.refresh())
+    .subscribe();
+  eventsStore._registerRealtimeChannel(sharedEventsChannel);
+
+  const groupsChannel = db
+    .channel("data-store:groups")
+    .on("postgres_changes", { event: "*", schema: "public", table: "groups" }, () => groupsStore.refresh())
+    .on("postgres_changes", { event: "*", schema: "public", table: "group_members" }, () => groupsStore.refresh())
+    .subscribe();
+  groupsStore._registerRealtimeChannel(groupsChannel);
+
+  const notificationsChannel = window.SupabaseClient.social.subscribeNotifications(
+    user.id,
+    () => notificationsStore.refresh()
+  );
+  notificationsStore._registerRealtimeChannel(notificationsChannel);
+}
+
 if (typeof window !== "undefined") {
   window.DataStore = {
     events: eventsStore,
     groups: groupsStore,
     notifications: notificationsStore,
-    _internal: { createNotifier, createDomainStore },
+    startRealtimeSync,
+    _internal: { createNotifier, createDomainStore, _resetCacheChain },
   };
 }
