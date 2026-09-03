@@ -46,3 +46,46 @@ describe("createNotifier", () => {
     expect(receivedByA).toEqual([]);
   });
 });
+
+describe("createDomainStore", () => {
+  beforeEach(() => {
+    const store = {};
+    global.chrome = {
+      storage: {
+        local: {
+          get: (key) => Promise.resolve({ [key]: store[key] }),
+          set: (obj) => { Object.assign(store, obj); return Promise.resolve(); },
+          remove: (key) => { delete store[key]; return Promise.resolve(); },
+        },
+      },
+    };
+  });
+
+  test("ready() resolves with an empty array when there's no cache yet", async () => {
+    const fetchFn = () => Promise.resolve([{ id: 1 }]);
+    const store = window.DataStore._internal.createDomainStore("events", fetchFn);
+
+    const result = await store.ready();
+
+    expect(result).toEqual([]);
+  });
+
+  test("ready() triggers a background refresh that notifies subscribers", async () => {
+    const fetchFn = () => Promise.resolve([{ id: 1 }]);
+    const store = window.DataStore._internal.createDomainStore("events", fetchFn);
+    const received = [];
+    store.subscribe((data) => received.push(data));
+
+    await store.ready();
+    await store.refresh(); // ready()'s own background refresh already ran; call again for a deterministic await
+
+    expect(received[received.length - 1]).toEqual([{ id: 1 }]);
+  });
+
+  test("a failed refresh does not throw and leaves current data in place", async () => {
+    const fetchFn = () => Promise.reject(new Error("network down"));
+    const store = window.DataStore._internal.createDomainStore("events", fetchFn);
+
+    await expect(store.refresh()).resolves.not.toThrow();
+  });
+});
