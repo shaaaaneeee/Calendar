@@ -49,6 +49,16 @@ function createNotifier() {
 const CACHE_KEY = "planwise_data_cache";
 let _cacheChain = Promise.resolve();
 
+// Bumped by clearAll() to invalidate any refresh() already in flight at the
+// moment of sign-out. Without this, a refresh() started just before
+// clearAll() runs (fire-and-forget from ready() or a realtime callback) can
+// still be awaiting its network response when clearAll() clears the cache -
+// and its writeCache()/notify() would land afterward, writing the previous
+// account's data back into the cache post-clear. Shared across all domain
+// stores (not per-store) so one clearAll() invalidates in-flight work for
+// events/groups/notifications at once.
+let _generation = 0;
+
 function _enqueueCacheOp(fn) {
   _cacheChain = _cacheChain.then(fn, fn); // Chain on both resolve and reject paths
   return _cacheChain;
@@ -88,8 +98,15 @@ function createDomainStore(domain, fetchFn) {
   let realtimeChannels = [];
 
   async function refresh() {
+    const startGeneration = _generation;
     try {
       const fresh = await fetchFn();
+      if (_generation !== startGeneration) {
+        // clearAll() ran while this fetch was in flight - discard the
+        // stale result rather than writing a previous account's data back
+        // into the cache after sign-out.
+        return current;
+      }
       current = fresh;
       await writeCache(domain, fresh);
       notifier.notify(fresh);
@@ -194,6 +211,7 @@ async function startRealtimeSync() {
 }
 
 function clearAll() {
+  _generation++;
   eventsStore._reset();
   groupsStore._reset();
   notificationsStore._reset();

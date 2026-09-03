@@ -126,6 +126,30 @@ describe("createDomainStore", () => {
     expect(cache.groups.data).toEqual([{ id: 2, name: "group" }]);
   });
 
+  test("clearAll() invalidates a refresh() already in flight, discarding its stale write", async () => {
+    let resolveFetch;
+    const fetchFn = () => new Promise((resolve) => { resolveFetch = resolve; });
+    const store = window.DataStore._internal.createDomainStore("events", fetchFn);
+    const received = [];
+    store.subscribe((data) => received.push(data));
+
+    // Simulate a refresh() already in flight (e.g. ready()'s fire-and-forget
+    // background refresh, or a realtime callback) at the moment of sign-out.
+    const refreshPromise = store.refresh();
+
+    // Sign-out happens while the fetch above is still awaiting its response.
+    window.DataStore.clearAll();
+
+    // The in-flight fetch finally resolves, carrying the previous account's data.
+    resolveFetch([{ id: "stale-from-previous-account" }]);
+    await refreshPromise;
+
+    // The stale result must never reach the cache or subscribers.
+    const result = await global.chrome.storage.local.get("planwise_data_cache");
+    expect(result.planwise_data_cache?.events).toBeUndefined();
+    expect(received).toEqual([]);
+  });
+
   test("a failure in one queued cache operation does not block a later queued operation", async () => {
     const originalSet = global.chrome.storage.local.set;
     let callCount = 0;
