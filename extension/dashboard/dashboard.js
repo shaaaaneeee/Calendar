@@ -56,6 +56,18 @@ async function init() {
   loadTasksPreview();
   initNotifFeed();
   loadUserInitials();
+
+  // Registered once per page load (not inside loadEvents()/loadGroupsFilter(),
+  // which both run repeatedly over a session) so listeners don't accumulate.
+  DataStore.events.subscribe((fresh) => {
+    allEvents = mergeEventsWithDeadlines(fresh, deadlineEvents);
+    render();
+    renderUpcoming();
+  });
+  DataStore.groups.subscribe((fresh) => {
+    calGroups = fresh;
+    renderGroupsFilter();
+  });
 }
 
 
@@ -77,11 +89,6 @@ async function loadEvents() {
         console.warn("[PlanWise] Failed to materialize recurring events:", err.message);
       });
       allEvents = await DataStore.events.ready();
-      DataStore.events.subscribe((fresh) => {
-        allEvents = mergeEventsWithDeadlines(fresh, deadlineEvents);
-        render();
-        renderUpcoming();
-      });
     } else {
       // Not logged in - fall back to local confirmed events
       const result = await chrome.storage.local.get("confirmedEvents");
@@ -753,9 +760,11 @@ async function handleModalSave() {
       for (const groupId of unshareGroupIds) await Social.unshareEvent(savedId, groupId);
     }
     closeModal();
-    await loadEvents();
-    render();
-    renderUpcoming();
+    // Reconcile the local view eagerly rather than waiting on a Realtime
+    // push to correct it - DataStore.events.refresh() re-fetches and, via
+    // the subscription registered once in init(), updates allEvents and
+    // re-renders before this await resolves.
+    await DataStore.events.refresh();
     if (selectedDay) {
       const dateMap = buildDateMap(allEvents);
       openDayPanel(selectedDay, dateMap[selectedDay] || []);
@@ -785,9 +794,9 @@ async function handleModalDelete() {
     }
     closeModal();
     closeDayPanel();
-    await loadEvents();
-    render();
-    renderUpcoming();
+    // See handleModalSave() - refresh() reconciles allEvents and re-renders
+    // via the init()-registered subscription before this await resolves.
+    await DataStore.events.refresh();
   } catch (err) {
     console.warn("[PlanWise] Delete failed:", err.message);
     showToast("Delete failed: " + err.message);
@@ -995,11 +1004,6 @@ async function loadGroupsFilter() {
     calGroups = [];
   }
   renderGroupsFilter();
-
-  DataStore.groups.subscribe((fresh) => {
-    calGroups = fresh;
-    renderGroupsFilter();
-  });
 }
 
 function renderGroupsFilter() {
@@ -1588,7 +1592,9 @@ async function renderNotifFeed() {
             dot.className = "w-2 h-2 rounded-full mt-1.5 shrink-0 bg-transparent";
             n.read = true;
             updateNotifBadge();
-            loadGroupsFilter();
+            // Reconcile eagerly rather than waiting on Realtime - see
+            // handleModalSave()'s equivalent comment for events.
+            DataStore.groups.refresh();
           } catch (err) {
             acceptBtn.textContent = "Accept";
             acceptBtn.disabled = false;
