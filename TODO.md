@@ -1,12 +1,56 @@
 # TODO
 
-## Review desktop app design spec — pending
+## Dashboard load time — one fix done, two bigger ones written up (2026-09-04)
 
-**Next session:** read through
-`docs/superpowers/specs/2026-09-03-desktop-app-design.md` (Windows desktop
-app, generic UI Automation detection — first step toward the
-universal-plan-detection vision) and confirm it before moving on to the
-implementation plan. Flag anything that needs to change.
+**Reported:** dashboard.html feels slow to open (~half a second) every time.
+
+**Done:** `loadEvents()` was awaiting `Events.materializeRecurrences()` (an
+RPC that extends recurring-series materialization out to the 1-year
+horizon) before fetching events at all - a full extra sequential network
+round-trip blocking the calendar's first paint, for a call whose result
+only matters near the horizon's far edge, never in the initial view. Now
+fire-and-forget (still runs, still logged on failure, just doesn't block
+render).
+
+**Not done, needs its own pass:**
+
+1. **`SupabaseEvents.getAll()` has no date bounds** — it fetches every
+   event the user has ever created or been shared, forever, with a joined
+   `shared_events(group_id, groups(colour, name))` on every row. For an
+   account with a year+ of history plus recurring series materialized a
+   year out (up to ~52 rows/year per weekly series), this could easily be
+   the single largest contributor to load time, bigger than the fix above.
+   Fixing it properly means windowing the query to roughly the visible
+   month/week (+ some buffer) and re-fetching on month/week navigation
+   instead of assuming `allEvents` holds everything - which several call
+   sites currently assume (mini-calendar, "Upcoming" sidebar, month-nav via
+   `buildDateMap(allEvents)`). Real feature work, not a one-line fix -
+   needs its own design pass, not something to rush.
+2. **`init()`'s independent loaders run after `loadEvents()`, not
+   alongside it** — `loadGroupsFilter()`, `loadTasksPreview()`,
+   `initNotifFeed()`, and `loadUserInitials()` don't depend on
+   `loadEvents()`'s result, but are only *called* after it resolves, so
+   their network requests don't start until the events fetch already
+   finished instead of overlapping it. Mostly safe to parallelize, with one
+   real trap: `loadGroupsFilter()` → `renderGroupsFilter()` reads the
+   module-level `deadlineEvents`, which `loadEvents()` populates - so
+   naively firing it fully in parallel would race and sometimes miss
+   showing the "Deadlines" filter row. Needs `loadGroupsFilter()` split into
+   its fetch (safe to start early) and its render (must wait on
+   `loadEvents()`), not a blind reorder.
+
+## Review desktop app design spec — done (2026-09-03)
+
+Reviewed `docs/superpowers/specs/2026-09-03-desktop-app-design.md` and
+flagged two things directly in the spec before moving to an implementation
+plan: every Electron `BrowserWindow` needs `contextIsolation`/
+`nodeIntegration`/`sandbox` set correctly (these renderers load the same
+pages that already had one stored-XSS bug this session - a DOM bug that's
+sandboxed in the Chrome extension becomes full desktop RCE in a
+misconfigured Electron renderer), and password/PIN fields in allowlisted
+apps need a manual-verification step confirming the UIA Watcher doesn't
+see them (expected to be a non-issue via `IsPassword`, not yet confirmed).
+Implementation plan not started yet.
 
 ## Custom SMTP for auth emails — done for now
 

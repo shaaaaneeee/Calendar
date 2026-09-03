@@ -68,11 +68,14 @@ async function loadEvents() {
     const user = await Auth.getUser();
     currentUserId = user?.id || null;
     if (user) {
-      try {
-        await Events.materializeRecurrences();
-      } catch (err) {
+      // Not awaited: this only extends the recurrence horizon further into
+      // the future (materialize_recurrences() is idempotent and re-runs
+      // every load) - it doesn't affect anything the initial view actually
+      // shows, so blocking the calendar's first paint on this network RPC
+      // was adding a full extra round-trip for no visible benefit.
+      Events.materializeRecurrences().catch(err => {
         console.warn("[PlanWise] Failed to materialize recurring events:", err.message);
-      }
+      });
       allEvents = await Events.getAll();
     } else {
       // Not logged in - fall back to local confirmed events
