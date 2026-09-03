@@ -64,7 +64,12 @@ describe("createDomainStore", () => {
   });
 
   test("ready() resolves with an empty array when there's no cache yet", async () => {
-    const fetchFn = () => Promise.resolve([{ id: 1 }]);
+    // fetchFn intentionally never resolves during this test. A real network
+    // call always takes far longer than the synchronous cache-read path, so
+    // the first ready() call - which per spec must never wait on the
+    // network - resolves from the cache before its own fire-and-forget
+    // background refresh has any chance to land.
+    const fetchFn = () => new Promise(() => {});
     const store = window.DataStore._internal.createDomainStore("events", fetchFn);
 
     const result = await store.ready();
@@ -89,6 +94,45 @@ describe("createDomainStore", () => {
     const store = window.DataStore._internal.createDomainStore("events", fetchFn);
 
     await expect(store.refresh()).resolves.not.toThrow();
+  });
+
+  test("ready() reflects the latest current value on repeat calls, not the frozen first-ever snapshot", async () => {
+    // First call (fired internally by ready()'s own fire-and-forget
+    // background refresh) never resolves, simulating a network call still
+    // in flight - so the first ready() reflects only the cache. The second
+    // call (triggered explicitly below via refresh(), the same pattern
+    // dashboard.js now uses after save/delete) resolves with fresh data.
+    let callCount = 0;
+    const fetchFn = () => {
+      callCount++;
+      return callCount === 1 ? new Promise(() => {}) : Promise.resolve([{ id: 1 }]);
+    };
+    const store = window.DataStore._internal.createDomainStore("events", fetchFn);
+
+    // Regression: readyPromise used to permanently memoize this first,
+    // empty-array snapshot - every later ready() call kept returning it
+    // even after `current` had moved on.
+    const first = await store.ready();
+    expect(first).toEqual([]);
+
+    await store.refresh();
+
+    // ready() called again must reflect that update, not the frozen
+    // first-ever snapshot.
+    const second = await store.ready();
+    expect(second).toEqual([{ id: 1 }]);
+  });
+
+  test("ready() falls back to an empty array (not a permanently rejected promise) if the cache read throws", async () => {
+    global.chrome.storage.local.get = () => Promise.reject(new Error("storage broken"));
+    // Never resolves - this test only cares that a cache-read failure
+    // doesn't reject/hang ready(); it doesn't care what the background
+    // refresh (which will also fail, since writeCache() shares the same
+    // broken chrome.storage.local.get) eventually does.
+    const fetchFn = () => new Promise(() => {});
+    const store = window.DataStore._internal.createDomainStore("events", fetchFn);
+
+    await expect(store.ready()).resolves.toEqual([]);
   });
 
   test("concurrent refreshes from two domains both persist correctly (no read-modify-write race)", async () => {

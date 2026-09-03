@@ -4,9 +4,11 @@
  * Shared cache + live-sync layer sitting on top of supabase-client.js.
  * Loaded on dashboard.html and settings.html only.
  *
- * Every domain (events, groups, notifications, settings) exposes the same
- * interface: ready(), subscribe(callback), refresh(). See
- * docs/superpowers/specs/2026-09-04-data-store-live-sync-design.md.
+ * Every domain (events, groups, notifications) exposes the same interface:
+ * ready(), subscribe(callback), refresh(). Settings is handled separately
+ * (see settings.js's own local-storage + subscribeSettings mechanism)
+ * since it already had a working local-cache pattern before this file
+ * existed. See docs/superpowers/specs/2026-09-04-data-store-live-sync-design.md.
  *
  * Depends on: supabase-client.js (must load first).
  */
@@ -25,7 +27,13 @@ function createNotifier() {
       return () => listeners.delete(cb);
     },
     notify(data) {
-      for (const cb of listeners) cb(data);
+      for (const cb of listeners) {
+        try {
+          cb(data);
+        } catch (err) {
+          console.warn("[PlanWise:DataStore] subscriber threw:", err);
+        }
+      }
     },
     listenerCount() {
       return listeners.size;
@@ -117,14 +125,19 @@ function createDomainStore(domain, fetchFn) {
   }
 
   function ready() {
-    if (readyPromise) return readyPromise;
+    if (readyPromise) return readyPromise.then(() => current);
     readyPromise = (async () => {
-      const cached = await readCache(domain);
-      current = cached ?? [];
+      try {
+        const cached = await readCache(domain);
+        current = cached ?? [];
+      } catch (err) {
+        console.warn(`[PlanWise:DataStore] ${domain} cache read failed:`, err.message);
+        current = [];
+      }
       refresh(); // fire-and-forget background refresh + realtime-driven updates land via subscribe()
       return current;
     })();
-    return readyPromise;
+    return readyPromise.then(() => current);
   }
 
   function subscribe(cb) {
@@ -173,10 +186,11 @@ let _realtimeStarted = false;
 
 async function startRealtimeSync() {
   if (_realtimeStarted) return;
-  _realtimeStarted = true;
 
   const user = await window.SupabaseClient.auth.getUser();
   if (!user) return;
+
+  _realtimeStarted = true;
 
   const db = window.SupabaseClient.db;
 
