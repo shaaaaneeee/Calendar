@@ -1,43 +1,47 @@
 # TODO
 
-## Dashboard load time — one fix done, two bigger ones written up (2026-09-04)
+## Dashboard load time — root cause found and fixed (2026-09-04)
 
 **Reported:** dashboard.html feels slow to open (~half a second) every time.
 
-**Done:** `loadEvents()` was awaiting `Events.materializeRecurrences()` (an
-RPC that extends recurring-series materialization out to the 1-year
-horizon) before fetching events at all - a full extra sequential network
-round-trip blocking the calendar's first paint, for a call whose result
-only matters near the horizon's far edge, never in the initial view. Now
-fire-and-forget (still runs, still logged on failure, just doesn't block
-render).
+**First pass (small win):** `loadEvents()` was awaiting
+`Events.materializeRecurrences()` before fetching events at all - a full
+extra sequential network round-trip blocking first paint for a call that
+only matters near the 1-year materialization horizon. Made fire-and-forget.
 
-**Not done, needs its own pass:**
+**Real bottleneck, found via a HAR capture of an actual dashboard load in
+the real extension:** 4 separate `POST /auth/v1/token?grant_type=refresh_token`
+calls, almost entirely sequential, totaling ~1.3s of the page's ~1.85s total
+load time - by far the largest cost. `db.auth.setSession()` (called inside
+`_restoreSession()`) is a real network round-trip every time, not a cached
+local operation, and `loadEvents`, `loadGroupsFilter`, `initNotifFeed`, and
+`loadUserInitials` each independently restore their own session on every
+load. Fixed by memoizing the session promise per page load in
+`supabase-client.js` - every caller now shares one round-trip. Benefits
+every page (popup/dashboard/settings/tasks/signup), not just the dashboard.
 
-1. **`SupabaseEvents.getAll()` has no date bounds** — it fetches every
-   event the user has ever created or been shared, forever, with a joined
-   `shared_events(group_id, groups(colour, name))` on every row. For an
-   account with a year+ of history plus recurring series materialized a
-   year out (up to ~52 rows/year per weekly series), this could easily be
-   the single largest contributor to load time, bigger than the fix above.
-   Fixing it properly means windowing the query to roughly the visible
-   month/week (+ some buffer) and re-fetching on month/week navigation
-   instead of assuming `allEvents` holds everything - which several call
-   sites currently assume (mini-calendar, "Upcoming" sidebar, month-nav via
-   `buildDateMap(allEvents)`). Real feature work, not a one-line fix -
-   needs its own design pass, not something to rush.
-2. **`init()`'s independent loaders run after `loadEvents()`, not
-   alongside it** — `loadGroupsFilter()`, `loadTasksPreview()`,
-   `initNotifFeed()`, and `loadUserInitials()` don't depend on
-   `loadEvents()`'s result, but are only *called* after it resolves, so
-   their network requests don't start until the events fetch already
-   finished instead of overlapping it. Mostly safe to parallelize, with one
-   real trap: `loadGroupsFilter()` → `renderGroupsFilter()` reads the
-   module-level `deadlineEvents`, which `loadEvents()` populates - so
-   naively firing it fully in parallel would race and sometimes miss
-   showing the "Deadlines" filter row. Needs `loadGroupsFilter()` split into
-   its fetch (safe to start early) and its render (must wait on
-   `loadEvents()`), not a blind reorder.
+**Checked and ruled out:** suspected `SupabaseEvents.getAll()`'s unbounded
+query (no date filtering, fetches every event ever) might be the bigger
+cost. Checked directly against the live database (read-only, via the
+Supabase connector): 94 rows in `events`, zero performance advisories.
+Its ~360ms is essentially pure network RTT to the Tokyo region, not query
+cost - not the bottleneck at this data size. Still worth bounding by date
+range eventually as the account grows and for general hygiene, but not
+urgent - not treating it as a live problem anymore.
+
+**Also not urgent anymore:** parallelizing `init()`'s independent loaders
+(groups filter, tasks preview, notifications, user initials) so they start
+alongside `loadEvents()` instead of after it. Most of what made that
+ordering costly was the redundant session-restore calls each one made,
+which the memoization fix above already eliminates - revisit only if a
+future load-time check shows it's still worth the complexity (one of the
+loaders has a real data-ordering dependency on `loadEvents()`'s result that
+would need care, not a blind reorder).
+
+**Not yet re-verified against real numbers** - the fix is live, but hasn't
+been confirmed with a second HAR/console capture from the real extension
+yet. Worth a quick check next time the dashboard's open, to confirm the 4
+token calls actually collapsed to 1.
 
 ## Review desktop app design spec — done (2026-09-03)
 
