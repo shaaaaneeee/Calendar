@@ -38,10 +38,11 @@ future load-time check shows it's still worth the complexity (one of the
 loaders has a real data-ordering dependency on `loadEvents()`'s result that
 would need care, not a blind reorder).
 
-**Not yet re-verified against real numbers** - the fix is live, but hasn't
-been confirmed with a second HAR/console capture from the real extension
-yet. Worth a quick check next time the dashboard's open, to confirm the 4
-token calls actually collapsed to 1.
+**Confirmed with a second HAR capture from the real extension (2026-09-04):**
+`/auth/v1/token` calls went from 4 to 1, total requests from 8 to 5,
+critical-path load time from ~1854ms to ~1037ms - a measured 44%
+reduction. Temporary diagnostic instrumentation removed from
+`dashboard.js` now that the investigation is done.
 
 ## Review desktop app design spec — done (2026-09-03)
 

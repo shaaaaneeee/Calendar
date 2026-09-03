@@ -46,45 +46,16 @@ let modalSharedDetails = []; // { group_id, shared_by }[] for the event currentl
 // INIT
 // ─────────────────────────────────────────────
 
-// TEMPORARY: load-time diagnostics (2026-09-04) - logs a timing breakdown
-// of dashboard init to the console so the real bottleneck can be measured
-// against a real account's real data volume instead of guessed at. Remove
-// once the slow-load investigation is done.
-const _perf = {};
-function _perfStart(label) { _perf[label] = performance.now(); }
-function _perfEnd(label) { _perf[label] = Math.round(performance.now() - _perf[label]); }
-
 async function init() {
-  const _t0 = performance.now();
   updateTodayDisplay();
-
-  _perfStart("loadEvents (total)");
   await loadEvents();
-  _perfEnd("loadEvents (total)");
-
-  _perfStart("render+renderUpcoming");
   render();
   renderUpcoming();
-  _perfEnd("render+renderUpcoming");
-
   wireControls();
-
-  _perfStart("loadGroupsFilter");
-  loadGroupsFilter().finally(() => _perfEnd("loadGroupsFilter"));
-
-  _perfStart("loadTasksPreview");
-  loadTasksPreview().finally(() => _perfEnd("loadTasksPreview"));
-
-  _perfStart("initNotifFeed");
-  initNotifFeed().finally(() => {
-    _perfEnd("initNotifFeed");
-    _perf["TOTAL (init to all loaders settled)"] = Math.round(performance.now() - _t0);
-    console.log("[PlanWise:perf] dashboard load breakdown (ms):");
-    console.table(_perf);
-  });
-
-  _perfStart("loadUserInitials");
-  loadUserInitials().finally(() => _perfEnd("loadUserInitials"));
+  loadGroupsFilter();
+  loadTasksPreview();
+  initNotifFeed();
+  loadUserInitials();
 }
 
 
@@ -94,9 +65,7 @@ async function init() {
 
 async function loadEvents() {
   try {
-    _perfStart("  -> Auth.getUser (session restore)");
     const user = await Auth.getUser();
-    _perfEnd("  -> Auth.getUser (session restore)");
     currentUserId = user?.id || null;
     if (user) {
       // Not awaited: this only extends the recurrence horizon further into
@@ -107,10 +76,7 @@ async function loadEvents() {
       Events.materializeRecurrences().catch(err => {
         console.warn("[PlanWise] Failed to materialize recurring events:", err.message);
       });
-      _perfStart("  -> Events.getAll (query)");
       allEvents = await Events.getAll();
-      _perfEnd("  -> Events.getAll (query)");
-      _perf["  -> Events.getAll (row count)"] = allEvents.length;
     } else {
       // Not logged in - fall back to local confirmed events
       const result = await chrome.storage.local.get("confirmedEvents");
