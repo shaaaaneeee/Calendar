@@ -117,6 +117,7 @@
 
 /* ── Event pills (created by makeMonthCell / renderWeek) ── */
 .event-pill {
+  position: relative;
   font-size: 10px;
   font-family: 'Geist', sans-serif;
   padding: 1px 5px;
@@ -125,29 +126,36 @@
   color: var(--c-text);
   border: 1px solid var(--c-outline);
   cursor: pointer;
-  display: flex;
-  align-items: stretch;
 }
 .event-pill:hover { background: var(--c-bg-low); }
 .event-pill-title {
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-width: 0;
-  margin-left: 3px;
 }
-.event-pill-title:first-child { margin-left: 0; }
-/* One solid-colour bar per group an event is shared with, flush against
-   each other (no gap) and against the pill's left edge (extends past its
-   own border/padding - the pill's own border-left is removed in JS when
-   there's more than one bar, so no black line shows before the colours
-   start, same as the single-group case never showing one either). */
+/* Same uniform 1px border on every side, always - single-group and
+   multi-group pills are never structurally different, only whether/how
+   the accent bar overlay below appears. */
+.event-pill.has-groupbar .event-pill-title { padding-left: 6px; }
 .event-pill-groupbar {
-  width: 3px;
-  flex-shrink: 0;
-  margin: -1px 0;
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--c-outline-soft);
 }
-.event-pill-groupbar:first-child { margin-left: -5px; }
+.event-pill-groupbar-segment { flex: 1 1 0; }
+/* One thin divider between adjacent colours when an event is shared to
+   more than one group - not a gap, not a gradient blend, a hard line,
+   matching the rest of the app's flat-colour hard-edge style. A single
+   group's bar has no divider (nothing to divide). */
+.event-pill-groupbar-divider {
+  height: 1px;
+  flex-shrink: 0;
+  background: var(--c-outline);
+}
 
 /* ── Upcoming list items (created by renderUpcoming) ── */
 .upcoming-item {

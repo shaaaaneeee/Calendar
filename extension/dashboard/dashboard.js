@@ -38,7 +38,12 @@ let editingEvent = null; // Event currently open in modal
 let calGroups = []; // Cached groups for filter + share UI
 let hiddenGroups = new Set(); // Group IDs currently filtered out
 let activeCommentsChannel = null; // Realtime channel for live comments
-let lastAnimatedGridKey = null; // Last month/view key that ran the grid entrance animation
+// Seeded to match the initial render's gridKey (not null) so the very
+// first render of a fresh page load never animates - that data just came
+// straight from the local cache in ready(), there was nothing to reveal.
+// Genuine in-session navigation (prev/next, jump, view switch) still
+// animates normally since those change gridKey away from this seed.
+let lastAnimatedGridKey = `month:${currentDate.getFullYear()}-${currentDate.getMonth()}`;
 let currentUserId = null; // Signed-in user's id, needed to know which shares are ours to undo
 let modalSharedDetails = []; // { group_id, shared_by }[] for the event currently open in the modal
 
@@ -1072,25 +1077,34 @@ function escapeHtml(str) {
 // one-group pill looks exactly as it always has.
 function renderPillContent(pill, event, titleText) {
   pill.innerHTML = "";
+  pill.classList.remove("has-groupbar");
 
   const colours = (event.shared_groups?.length
     ? event.shared_groups.map(g => g.colour)
     : [event.group_colour]
   ).filter(Boolean);
 
-  if (colours.length > 1) {
-    // Remove the pill's own black border-left entirely, same as the
-    // single-colour branch below does by overwriting it - otherwise the
-    // default 1px outline shows as a black line before the bars start.
-    pill.style.borderLeft = "0";
-    for (const colour of colours) {
-      const bar = document.createElement("span");
-      bar.className = "event-pill-groupbar";
-      bar.style.background = colour;
-      pill.appendChild(bar);
-    }
-  } else if (colours.length === 1) {
-    pill.style.borderLeft = `3px solid ${colours[0]}`;
+  // Single container overlaying the pill's left edge, same structure for
+  // one group (a solid fill, no divider) and several (equal-height
+  // stacked segments with a hard 1px divider between each pair) - there's
+  // no structural difference between the two cases, so no black
+  // border-left artifact can appear for one and not the other.
+  if (colours.length > 0) {
+    pill.classList.add("has-groupbar");
+    const bar = document.createElement("span");
+    bar.className = "event-pill-groupbar";
+    colours.forEach((colour, i) => {
+      if (i > 0) {
+        const divider = document.createElement("span");
+        divider.className = "event-pill-groupbar-divider";
+        bar.appendChild(divider);
+      }
+      const segment = document.createElement("span");
+      segment.className = "event-pill-groupbar-segment";
+      segment.style.background = colour;
+      bar.appendChild(segment);
+    });
+    pill.appendChild(bar);
   }
 
   const title = document.createElement("span");
