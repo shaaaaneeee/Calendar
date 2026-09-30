@@ -13,7 +13,7 @@
   <script src="../utils/dom-helpers.js"></script>
   <link rel="stylesheet" href="../vendor/theme.css" />
   <link rel="stylesheet" href="dashboard.css" />
-  <script src="theme-init.js"></script>
+  <script src="../utils/theme-init.js"></script>
 </head>
 <body class="bg-background font-sans text-on-surface h-screen overflow-hidden">
 <div id="app" class="flex h-screen overflow-hidden">
@@ -72,10 +72,6 @@
           <button id="view-month" class="view-btn px-3 py-1 font-mono text-[10px] font-bold tracking-wider bg-primary text-on-primary">MONTH</button>
           <button id="view-week"  class="view-btn px-3 py-1 font-mono text-[10px] font-bold tracking-wider bg-surface text-on-surface hover:bg-surface-mid">WEEK</button>
         </div>
-
-        <button id="btn-theme-toggle" class="w-8 h-8 flex items-center justify-center hover:bg-surface-mid" title="Toggle dark mode (prototype)">
-          <span id="theme-toggle-icon" class="material-symbols-outlined text-[18px]">dark_mode</span>
-        </button>
 
         <button id="btn-notifications" class="w-8 h-8 flex items-center justify-center hover:bg-surface-mid relative">
           <span class="material-symbols-outlined text-[18px]">notifications</span>

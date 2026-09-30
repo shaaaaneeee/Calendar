@@ -35,7 +35,26 @@ function showUnauthMessage() {
   setTimeout(() => window.close(), 1500);
 }
 
+// A paused/unreachable Supabase project must never look like "you're signed
+// out" (showUnauthMessage above) - that sends people down a confusing
+// sign-in retry loop. This replaces the whole page instead of a banner so
+// no setting screen is reachable while the backend is down.
+function showServiceUnavailable() {
+  document.body.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100vh;text-align:center;padding:0 24px;font-family:inherit;">' +
+      '<div style="font-family:monospace;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--c-muted);">PlanWise</div>' +
+      '<div style="font-weight:700;font-size:18px;color:var(--c-text);">Service unavailable</div>' +
+      '<p style="font-size:13px;color:var(--c-muted);max-width:320px;">Can\'t reach the PlanWise database right now. Try again in a few minutes.</p>' +
+    '</div>';
+}
+
 async function init() {
+  const dbAvailable = await window.SupabaseClient.health.isAvailable();
+  if (!dbAvailable) {
+    showServiceUnavailable();
+    return;
+  }
+
   try {
     currentUser = await Auth.getUser();
     if (!currentUser) {
@@ -458,6 +477,8 @@ function wireControls() {
     persistLocal();
   });
 
+  wireThemeToggle();
+
   el('btn-set-username').addEventListener('click', handleSetUsername);
   el('account-username-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') handleSetUsername();
@@ -466,6 +487,22 @@ function wireControls() {
   el('btn-signout').addEventListener('click', async () => {
     await Auth.signOut();
     window.close();
+  });
+}
+
+// Dark mode lives only here, not as a one-tap toggle on the calendar header
+// - theme-init.js (loaded on every page) applies whatever's saved here
+// before paint, so the choice still shows up everywhere.
+function wireThemeToggle() {
+  const root   = document.documentElement;
+  const toggle = el('toggle-dark-mode');
+
+  toggle.checked = root.dataset.theme === 'dark';
+
+  toggle.addEventListener('change', () => {
+    const next = toggle.checked ? 'dark' : 'light';
+    root.dataset.theme = next;
+    try { localStorage.setItem('planwise-theme', next); } catch (_) {}
   });
 }
 

@@ -12,6 +12,7 @@
   <script src="../utils/dom-helpers.js"></script>
   <link rel="stylesheet" href="../vendor/theme.css" />
   <link rel="stylesheet" href="popup.css" />
+  <script src="../utils/theme-init.js"></script>
 </head>
 <body class="bg-background font-sans text-on-surface w-80 min-h-48">
 <div id="app" class="flex flex-col min-h-48">
@@ -46,6 +47,12 @@
   <div id="empty" class="state hidden px-4 py-8 flex-col items-center gap-2 text-center">
     <div class="font-bold text-sm">No pending plans.</div>
     <div class="text-xs text-on-muted font-mono tracking-wide">PlanWise is watching your conversations.</div>
+  </div>
+
+  <!-- Service unavailable — shown when Supabase is unreachable (e.g. project paused) -->
+  <div id="service-unavailable" class="state hidden px-4 py-8 flex-col items-center gap-2 text-center">
+    <div class="font-bold text-sm">Service unavailable</div>
+    <div class="text-xs text-on-muted font-mono tracking-wide">Can't reach PlanWise's database right now. Try again shortly.</div>
   </div>
 
   <!-- Event card -->
@@ -99,8 +106,8 @@
     <div id="queue-info" class="px-4 pb-2 font-mono text-[9px] text-on-muted tracking-wide text-center"></div>
   </div>
 
-  <!-- Footer links -->
-  <div class="footer-links flex items-center justify-center gap-2 px-4 py-2 border-t border-outline mt-auto">
+  <!-- Footer links — hidden until signed in (see showQueue() in popup.js) -->
+  <div id="footer-links" class="hidden footer-links items-center justify-center gap-2 px-4 py-2 border-t border-outline mt-auto">
     <a id="btn-dashboard" href="#" class="font-mono text-[9px] text-on-muted hover:text-on-surface tracking-wider uppercase">Calendar</a>
     <span id="footer-sep"          class="hidden text-on-muted font-mono text-[9px]">·</span>
     <a    id="btn-tasks"   href="#" class="hidden font-mono text-[9px] text-on-muted hover:text-on-surface tracking-wider uppercase">Tasks</a>

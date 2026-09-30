@@ -13,6 +13,7 @@
   <script src="../utils/dom-helpers.js"></script>
   <link rel="stylesheet" href="../vendor/theme.css" />
   <link rel="stylesheet" href="settings.css" />
+  <script src="../utils/theme-init.js"></script>
 </head>
 <body class="bg-background font-sans text-on-surface h-screen overflow-hidden">
 
@@ -199,6 +200,18 @@
     <section id="section-account" class="section hidden p-8 max-w-2xl">
       <h1 class="text-xl font-bold tracking-tight mb-1">Account</h1>
       <p class="text-sm text-on-muted mb-6">Manage your PlanWise account.</p>
+
+      <div class="flex items-center justify-between py-4 mb-4 border-b border-outline-soft">
+        <div>
+          <div class="font-medium text-sm mb-0.5">Dark mode</div>
+          <div class="text-sm text-on-muted">Applies across the calendar, tasks, and popup.</div>
+        </div>
+        <label class="toggle relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="toggle-dark-mode" class="sr-only peer" />
+          <div class="w-9 h-5 bg-surface-top border border-outline peer-checked:bg-primary peer-checked:border-primary after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-on-primary after:w-4 after:h-4 after:border after:border-outline after:transition-all peer-checked:after:translate-x-4 peer-checked:after:border-on-primary"></div>
+        </label>
+      </div>
+
       <div class="border border-outline p-5 flex flex-col gap-4">
         <div>
           <div class="font-mono text-[9px] font-bold tracking-[0.15em] uppercase text-on-muted mb-1">Signed in as</div>

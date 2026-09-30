@@ -26,6 +26,33 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
 
 
 // ─────────────────────────────────────────────
+// HEALTH
+// ─────────────────────────────────────────────
+
+// A paused Supabase project (free tier pauses after a week of inactivity)
+// doesn't fail loudly - auth/table calls just hang or reject with an
+// opaque network error. Pages check this first and show a clear "service
+// unavailable" state instead of misreporting it as "not signed in" or
+// silently falling back to local-only data.
+const SupabaseHealth = {
+  async isAvailable() {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
+        headers: { apikey: SUPABASE_ANON },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return res.ok;
+    } catch (err) {
+      return false;
+    }
+  },
+};
+
+
+// ─────────────────────────────────────────────
 // AUTH
 // ─────────────────────────────────────────────
 
@@ -810,6 +837,7 @@ const SupabaseSocial = {
 if (typeof window !== 'undefined') {
   window.SupabaseClient = {
     db,
+    health:    SupabaseHealth,
     auth:      SupabaseAuth,
     events:    SupabaseEvents,
     settings:  SupabaseSettings,

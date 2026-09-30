@@ -24,6 +24,10 @@ body {
   flex-direction: column;
 }
 
+#footer-links:not(.hidden) {
+  display: flex;
+}
+
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar {

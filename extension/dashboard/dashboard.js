@@ -53,6 +53,18 @@ let modalSharedDetails = []; // { group_id, shared_by }[] for the event currentl
 // ─────────────────────────────────────────────
 
 async function init() {
+  const user = await Auth.getUser();
+  if (!user) {
+    showSignInRequired();
+    return;
+  }
+
+  const dbAvailable = await window.SupabaseClient.health.isAvailable();
+  if (!dbAvailable) {
+    showServiceUnavailable();
+    return;
+  }
+
   updateTodayDisplay();
   await loadEvents();
   render();
@@ -1007,38 +1019,40 @@ function wireControls() {
   el("modal-overlay").addEventListener("click", (e) => {
     if (e.target === el("modal-overlay")) closeModal();
   });
-
-  initThemeToggle();
-}
-
-// Prototype dark-mode toggle - self-contained, not yet wired into Settings
-// or synced to the account. Just flips the CSS-variable theme. Moved here
-// from an inline <script> in dashboard.html, which MV3's mandatory
-// script-src 'self' CSP silently blocked - the toggle never actually
-// worked in the real extension, only when tested outside it.
-function initThemeToggle() {
-  const root = document.documentElement;
-  const icon = el("theme-toggle-icon");
-  const btn = el("btn-theme-toggle");
-  if (!icon || !btn) return;
-
-  function syncIcon() {
-    icon.textContent = root.dataset.theme === "dark" ? "light_mode" : "dark_mode";
-  }
-  syncIcon();
-
-  btn.addEventListener("click", () => {
-    const next = root.dataset.theme === "dark" ? "light" : "dark";
-    root.dataset.theme = next;
-    syncIcon();
-    try { localStorage.setItem("planwise-theme", next); } catch (_) {}
-  });
 }
 
 
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
+
+// Replaces the whole page - not just a banner - so a paused/unreachable
+// Supabase project never lets someone into a half-working calendar (e.g.
+// the local-storage fallback used when signed out). Inline styles, not
+// Tailwind classes: written after the page's own stylesheet has already
+// settled, so it can't depend on Tailwind re-scanning dynamically-added
+// markup.
+function showServiceUnavailable() {
+  document.body.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100vh;text-align:center;padding:0 24px;font-family:inherit;">' +
+      '<div style="font-family:monospace;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--c-muted);">PlanWise</div>' +
+      '<div style="font-weight:700;font-size:18px;color:var(--c-text);">Service unavailable</div>' +
+      '<p style="font-size:13px;color:var(--c-muted);max-width:320px;">Can\'t reach the PlanWise database right now. Try again in a few minutes.</p>' +
+    '</div>';
+}
+
+// Same replace-the-whole-page approach as showServiceUnavailable() above -
+// reaching this page while signed out (e.g. a bookmarked dashboard.html
+// tab after signing out elsewhere) must never fall through to the
+// local-storage event cache, which would look like a working calendar.
+function showSignInRequired() {
+  document.body.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100vh;text-align:center;padding:0 24px;font-family:inherit;">' +
+      '<div style="font-family:monospace;font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--c-muted);">PlanWise</div>' +
+      '<div style="font-weight:700;font-size:18px;color:var(--c-text);">Sign in required</div>' +
+      '<p style="font-size:13px;color:var(--c-muted);max-width:320px;">Open the PlanWise extension icon and sign in to view your calendar.</p>' +
+    '</div>';
+}
 
 function updateTodayDisplay() {
   el("today-display").textContent = new Date().toLocaleDateString("en-US", {

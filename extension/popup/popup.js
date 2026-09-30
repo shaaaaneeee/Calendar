@@ -24,6 +24,13 @@ let overrideOverlap = false;
 // ─────────────────────────────────────────────
 
 async function init() {
+  const dbAvailable = await window.SupabaseClient.health.isAvailable();
+  if (!dbAvailable) {
+    hide("loading");
+    show("service-unavailable");
+    return;
+  }
+
   let user;
   try {
     // Race the session check against a timeout.
@@ -115,6 +122,8 @@ function setAuthError(msg) {
 // ─────────────────────────────────────────────
 
 async function showQueue() {
+  show("footer-links");
+  show("btn-dashboard");
   show("btn-tasks");
   show("footer-sep");
   show("btn-settings");

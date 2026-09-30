@@ -1,5 +1,6 @@
-// Prototype dark-mode toggle - applied before paint to avoid a light-mode
-// flash. Persisted locally only; not yet a real setting.
+// Applies the dark/light theme saved from Settings, before paint, to avoid
+// a light-mode flash. Shared by every extension page so the choice made in
+// Settings is reflected everywhere, even though it can only be changed there.
 //
 // Must be an external file, not an inline <script> - MV3 extension pages
 // enforce script-src 'self' unconditionally, with no way to allow inline
