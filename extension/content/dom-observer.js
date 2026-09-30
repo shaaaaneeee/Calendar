@@ -13,6 +13,12 @@ const PLATFORM_SELECTORS = {
       '#main div[contenteditable="true"][role="textbox"]',
     ],
     sendButtonSelector: 'button[data-testid="send"], button[aria-label="Send"], span[data-icon="send"]',
+    // TODO: WhatsApp Web's quoted-reply preview (the small snippet shown
+    // above the input when replying to a specific message) uses obfuscated,
+    // frequently-changing class names. Not confirmed against a live DOM -
+    // left empty (no stripping) rather than guess. Confirm from an actual
+    // reply-preview element before filling this in.
+    quoteSelectors: [],
     name: "WhatsApp"
   },
   "web.telegram.org": {
@@ -23,6 +29,10 @@ const PLATFORM_SELECTORS = {
       "div.composer-wrapper div[contenteditable=\"true\"]",
     ],
     sendButtonSelector: "button.send",
+    // TODO: same situation as WhatsApp above - Telegram Web's reply-preview
+    // markup hasn't been confirmed against a live DOM. Left empty until
+    // real selectors are captured from an actual reply preview.
+    quoteSelectors: [],
     name: "Telegram"
   },
   "mail.google.com": {
@@ -31,6 +41,16 @@ const PLATFORM_SELECTORS = {
       'div.Am.aiL.editable',
     ],
     sendButtonSelector: null,
+    // Gmail wraps quoted reply history AND forwarded messages in the same
+    // markup: an outer .gmail_quote_container (current Gmail) or .gmail_quote
+    // holding the "On ... wrote:" / "---------- Forwarded message ----------"
+    // line, plus a nested <blockquote class="gmail_quote"> with the actual
+    // quoted content. This is Gmail's long-standing, widely-documented
+    // compose markup (the same convention email-parsing tools rely on) -
+    // not something inspected live in this session, since that needs a
+    // real signed-in Gmail draft. Verify against a real reply and forward
+    // (see manual test plan) and adjust here if it doesn't match.
+    quoteSelectors: [".gmail_quote_container", ".gmail_quote", "blockquote"],
     name: "Gmail"
   }
 };

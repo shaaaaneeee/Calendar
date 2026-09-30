@@ -15,7 +15,11 @@ class TextBuffer {
 
   // Replace the buffer with the current input value on every keystroke -
   // this is the only way text enters the buffer, so it only ever reflects
-  // what the user is actively typing into their own compose box.
+  // what the user is actively typing into their own compose box. Callers
+  // must strip quoted/forwarded content before calling this (see
+  // content-script.js's getComposedText()) - the slice below keeps the
+  // TAIL of whatever string it's given, so unstripped quoted text sitting
+  // after the user's new text would win the slice instead of the new text.
   set(text) {
     if (!text || typeof text !== "string") return;
 

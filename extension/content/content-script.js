@@ -90,7 +90,7 @@ function attachBuffer(inputElement, platform) {
   });
 
   inputElement.addEventListener("input", () => {
-    const text = inputElement.textContent || inputElement.value || "";
+    const text = getComposedText(inputElement, platform);
     buffer.set(text);
   });
 
@@ -105,6 +105,29 @@ function attachBuffer(inputElement, platform) {
   }
 
   console.log("[PlanWise] Monitoring active on", platform.name);
+}
+
+/**
+ * Reads the compose box's current text with quoted/forwarded content
+ * stripped first (per platform.quoteSelectors), so an old plan sitting in a
+ * quoted email - or anything hidden inside one - is never analyzed as if it
+ * were newly typed. Works on a clone; the live compose DOM is never touched.
+ */
+function getComposedText(inputElement, platform) {
+  const quoteSelectors = platform.quoteSelectors || [];
+
+  let text;
+  if (quoteSelectors.length > 0) {
+    const clone = inputElement.cloneNode(true);
+    for (const selector of quoteSelectors) {
+      clone.querySelectorAll(selector).forEach((node) => node.remove());
+    }
+    text = clone.textContent;
+  } else {
+    text = inputElement.textContent;
+  }
+
+  return text || inputElement.value || "";
 }
 
 async function analyzeText(text, platform, fromSend = false) {
