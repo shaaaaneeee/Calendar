@@ -65,15 +65,30 @@ function detectPlatform() {
   return null;
 }
 
-function waitForElement(selectorOrList, timeout = 10000) {
+function waitForElement(selectorOrList, timeout = 10000, platformName = null) {
   // Normalise to array so the rest of the logic is the same
   const selectors = Array.isArray(selectorOrList) ? selectorOrList : [selectorOrList];
+
+  // Only warns when a platformName is given, so the send-button caller
+  // below (a single comma-joined selector, not an ordered fallback list)
+  // doesn't log noise it was never meant to.
+  function warnIfDrifted(selector) {
+    const index = selectors.indexOf(selector);
+    if (platformName && index > 0) {
+      console.warn(
+        `[PlanWise] Selector drift on ${platformName}: selectors[0] ` +
+        `("${selectors[0]}") did not match - fell back to selectors[${index}] ("${selector}"). ` +
+        `If ${platformName} changed its DOM, consider promoting this selector.`
+      );
+    }
+  }
 
   return new Promise((resolve, reject) => {
     // Check if any selector already matches
     for (const selector of selectors) {
       const el = document.querySelector(selector);
       if (el) {
+        warnIfDrifted(selector);
         resolve(el);
         return;
       }
@@ -85,6 +100,7 @@ function waitForElement(selectorOrList, timeout = 10000) {
         const el = document.querySelector(selector);
         if (el) {
           observer.disconnect();
+          warnIfDrifted(selector);
           resolve(el);
           return;
         }

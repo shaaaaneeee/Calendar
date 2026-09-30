@@ -32,7 +32,8 @@ async function attachWhenReady(platform) {
   try {
     const inputElement = await window.DOMObserver.waitForElement(
       platform.inputSelector,
-      30000
+      30000,
+      platform.name
     );
     console.log("[PlanWise] Input element found.");
     attachBuffer(inputElement, platform);
@@ -64,6 +65,14 @@ function watchForInput(platform) {
       const el = document.querySelector(selector);
       if (el) {
         observer.disconnect();
+        const index = selectors.indexOf(selector);
+        if (index > 0) {
+          console.warn(
+            `[PlanWise] Selector drift on ${platform.name}: selectors[0] ` +
+            `("${selectors[0]}") did not match - fell back to selectors[${index}] ("${selector}"). ` +
+            `If ${platform.name} changed its DOM, consider promoting this selector.`
+          );
+        }
         console.log("[PlanWise] Input element appeared - attaching.");
         attachBuffer(el, platform);
         return;
