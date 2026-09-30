@@ -166,4 +166,4 @@ Open the **Settings** page from the dashboard sidebar to configure:
 - **Detection** — sensitivity threshold, custom trigger words, activity words, place words, custom names, and plan items
 - **Groups** — create and manage social groups; invite members by username
 - **Notifications** — toggle badge notifications on/off
-- **Account** — sign out
+- **Account** — sign out, switch between light and dark mode (applies across the popup, dashboard, and tasks board)

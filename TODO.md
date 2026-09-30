@@ -1,5 +1,106 @@
 # TODO
 
+## ⚠️ Heads up: detection engine gets a full rewrite next session
+
+The user has said the detection algorithm (`extension/detection/rules.js`
+and `engine.js`, likely `extractor.js` too) is being **completely
+rewritten** next session. This supersedes the incremental "Option A"
+(expand the local rule set) recommendation in
+`docs/superpowers/specs/2026-09-05-detection-false-negative-reduction-design.md`
+— treat that spec's 5-option menu as background/reference once the
+rewrite starts, not the active plan. `TO_TEST.md`'s recurring-events and
+detection-false-negative sections lean on today's `rules.js`/`engine.js`/
+`extractor.js` behavior and will need re-checking (or replacing outright)
+once the new algorithm lands.
+
+## To-test checklist created (2026-09-30)
+
+Went through every `.md` doc in the repo and pulled every manual-
+verification step mentioned anywhere into one file: `TO_TEST.md`. Covers
+not-yet-verified items, a regression checklist for already-shipped
+features, and items blocked on features not yet built (desktop app,
+detection false-negative fix).
+
+## Quoted/forwarded text no longer feeds plan detection (2026-09-30) — done
+
+**Problem:** `content-script.js` read the entire Gmail compose box's
+`textContent`, including quoted reply/forward history, and
+`text-buffer.js` kept only the *last* 500 characters — so on a long
+thread, detection could run on old quoted content instead of what the
+user just typed, risking an old plan re-triggering as new.
+
+**Fix:** added a per-platform `quoteSelectors` list in `dom-observer.js`
+(Gmail: `.gmail_quote_container`, `.gmail_quote`, `blockquote` — from
+Gmail's long-documented compose markup, not verified against a live
+account this session; WhatsApp/Telegram left empty with a `TODO`, not
+confirmed either). `content-script.js` now clones the compose node,
+strips matches from the clone, and reads text from that before it ever
+reaches the buffer — the live DOM is never touched. Commit `b7d0b91`.
+
+Also added: selector-drift logging — a `console.warn` naming the
+platform, index, and selector string whenever a platform's *primary*
+input selector fails and a fallback selector saves it, so DOM drift on
+Gmail/WhatsApp/Telegram shows up in the console before every fallback
+also breaks. Commit `72f314c`.
+
+**Not yet done:** real Gmail/WhatsApp/Telegram manual verification — see
+`TO_TEST.md` items 1–2.
+
+## HF model research for Gmail plan detection (2026-09-30) — research only, no code
+
+Explored replacing/supplementing Gemini Nano with small Hugging Face
+models (zero-shot classifiers, GLiNER, small instruct LLMs) for
+PlanWise's four detection tasks (plan detection, note detection,
+date/time/place extraction, structured event creation). Conclusion: run
+everything **on-device** via Transformers.js — never server-side, given
+the "drafts never leave the device" privacy stance — staged as rules → a
+small zero-shot classifier (only on the rule engine's ambiguous cases) →
+GLiNER for location/participant spans → deterministic template assembly
+→ a small instruct LLM (SmolLM2-360M or similar) only as a last-resort
+field-repair step. Full model comparison, sizing, and MV3/Transformers.js
+runtime constraints (bundle the JS/WASM runtime locally to avoid a Chrome
+Web Store "remote code" rejection; lazy-downloading model *weights* from
+the Hub at runtime is fine, since those are data, not code) live in this
+session's conversation, not yet written into a spec file. **No code
+changes were made from this research** — superseded in priority by the
+full algorithm rewrite noted above, in any case.
+
+## Popup sign-in gating, dark mode moved to Settings, paused-DB guard (2026-09-30) — done
+
+**Three-part ask:** (1) the popup's "Calendar" footer link was visible
+and clickable even when signed out, letting someone open the dashboard
+with no account. (2) dark mode lived as a one-tap header button on the
+dashboard — too easy to hit by accident, and not synced anywhere else.
+(3) if the Supabase project is paused/unreachable, the popup and the
+full-page app need to show a clear "service unavailable" state rather
+than a broken or misleading one.
+
+**Fix:**
+- `popup.js`/`popup.html`: Calendar/Tasks/Settings footer links are now
+  hidden by default, shown only once `showQueue()` confirms a signed-in
+  session. Added a `#service-unavailable` state, checked via a new
+  `SupabaseClient.health.isAvailable()` *before* the auth check even
+  runs.
+- `dashboard.js`: `init()` now checks sign-in (`showSignInRequired()`)
+  and DB health (`showServiceUnavailable()`) first — both replace the
+  whole page rather than showing a banner, so nothing falls through to
+  the local-storage fallback and ends up looking like a half-working
+  calendar.
+- `settings.js`: same `showServiceUnavailable()` guard added to `init()`.
+- Dark mode: removed the header toggle button and `initThemeToggle()`
+  from `dashboard.js`/`dashboard.html` entirely. Added a "Dark mode"
+  toggle in Settings → Account instead (`wireThemeToggle()`).
+  `theme-init.js` (the before-paint theme-apply script) moved from
+  `extension/dashboard/` to `extension/utils/` and is now included on
+  every page (popup, dashboard, settings, tasks, signup) so the choice
+  made in Settings shows up everywhere, even though it can only be
+  changed there.
+- `supabase-client.js`: added `SupabaseHealth.isAvailable()` — a
+  5-second-timeout ping to Supabase's `/auth/v1/health` endpoint.
+
+**Status:** committed as `f728512`, pushed to `origin/main`. Not yet
+manually verified — see `TO_TEST.md` item 3.
+
 ## Dashboard load time — root cause found and fixed (2026-09-04)
 
 **Reported:** dashboard.html feels slow to open (~half a second) every time.

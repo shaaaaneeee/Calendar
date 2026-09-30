@@ -1,6 +1,15 @@
 # PlanWise — Project Status
 
-_Last updated: 2026-09-30 (reflects repo state as of commit `a5effbd`, pushed to `origin/main`)_
+_Last updated: 2026-10-01 (reflects repo state as of commit `f728512`,
+pushed to `origin/main`)_
+
+## ⚠️ Heads up: detection engine gets a full rewrite next session
+
+The detection algorithm (`extension/detection/rules.js`/`engine.js`,
+likely `extractor.js` too) is being **completely rewritten** next
+session. This supersedes the incremental "Option A" path recommended in
+the false-negative-reduction spec below — treat that spec as background
+reading once the rewrite starts, not the active plan.
 
 ## What this is
 
@@ -13,9 +22,10 @@ and a marketing landing page.
 
 ## Repo state
 
-- Branch `main`, clean working tree, fully pushed to `origin/main`
-  (was 24 commits ahead; now in sync).
-- Tests: 185/185 passing (`npm test`, Jest).
+- Branch `main`, clean working tree, fully pushed to `origin/main`.
+- Tests: 185/185 passing (`npm test`, Jest) — unaffected by this
+  session's commits, since none of them touch `detection/` or are
+  covered by Jest.
 
 ## Shipped and working
 
@@ -39,16 +49,33 @@ and a marketing landing page.
 - **Security**: RLS IDOR and stored-XSS bugs fixed and verified this
   project cycle; circular RLS recursion bug (shared_events ↔ events)
   fixed via a SECURITY DEFINER helper function, live in production DB.
+- **Content-script hardening** (2026-09-30, commits `b7d0b91`/`72f314c`):
+  quoted/forwarded Gmail text is stripped before detection runs, instead
+  of potentially being analyzed as if newly typed; selector-drift
+  logging added so DOM changes on Gmail/WhatsApp/Telegram surface in the
+  console before every fallback selector also breaks. Not yet manually
+  verified against real Gmail/WhatsApp/Telegram — see `TO_TEST.md`.
+- **Popup sign-in gating, dark mode → Settings, paused-DB guard**
+  (2026-09-30, commit `f728512`): the popup's Calendar/Tasks/Settings
+  links are now hidden until signed in; dark mode is now a toggle in
+  Settings → Account instead of a one-tap dashboard-header button;
+  popup/dashboard/settings all show a "Service unavailable" page instead
+  of a broken one when Supabase is unreachable, and dashboard also shows
+  "Sign in required" when opened directly while signed out. Not yet
+  manually verified — see `TO_TEST.md` item 3.
 
 ## Known gaps / open items
 
+- **Detection algorithm is being fully rewritten next session** (see
+  top of this doc) — the largest open item, supersedes the item below.
 - **Detection false-negative rate is high (~87.5% on a targeted test
   batch)** — root-caused and written up as a design spec with five
   candidate solutions (rule expansion, on-device classifier, cloud AI
   fallback with cost/privacy controls, bring-your-own-key, personal
   feedback loop). See
   `docs/superpowers/specs/2026-09-05-detection-false-negative-reduction-design.md`.
-  **Not yet implemented — no direction chosen yet.**
+  **Not implemented — superseded by the full rewrite above, not just
+  "no direction chosen" anymore.**
 - **2 pairs of duplicate test events** in the live `events` table
   (from retried saves during the RLS recursion bug) — left untouched
   pending an explicit decision (never-delete rule in effect).
@@ -58,7 +85,11 @@ and a marketing landing page.
   started.
 - **Email deliverability** — spam-folder issue until a real domain is
   purchased and verified with a transactional email provider.
-- Full change history and fix-by-fix detail: see `TODO.md`.
+- **"Phase 0 reliability sweep (silent-failure pattern)"** — referenced
+  as outstanding in `docs/chrome-web-store-listing.md` but no spec/plan
+  anywhere defines its scope. Needs the user to define what it covers.
+- Full change history and fix-by-fix detail: see `TODO.md`. Full manual
+  test checklist, organized by status: see `TO_TEST.md`.
 
 ## Data safety
 
