@@ -23,6 +23,7 @@ let settings = {
   placeWords:           [],
   sensitivity:          2,
   notificationsEnabled: true,
+  classificationStrategy: "legacy",
 };
 
 
@@ -126,6 +127,7 @@ async function syncRemoteSettings(fromLiveUpdate = false) {
       contacts:             remote.contacts              || [],
       sensitivity:          remote.sensitivity           ?? 2,
       notificationsEnabled: remote.notifications_enabled ?? true,
+      classificationStrategy: remote.classification_strategy || "legacy",
       priorityNames:        remote.priority_names        || [],
       activityWords:        remote.activity_words        || [],
       meetingWords:         remote.meeting_words         || [],
@@ -158,6 +160,10 @@ async function syncRemoteSettings(fromLiveUpdate = false) {
     }
     if (settings.notificationsEnabled !== remoteMapped.notificationsEnabled) {
       settings.notificationsEnabled = remoteMapped.notificationsEnabled;
+      changed = true;
+    }
+    if (settings.classificationStrategy !== remoteMapped.classificationStrategy) {
+      settings.classificationStrategy = remoteMapped.classificationStrategy;
       changed = true;
     }
 
@@ -215,6 +221,7 @@ function showSaveStatus(msg) {
 
 function renderAll() {
   renderSensitivity();
+  renderClassificationStrategy();
   renderTriggerTags();
   renderPriorityNameTags();
   renderActivityWordTags();
@@ -227,6 +234,13 @@ function renderAll() {
 function renderSensitivity() {
   el('sensitivity-slider').value        = settings.sensitivity;
   el('sensitivity-display').textContent = settings.sensitivity;
+}
+
+// 'legacy' (default), 'layered', and 'full' are being benchmarked against
+// each other (see tests/benchmark/) - exposed here as an experimental,
+// opt-in switch rather than a decided-upon setting.
+function renderClassificationStrategy() {
+  el('classification-strategy-select').value = settings.classificationStrategy;
 }
 
 function renderTriggerTags() {
@@ -444,6 +458,11 @@ function wireControls() {
   el('sensitivity-slider').addEventListener('input', () => {
     settings.sensitivity = parseInt(el('sensitivity-slider').value);
     el('sensitivity-display').textContent = settings.sensitivity;
+    persistLocal();
+  });
+
+  el('classification-strategy-select').addEventListener('change', () => {
+    settings.classificationStrategy = el('classification-strategy-select').value;
     persistLocal();
   });
 

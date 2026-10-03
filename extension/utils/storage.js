@@ -20,7 +20,11 @@ const DEFAULT_SETTINGS = {
   items: [],
   placeWords: [],
   sensitivity: 2,
-  notificationsEnabled: true
+  notificationsEnabled: true,
+  // 'legacy' = rules.js/engine.js (default, unchanged behavior). 'layered'
+  // and 'full' are the two ML-based strategies being benchmarked against
+  // each other - see tests/benchmark/.
+  classificationStrategy: "legacy"
 };
 
 const Storage = {

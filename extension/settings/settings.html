@@ -76,6 +76,16 @@
       </div>
 
       <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
+        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Detection Engine <span class="text-on-muted">(experimental)</span></label>
+        <p class="text-sm text-on-muted -mt-1">Legacy is the current rule-based engine. The other two are on-device ML models being benchmarked against it — expect them to be slower per message and occasionally wrong while this is being evaluated.</p>
+        <select id="classification-strategy-select" class="border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none">
+          <option value="legacy">Legacy (rules-based, default)</option>
+          <option value="layered">ML — Layered (rules fast-path + model for ambiguous text)</option>
+          <option value="full">ML — Full replacement (model decides every message)</option>
+        </select>
+      </div>
+
+      <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
         <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Custom Trigger Words</label>
         <p class="text-sm text-on-muted -mt-1">Words that strongly suggest a plan — meetings, rehearsals, standups, anything specific to how you talk. Each match adds +2 to detection score.</p>
         <div class="flex gap-2">
