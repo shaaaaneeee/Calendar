@@ -139,9 +139,46 @@ function getComposedText(inputElement, platform) {
   return text || inputElement.value || "";
 }
 
+// Guards against a slow/stale ML response (strategy "layered"/"full")
+// landing after the user has kept typing past it - only one compose box
+// is tracked per page today, so a single module-level counter is enough;
+// this would need to move into attachBuffer's closure if that ever changes.
+let latestAnalyzeRequestId = 0;
+
 async function analyzeText(text, platform, fromSend = false) {
   const settings = await window.PlanWiseStorage.getSettings();
-  const result = window.PlanWiseEngine.analyzeIntent(text, settings);
+  const requestId = ++latestAnalyzeRequestId;
+  const strategy = settings.classificationStrategy || "legacy";
+
+  let result;
+  if (strategy === "legacy") {
+    result = window.PlanWiseEngine.analyzeIntent(text, settings);
+  } else {
+    try {
+      const strategyResult = strategy === "full"
+        ? await window.PlanWiseStrategyFull.classify(text, window.PlanWiseML.classify)
+        : await window.PlanWiseStrategyLayered.classify(text, settings, window.PlanWiseML.classify);
+
+      // The text has already been superseded by newer typing - drop this
+      // response rather than act on text that's no longer current.
+      if (requestId !== latestAnalyzeRequestId) return;
+
+      result = {
+        triggered: strategyResult.intent === "CONFIRM",
+        score: null,
+        intent: strategyResult.intent,
+        reason: strategyResult.reason,
+        matches: {},
+        votes: {},
+        text,
+      };
+    } catch (err) {
+      // Fail open: a broken/slow ML call must never silently drop a real
+      // plan. Fall back to the legacy engine for this message only.
+      console.warn(`[PlanWise] "${strategy}" strategy failed, falling back to legacy engine:`, err.message);
+      result = window.PlanWiseEngine.analyzeIntent(text, settings);
+    }
+  }
 
   console.log(
     `[PlanWise] Score: ${result.score} | Intent: ${result.intent} | Reason: ${result.reason}`,
