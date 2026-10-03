@@ -6,14 +6,20 @@
   "permissions": [
     "storage",
     "notifications",
-    "tabs"
+    "tabs",
+    "offscreen"
   ],
   "host_permissions": [
     "https://web.whatsapp.com/*",
     "https://web.telegram.org/*",
     "https://mail.google.com/*",
-    "https://*.supabase.co/*"
+    "https://*.supabase.co/*",
+    "https://huggingface.co/*",
+    "https://*.hf.co/*"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
   "icons": {
     "16": "assets/icon-16.png",
     "32": "assets/icon-32.png",
@@ -36,6 +42,9 @@
         "detection/rules.js",
         "detection/engine.js",
         "detection/extractor.js",
+        "detection/ml-client.js",
+        "detection/strategy-layered.js",
+        "detection/strategy-full.js",
         "content/text-buffer.js",
         "content/dom-observer.js",
         "content/content-script.js"

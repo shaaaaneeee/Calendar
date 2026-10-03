@@ -34,10 +34,12 @@
   },
   "homepage": "https://github.com/shaaaaneeee/Calendar#readme",
   "dependencies": {
+    "@huggingface/transformers": "^4.3.0",
     "@supabase/supabase-js": "^2.104.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
+    "esbuild": "^0.28.2",
     "jest": "^30.3.0"
   }
 }
