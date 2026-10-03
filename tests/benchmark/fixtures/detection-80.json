@@ -1,0 +1,432 @@
+[
+  {
+    "text": "let's grab dinner tomorrow at 7",
+    "category": "Clear plan creation — should trigger",
+    "name": "classic plan proposal",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "gym tomorrow at 6",
+    "category": "Clear plan creation — should trigger",
+    "name": "gym plan with time",
+    "expectedTriggered": true,
+    "expectedReason": "structural_confirm"
+  },
+  {
+    "text": "sounds good, coffee at 10am",
+    "category": "Clear plan creation — should trigger",
+    "name": "coffee plan with confirmation",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "dinner tonight with alex sounds good",
+    "category": "Clear plan creation — should trigger",
+    "name": "dinner with multiple signals",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "let's meet next Monday at 3pm",
+    "category": "Clear plan creation — should trigger",
+    "name": "meeting next week",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "want to watch a movie this weekend?",
+    "category": "Clear plan creation — should trigger",
+    "name": "movie plan",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "should we study together tomorrow?",
+    "category": "Clear plan creation — should trigger",
+    "name": "study session",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "lunch on 12/25 works for me",
+    "category": "Clear plan creation — should trigger",
+    "name": "lunch plan with date",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "let's catch up in 2 days",
+    "category": "Clear plan creation — should trigger",
+    "name": "relative time plan",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "gym tmrw at 6pm, you in?",
+    "category": "Clear plan creation — should trigger",
+    "name": "plan using tmrw abbreviation",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "ok sure dinner at 8 tonight",
+    "category": "Clear plan creation — should trigger",
+    "name": "informal confirmation",
+    "expectedTriggered": false
+  },
+  {
+    "text": "come to my place tonight at 9",
+    "category": "Clear plan creation — should trigger",
+    "name": "come to plan",
+    "expectedTriggered": false
+  },
+  {
+    "text": "about tomorrow's dinner at 9pm, I can't make it",
+    "category": "Clear cancellations — should NOT trigger",
+    "name": "classic cancellation",
+    "expectedTriggered": false
+  },
+  {
+    "text": "sorry something came up, can't do dinner tonight",
+    "category": "Clear cancellations — should NOT trigger",
+    "name": "something came up",
+    "expectedTriggered": false
+  },
+  {
+    "text": "I won't be there for the movie tonight",
+    "category": "Clear cancellations — should NOT trigger",
+    "name": "won't be there",
+    "expectedTriggered": false
+  },
+  {
+    "text": "I have to cancel our lunch tomorrow",
+    "category": "Clear cancellations — should NOT trigger",
+    "name": "have to cancel",
+    "expectedTriggered": false
+  },
+  {
+    "text": "can we take a rain check on dinner?",
+    "category": "Clear cancellations — should NOT trigger",
+    "name": "rain check",
+    "expectedTriggered": false
+  },
+  {
+    "text": "I'm not available tomorrow night",
+    "category": "Clear cancellations — should NOT trigger",
+    "name": "not available",
+    "expectedTriggered": false
+  },
+  {
+    "text": "I'm busy this weekend, wish I could make it",
+    "category": "Clear cancellations — should NOT trigger",
+    "name": "busy signal",
+    "expectedTriggered": false
+  },
+  {
+    "text": "unfortunately I can't attend the meeting tomorrow",
+    "category": "Clear cancellations — should NOT trigger",
+    "name": "can't attend",
+    "expectedTriggered": false
+  },
+  {
+    "text": "I won't be able to make dinner at 7",
+    "category": "Clear cancellations — should NOT trigger",
+    "name": "won't be able",
+    "expectedTriggered": false
+  },
+  {
+    "text": "yeah right let's hang out tomorrow jk",
+    "category": "Sarcasm and edge cases — should NOT trigger",
+    "name": "jk cancels plan signal",
+    "expectedTriggered": false
+  },
+  {
+    "text": "lol we saw a movie last night",
+    "category": "Sarcasm and edge cases — should NOT trigger",
+    "name": "past-tense movie comment — not a plan",
+    "expectedTriggered": false
+  },
+  {
+    "text": "ok",
+    "category": "Sarcasm and edge cases — should NOT trigger",
+    "name": "single word — too short",
+    "expectedTriggered": false
+  },
+  {
+    "text": "",
+    "category": "Sarcasm and edge cases — should NOT trigger",
+    "name": "empty string",
+    "expectedTriggered": false
+  },
+  {
+    "text": "won't make it to dinner tomorrow",
+    "category": "Sarcasm and edge cases — should NOT trigger",
+    "name": "explicit rejection — won't make it",
+    "expectedTriggered": false
+  },
+  {
+    "text": "we had dinner last night at 7",
+    "category": "Sarcasm and edge cases — should NOT trigger",
+    "name": "past tense reference — not a future plan",
+    "expectedTriggered": false
+  },
+  {
+    "text": "I love watching movies on weekends",
+    "category": "Sarcasm and edge cases — should NOT trigger",
+    "name": "general statement with no plan intent",
+    "expectedTriggered": false
+  },
+  {
+    "text": "dinner was amazing last night",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "past-tense dinner recap",
+    "expectedTriggered": false
+  },
+  {
+    "text": "just got back from the gym",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "just got back — activity recap",
+    "expectedTriggered": false
+  },
+  {
+    "text": "I watch movies every Sunday",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "habitual statement — no creation phrase",
+    "expectedTriggered": false,
+    "expectedReason": "no_intent_signal_drop"
+  },
+  {
+    "text": "call me tonight",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "call me tonight — no creation phrase",
+    "expectedTriggered": false,
+    "expectedReason": "no_intent_signal_drop"
+  },
+  {
+    "text": "we should hang out sometime",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "vague future hang out — no time anchor",
+    "expectedTriggered": false
+  },
+  {
+    "text": "it was a great dinner, loved it",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "it was a great dinner — sentiment recap",
+    "expectedTriggered": false
+  },
+  {
+    "text": "we have already had lunch",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "we have already had lunch — perfect tense",
+    "expectedTriggered": false
+  },
+  {
+    "text": "we should catch up sometime soon",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "sometime soon — vague future",
+    "expectedTriggered": false
+  },
+  {
+    "text": "i want to take the 8am meeting with sam on monday the 5th off my calendar",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "\"take X off my calendar\" is a cancellation, not a new plan (found via CLINC150)",
+    "expectedTriggered": false,
+    "expectedIntent": "REJECT"
+  },
+  {
+    "text": "remove my office meeting event for next week",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "\"remove my ... meeting/event\" is a cancellation, not a new plan (found via MASSIVE)",
+    "expectedTriggered": false,
+    "expectedIntent": "REJECT"
+  },
+  {
+    "text": "delete lunch with steve on friday please",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "\"delete lunch with X\" is a cancellation (found via CLINC150 re-sweep)",
+    "expectedTriggered": false,
+    "expectedIntent": "REJECT"
+  },
+  {
+    "text": "please remove lunch with sally that is on my calendar on tuesday the 8th",
+    "category": "False positives — should NOT trigger after hardening",
+    "name": "\"remove ... that is on my calendar\" is a cancellation (\"on\", not just \"from\")",
+    "expectedTriggered": false,
+    "expectedIntent": "REJECT"
+  },
+  {
+    "text": "tomorrow please meet Esmond and Seth at the office at 10am, we are going out for ops bring the m3e drone",
+    "category": "Structural confirm — no literal creation phrase, but a real plan",
+    "name": "\"meet X at Y at Z\" triggers even without a creation phrase",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM",
+    "expectedReason": "structural_confirm"
+  },
+  {
+    "text": "tomorrow i need you to meet Esmond at the office at 9pm for night ops",
+    "category": "Structural confirm — no literal creation phrase, but a real plan",
+    "name": "action+temporal+location with a name, no creation phrase",
+    "expectedTriggered": true,
+    "expectedReason": "structural_confirm"
+  },
+  {
+    "text": "rehearsal tomorrow at Studio B",
+    "category": "Structural confirm — no literal creation phrase, but a real plan",
+    "name": "custom trigger word + custom place word count as action/location signals",
+    "expectedTriggered": true,
+    "expectedReason": "structural_confirm"
+  },
+  {
+    "text": "rehearsal tomorrow",
+    "category": "Structural confirm — no literal creation phrase, but a real plan",
+    "name": "custom activity word alone (no location) still needs a person or location",
+    "expectedTriggered": false,
+    "expectedReason": "no_intent_signal_drop"
+  },
+  {
+    "text": "schedule a meeting with tom for 6pm",
+    "category": "Structural confirm — no literal creation phrase, but a real plan",
+    "name": "lowercase name after \"with\"/\"meet\" still triggers structural_confirm",
+    "expectedTriggered": true,
+    "expectedReason": "structural_confirm"
+  },
+  {
+    "text": "remind me to call my mother saturday morning",
+    "category": "Structural confirm — no literal creation phrase, but a real plan",
+    "name": "\"call my mother\" does not falsely gain a person signal from \"my\"",
+    "expectedTriggered": false
+  },
+  {
+    "text": "do i have meeting with steve this week",
+    "category": "Questions about an existing plan are not a new proposal",
+    "name": "\"do I have a meeting with X\" does not trigger",
+    "expectedTriggered": false
+  },
+  {
+    "text": "is my meeting with bob tomorrow at three pm",
+    "category": "Questions about an existing plan are not a new proposal",
+    "name": "\"is my meeting with X at Y\" does not trigger",
+    "expectedTriggered": false
+  },
+  {
+    "text": "when is that meeting with my boss next week",
+    "category": "Questions about an existing plan are not a new proposal",
+    "name": "\"when is the meeting with X\" does not trigger",
+    "expectedTriggered": false
+  },
+  {
+    "text": "can we meet at the gym tomorrow",
+    "category": "Questions about an existing plan are not a new proposal",
+    "name": "a genuine casual proposal starting with \"can\" still triggers (not treated as a question)",
+    "expectedTriggered": true
+  },
+  {
+    "text": "let's grab dinner tomorrow at 7",
+    "category": "Must-trigger — should still trigger after hardening",
+    "name": "classic plan proposal",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "Coffee Thursday at noon?",
+    "category": "Must-trigger — should still trigger after hardening",
+    "name": "implicit activity invitation with day and time",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "I'm free Saturday, wanna hang?",
+    "category": "Must-trigger — should still trigger after hardening",
+    "name": "wanna hang — slang invitation",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "sounds good, see you Friday",
+    "category": "Must-trigger — should still trigger after hardening",
+    "name": "sounds good confirmation with day",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "down for gym tonight",
+    "category": "Must-trigger — should still trigger after hardening",
+    "name": "down for gym tonight",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "gym tmrw at 6pm, you in?",
+    "category": "Must-trigger — should still trigger after hardening",
+    "name": "tmrw invitation with you in",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "road trip next Fri-Sun, you in?",
+    "category": "Multi-day / date-range plans",
+    "name": "road trip with a weekday range still triggers",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "let's meet up March 3-5",
+    "category": "Multi-day / date-range plans",
+    "name": "month-day range with a creation phrase still triggers",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "dinner tomorrow at 7 with Sarah, James, Priya, and Alex",
+    "category": "Group plans (3+ people)",
+    "name": "a long comma-chained participant list does not prevent triggering",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "we hang out every weekend",
+    "category": "Recurring language",
+    "name": "\"every weekend\" — below threshold, no action/location signal",
+    "expectedTriggered": false
+  },
+  {
+    "text": "class every Thursday night",
+    "category": "Recurring language",
+    "name": "\"every Thursday night\" — below threshold",
+    "expectedTriggered": false
+  },
+  {
+    "text": "gym every Tuesday at 6",
+    "category": "Recurring language",
+    "name": "\"gym every Tuesday at 6\" — has action+temporal+location, but \"every\" blocks the implicit structural-confirm fallback",
+    "expectedTriggered": false,
+    "expectedReason": "no_intent_signal_drop"
+  },
+  {
+    "text": "let's do gym every Tuesday at 6",
+    "category": "Recurring language",
+    "name": "an explicit creation phrase still overrides the habitual guard",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  },
+  {
+    "text": "cena mañana a las 8",
+    "category": "Non-English and emoji text",
+    "name": "non-English text does not crash and does not false-positive",
+    "expectedTriggered": false
+  },
+  {
+    "text": "7pm?",
+    "category": "Very short valid texts",
+    "name": "\"7pm?\" alone has no action/location signal — correctly does not trigger",
+    "expectedTriggered": false
+  },
+  {
+    "text": "omg guess what happened today, work was crazy busy, anyway are you free tomorrow at 7 for dinner? lmk!",
+    "category": "Plan buried in a long noisy message",
+    "name": "a real plan sentence still triggers despite unrelated surrounding chatter",
+    "expectedTriggered": true,
+    "expectedIntent": "CONFIRM"
+  }
+]

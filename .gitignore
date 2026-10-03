@@ -11,3 +11,5 @@ landing/dist/
 # (see TODO.md) - large, re-downloadable, never meant to be committed.
 /CLINC150/
 /MASSIVE/
+tests/benchmark/fixtures/corpora/
+tests/benchmark/last-run-results.json

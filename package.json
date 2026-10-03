@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "jest",
-    "bundle": "node build.js"
+    "bundle": "node build.js",
+    "bench": "node tests/benchmark/run-eval.js"
   },
   "jest": {
     "setupFiles": [

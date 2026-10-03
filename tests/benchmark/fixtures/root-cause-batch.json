@@ -1,0 +1,35 @@
+[
+  { "text": "coffee tomorrow at 10am at the usual place", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+  { "text": "dinner tonight at 7, my place", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+  { "text": "poker night this friday at mike's", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+  { "text": "book club tuesday at 6pm", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+  { "text": "brunch sunday at 11", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+  { "text": "drinks friday after work, usual bar", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+  { "text": "movie night saturday at my place, 8pm", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+  { "text": "date night thursday, same restaurant as always", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+  { "text": "bbq sunday afternoon at the park", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+  { "text": "game night wednesday at 7", "expectedTriggered": true, "rootCause": "bare_event_noun" },
+
+  { "text": "let's do sushi tomorrow night", "expectedTriggered": true, "rootCause": "lets_plus_verb_generalization" },
+  { "text": "let's grab drinks after work friday", "expectedTriggered": true, "rootCause": "lets_plus_verb_generalization" },
+  { "text": "let's hit the gym tomorrow at 6", "expectedTriggered": true, "rootCause": "lets_plus_verb_generalization" },
+  { "text": "let's catch a movie this weekend", "expectedTriggered": true, "rootCause": "lets_plus_verb_generalization" },
+  { "text": "let's try that new ramen place saturday", "expectedTriggered": true, "rootCause": "lets_plus_verb_generalization" },
+  { "text": "let's do brunch sunday morning", "expectedTriggered": true, "rootCause": "lets_plus_verb_generalization" },
+  { "text": "let's walk the dog together tomorrow evening", "expectedTriggered": true, "rootCause": "lets_plus_verb_generalization" },
+  { "text": "let's check out that exhibit next week", "expectedTriggered": true, "rootCause": "lets_plus_verb_generalization" },
+
+  { "text": "the wedding is on June 12th", "expectedTriggered": true, "rootCause": "declarative_announcement" },
+  { "text": "our anniversary dinner is booked for saturday night", "expectedTriggered": true, "rootCause": "declarative_announcement" },
+  { "text": "the interview is scheduled for tuesday at 2pm", "expectedTriggered": true, "rootCause": "declarative_announcement" },
+  { "text": "my flight lands friday at 6pm", "expectedTriggered": true, "rootCause": "declarative_announcement" },
+  { "text": "the meeting got moved to thursday morning", "expectedTriggered": true, "rootCause": "declarative_announcement" },
+  { "text": "the appointment is confirmed for monday at 9", "expectedTriggered": true, "rootCause": "declarative_announcement" },
+  { "text": "the party starts at 8 on saturday", "expectedTriggered": true, "rootCause": "declarative_announcement" },
+  { "text": "the trip is booked for next weekend", "expectedTriggered": true, "rootCause": "declarative_announcement" },
+
+  { "text": "I watch a movie every sunday night", "expectedTriggered": false, "rootCause": "habitual_control" },
+  { "text": "call me whenever, no rush", "expectedTriggered": false, "rootCause": "vague_control" },
+  { "text": "coffee sounds nice sometime", "expectedTriggered": false, "rootCause": "vague_control" },
+  { "text": "I usually grab dinner around 7", "expectedTriggered": false, "rootCause": "habitual_control" }
+]
