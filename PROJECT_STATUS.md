@@ -1,15 +1,21 @@
 # PlanWise — Project Status
 
-_Last updated: 2026-10-01 (reflects repo state as of commit `f728512`,
-pushed to `origin/main`)_
+_Last updated: 2026-10-03 (reflects repo state as of commit `d5d1f1b`,
+**local only — 4 commits ahead of `origin/main`, not yet pushed**)_
 
-## ⚠️ Heads up: detection engine gets a full rewrite next session
+## Detection engine rewrite — built, benchmarked, not yet the default
 
-The detection algorithm (`extension/detection/rules.js`/`engine.js`,
-likely `extractor.js` too) is being **completely rewritten** next
-session. This supersedes the incremental "Option A" path recommended in
-the false-negative-reduction spec below — treat that spec as background
-reading once the rewrite starts, not the active plan.
+Two new ML-based classification strategies (`layered`, `full`) were
+built alongside the existing rules engine (now called `legacy`),
+specifically so they could be measured against each other on real data
+rather than committing to one upfront. **Real benchmark result: `layered`
+wins (86.2% F1) vs. `legacy` (70.0%, the known under-triggering problem)
+and `full` (77.5%)** — see `tests/benchmark/README.md` for the full
+writeup and `TODO.md` for the build details. `legacy` still ships as the
+default pending an explicit decision to switch it; the
+`detection-false-negative-reduction-design.md` spec's 5-option menu is
+superseded by this (it was the incremental path, this is the actual
+rewrite).
 
 ## What this is
 
@@ -63,19 +69,34 @@ and a marketing landing page.
   of a broken one when Supabase is unreachable, and dashboard also shows
   "Sign in required" when opened directly while signed out. Not yet
   manually verified — see `TO_TEST.md` item 3.
+- **ML-based detection strategies, experimental, opt-in** (2026-10-03,
+  commits `b8be3a2`/`d482bd1`/`9acff60`/`d5d1f1b`): on-device Transformers.js
+  classification (`extension/offscreen/`), two new strategies
+  (`layered`/`full`) selectable in Settings → Detection, a benchmark
+  harness (`npm run bench`) proving `layered` beats both alternatives.
+  `legacy` (today's rules engine) remains the default. Migration
+  `023_add_classification_strategy.sql` written but **not yet run
+  against the live Supabase project** — no DB access from this
+  environment to apply it.
 
 ## Known gaps / open items
 
-- **Detection algorithm is being fully rewritten next session** (see
-  top of this doc) — the largest open item, supersedes the item below.
-- **Detection false-negative rate is high (~87.5% on a targeted test
-  batch)** — root-caused and written up as a design spec with five
-  candidate solutions (rule expansion, on-device classifier, cloud AI
-  fallback with cost/privacy controls, bring-your-own-key, personal
-  feedback loop). See
-  `docs/superpowers/specs/2026-09-05-detection-false-negative-reduction-design.md`.
-  **Not implemented — superseded by the full rewrite above, not just
-  "no direction chosen" anymore.**
+- **Decide whether to switch the default detection strategy** from
+  `legacy` to `layered` given the benchmark result above — the data
+  points one way but nobody's flipped the switch yet. `layered`'s own
+  remaining false positives (questions about an existing plan, habitual
+  "every weekend" statements, non-English text) mirror guards `legacy`
+  already has that the model call doesn't inherit — a likely-valuable,
+  not-yet-built follow-up.
+- **GLiNER span-extraction spike** (location/participant enhancement)
+  deliberately deferred — both new strategies ship with the existing
+  regex extractor unchanged for now.
+- **Migration 023 not yet run** against the live Supabase project (see
+  above) — `classificationStrategy` works locally but won't sync across
+  devices until this is applied.
+- Original `docs/superpowers/specs/2026-09-05-detection-false-negative-reduction-design.md`
+  (5-option menu) is now superseded reference material, not an active
+  plan.
 - **2 pairs of duplicate test events** in the live `events` table
   (from retried saves during the RLS recursion bug) — left untouched
   pending an explicit decision (never-delete rule in effect).

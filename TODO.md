@@ -1,17 +1,56 @@
 # TODO
 
-## ⚠️ Heads up: detection engine gets a full rewrite next session
+## Detection engine rewrite — Phase 0-3 done, real benchmark results in (2026-10-03)
 
-The user has said the detection algorithm (`extension/detection/rules.js`
-and `engine.js`, likely `extractor.js` too) is being **completely
-rewritten** next session. This supersedes the incremental "Option A"
-(expand the local rule set) recommendation in
-`docs/superpowers/specs/2026-09-05-detection-false-negative-reduction-design.md`
-— treat that spec's 5-option menu as background/reference once the
-rewrite starts, not the active plan. `TO_TEST.md`'s recurring-events and
-detection-false-negative sections lean on today's `rules.js`/`engine.js`/
-`extractor.js` behavior and will need re-checking (or replacing outright)
-once the new algorithm lands.
+Plan at `C:\Users\shane\.claude\plans\sleepy-foraging-kettle.md` (dual-
+strategy ML classification, built per the user's explicit request to
+build both and measure them against each other rather than pick one
+upfront). Built and verified against a real loaded unpacked extension,
+not assumed:
+
+- **New ML infra** (commit `b8be3a2`): `extension/offscreen/` (model-
+  loading/inference, a chrome.offscreen document so it survives service-
+  worker suspension), `extension/vendor/transformers/` (Transformers.js
+  runtime, esbuild-bundled - an inline or external import map both
+  failed inside MV3's CSP, confirmed by testing, not assumed), new
+  `manifest.json` permissions/host_permissions/CSP. `@huggingface/
+  transformers` + `esbuild` added as dependencies (esbuild is dev-only,
+  used solely to resolve two bare-specifier imports at vendor time - does
+  not change how the rest of the extension is authored).
+- **Two strategies** (commit `d482bd1`): `strategy-layered.js` (rules.js
+  fast path + model for the ambiguous middle) and `strategy-full.js`
+  (model decides everything, no rules.js). `content-script.js` branches
+  on a new `classificationStrategy` setting (`legacy` default, unchanged
+  behavior). Both Jest-tested via a stubbed model call
+  (`tests/strategy-routing.test.js`).
+- **Settings plumbing** (commit `9acff60`): experimental selector in
+  Settings → Detection. Migration `023_add_classification_strategy.sql`
+  written but **not yet run against the live Supabase project** - no
+  DB/MCP access from this environment to apply it; run it in the SQL
+  Editor before relying on cross-device sync of this setting.
+- **Real benchmark, run and documented** (commit `d5d1f1b`,
+  `tests/benchmark/`, `npm run bench`): 96 cases (80 promoted from the
+  existing Jest suite + 30 freshly hand-authored targeting the three
+  documented root causes). **Results: legacy 70.0% F1 (100% precision,
+  53.8% recall), layered 86.2% F1 (best), full 77.5% F1.** `layered` wins
+  because it keeps `rules.js`'s free hard-block fast path - `full`'s
+  extra false positives are almost all cancellation/past-tense/removal
+  phrasing that path catches for free and `full` has no equivalent for.
+  Full writeup and the actual mismatch lists in `tests/benchmark/README.md`.
+
+**Not done / deferred, explicitly per the plan's own fallback clauses:**
+- GLiNER (location/participant span extraction) spike - deferred, ships
+  with the existing regex extractor unchanged for now.
+- CLINC150/MASSIVE large-scale (~40k-utterance) re-fetch for a bigger
+  false-positive-rate check - the two fixtures already built directly
+  answer the strategy-comparison question asked; this is a reasonable
+  follow-up for more statistical confidence, not a blocker.
+- Manual real-Gmail/WhatsApp/Telegram smoke test of the new strategies
+  (only tested via synthetic messages through the real extension, not by
+  actually typing into a live chat).
+- Choosing a new default. The data points to `layered`, but nobody's
+  actually flipped the setting's default yet - `legacy` still ships as
+  default pending that decision.
 
 ## To-test checklist created (2026-09-30)
 

@@ -1,12 +1,15 @@
 # PlanWise — Manual Test Checklist
 
-> **⚠️ Detection algorithm is being completely rewritten next session.**
-> Items 6 (recurring events) and 8 (detection false-negative reduction)
-> below depend on today's `rules.js`/`engine.js`/`extractor.js` behavior.
-> Hold off re-running those until after the rewrite lands — they may
-> change shape entirely or become moot. Items 1–5, 7, and 9 are unaffected
-> (they're about the content script's DOM handling and app UI, not the
-> detection algorithm itself).
+> **Update 2026-10-03:** the detection-engine rewrite flagged below has
+> happened — two new ML strategies (`layered`/`full`) exist alongside
+> the rules engine (now `legacy`), and a real benchmark picked `layered`
+> as the accuracy winner (86.2% F1). See `TODO.md` and
+> `tests/benchmark/README.md`. `legacy` is still the shipped default.
+> **New item 10 below** covers manually verifying the new strategies in
+> a real Gmail/WhatsApp/Telegram session — only synthetic-message
+> testing has been done so far. Item 9 (detection false-negative
+> reduction's 5-option menu) is now superseded reference material, not
+> an active gap.
 
 Compiled by going through every `.md` file in this repo (`README.md`,
 `TODO.md`, `PROJECT_STATUS.md`, `docs/chrome-web-store-listing.md`,
@@ -139,13 +142,17 @@ Once built:
 - [ ] Confirm a detected plan reaches the Notification/Confirm UI, and that confirming it makes the event appear on **both** the desktop dashboard and, on the same account, the Chrome extension's calendar.
 - [ ] **Specifically called out as unconfirmed in the spec:** focus a password/PIN field in an allowlisted app (e.g. a Teams re-auth prompt) — confirm it produces **no** `focus-text` event, or an empty one. The spec's own expectation is that Windows' `IsPassword` flag prevents this at the OS level, but says outright this "is not yet confirmed."
 
-### 9. Detection false-negative reduction (whichever option gets chosen)
-**Source:** `docs/superpowers/specs/2026-09-05-detection-false-negative-reduction-design.md` · **Status:** superseded — the detection algorithm is getting a full rewrite next session (see banner at top of this file), not just "no direction chosen" among these 5 options anymore. Kept below as reference in case the rewrite reuses any of this validation approach.
+### 9. Detection false-negative reduction — superseded, kept for reference only
+**Source:** `docs/superpowers/specs/2026-09-05-detection-false-negative-reduction-design.md` · **Status:** superseded — the rewrite this described happened (see item 10 below and `TODO.md`); its 5-option menu is now background reading, not an open gap. The one piece still genuinely useful: re-running a large CLINC150/MASSIVE-scale corpus for extra false-positive-rate confidence beyond the 96-case benchmark already run — optional follow-up, not done.
 
-Once a direction is picked:
-- [ ] Promote the 40-phrase false-negative batch and the 56-phrase mixed batch (currently only scratch scripts from that investigation) into permanent `tests/detection.test.js` cases.
-- [ ] Re-run the full CLINC150 + MASSIVE bulk stress test (~40,000 utterances) after the change — this regression-checks the **zero-false-positive** property, not just whether the false-negative rate improved.
-- [ ] If Option C (cloud AI fallback) is chosen specifically: run a synthetic "rapid typing" test — simulate the compose buffer flushing every 1.5s across a 30-second composition — and confirm the caching/trigger strategy actually caps call volume the way the design assumes, before it goes live.
+### 10. ML detection strategies ("layered"/"full") — real chat verification
+**Source:** this session, commits `b8be3a2`/`d482bd1`/`9acff60`/`d5d1f1b` · **Status:** benchmarked (96 synthetic cases through the real extension — see `tests/benchmark/README.md`), but **never tried against an actual live Gmail/WhatsApp/Telegram conversation**
+
+- [ ] In Settings → Detection, switch "Detection Engine" to **ML — Layered**. Type a few real messages in Gmail/WhatsApp/Telegram and confirm plans are still detected and popped up correctly, with a short (sub-second, once warmed up) delay for ambiguous messages only.
+- [ ] Switch to **ML — Full replacement**. Confirm it still works, but notice it's slower per message (every message now calls the model) and more prone to false positives per the benchmark — try a cancellation phrase ("I have to cancel lunch tomorrow") and see if it wrongly detects a plan, matching what the benchmark predicted.
+- [ ] Switch back to **Legacy** and confirm behavior is identical to before this session's changes.
+- [ ] With either ML strategy active, reload the extension (`chrome://extensions` → reload) and confirm the first message after reload takes longer (cold model load, ~15s observed) while subsequent ones are fast (~200ms observed) — this is expected, not a bug.
+- [ ] Open WhatsApp, Telegram, and Gmail in three tabs at once with an ML strategy active, type a plan in each close together, and confirm all three get detected correctly (tests the offscreen document's single-instance race guard under real concurrent use, not just the synthetic concurrent test already run).
 
 ---
 
