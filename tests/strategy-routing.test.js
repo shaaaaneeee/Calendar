@@ -55,6 +55,23 @@ describe('Strategy A (layered) routing', () => {
     const result = await StrategyLayered.classify("coffee tomorrow at 10am at the usual place", {}, mock);
     expect(result.intent).toBe('REJECT');
   });
+
+  // Real-world false positives (a bare name, a one-word aside) both
+  // scored 0 across every DETECTION_RULES category yet reached the
+  // model, which answered CONFIRM anyway - mock is rigged to answer
+  // CONFIRM here specifically to prove the gate stops it from ever
+  // being asked, not just that these particular inputs happen to score
+  // low with a well-behaved model.
+  test.each([
+    ['a bare name with no other content', 'weiling'],
+    ['a vague aside with no structural signal', 'hungry bro...'],
+  ])('%s never reaches the model and is rejected for free', async (_label, text) => {
+    const mock = mockClassify(StrategyLayered.ML_LABELS[0]); // rigged to wrongly say CONFIRM
+    const result = await StrategyLayered.classify(text, {}, mock);
+    expect(mock.calls.length).toBe(0);
+    expect(result.intent).toBe('REJECT');
+    expect(result.source).toBe('no_signal_fast_reject');
+  });
 });
 
 describe('Strategy B (full replacement) routing', () => {

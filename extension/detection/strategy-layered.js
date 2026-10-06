@@ -5,6 +5,10 @@
  * for an ML call on the ambiguous middle - exactly where the measured
  * 87.5% false-negative rate actually lives (see
  * docs/superpowers/specs/2026-09-05-detection-false-negative-reduction-design.md).
+ * Also rejects for free when text has zero structural signal at all
+ * (a bare name, a one-word aside) rather than asking the model, which
+ * can overconfidently say CONFIRM on text with no actual plan content -
+ * found via real-world testing, not anticipated up front.
  *
  * `classifyFn` is injected rather than imported directly so this stays
  * Jest-testable with a stub (see tests/strategy-routing.test.js) - the
@@ -37,6 +41,19 @@ async function classify(text, customRules, classifyFn) {
   const hasLiteralCreationPhrase = creationPhrases.some((pattern) => pattern.test(text));
   if (hasLiteralCreationPhrase && scoreResult.triggered) {
     return { intent: "CONFIRM", reason: "fast_path_creation_phrase", source: "fast_path" };
+  }
+
+  // Free reject - zero structural signal at all (no temporal/action/
+  // location/social/confirmation word matched anything in rules.js).
+  // Found via real-world testing: a bare name ("weiling") and a vague
+  // aside ("hungry bro...") both scored 0 here yet still reached the
+  // model, which answered CONFIRM with no actual plan content behind it
+  // - the model is a semantic matcher, not a judge of "is there even a
+  // plan-shaped claim here," so it shouldn't be asked about text that
+  // doesn't contain one. Every real plan case in the benchmark/this
+  // session scored above 0, so this costs no recall.
+  if (scoreResult.score <= 0) {
+    return { intent: "REJECT", reason: "no_structural_signal", source: "no_signal_fast_reject" };
   }
 
   // Everything else - the ambiguous middle - goes to the model.
