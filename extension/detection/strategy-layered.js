@@ -19,7 +19,6 @@ const ML_LABELS = [
 ];
 
 async function classify(text, customRules, classifyFn) {
-  const rules = window.DETECTION_RULES;
   const hardBlocks = window.HARD_BLOCK_RULES || [];
   const creationPhrases = window.CREATION_PHRASES || [];
 

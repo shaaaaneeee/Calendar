@@ -1,15 +1,13 @@
 # PlanWise — Manual Test Checklist
 
-> **Update 2026-10-03:** the detection-engine rewrite flagged below has
-> happened — two new ML strategies (`layered`/`full`) exist alongside
-> the rules engine (now `legacy`), and a real benchmark picked `layered`
-> as the accuracy winner (86.2% F1). See `TODO.md` and
-> `tests/benchmark/README.md`. `legacy` is still the shipped default.
-> **New item 10 below** covers manually verifying the new strategies in
-> a real Gmail/WhatsApp/Telegram session — only synthetic-message
-> testing has been done so far. Item 9 (detection false-negative
-> reduction's 5-option menu) is now superseded reference material, not
-> an active gap.
+> **Update 2026-10-06:** the detection-engine rewrite is done and the
+> benchmark winner is now the shipped default. Settings → Detection is a
+> `layered`/`full` toggle (`layered` default) — the old rules-only mode
+> is no longer a selectable option at all. See `TODO.md` for the full
+> history. **Item 10 below** covers manually verifying this in a real
+> Gmail/WhatsApp/Telegram session — only synthetic-message testing has
+> been done so far. Item 9 (detection false-negative reduction's
+> 5-option menu) is superseded reference material, not an active gap.
 
 Compiled by going through every `.md` file in this repo (`README.md`,
 `TODO.md`, `PROJECT_STATUS.md`, `docs/chrome-web-store-listing.md`,
@@ -146,13 +144,14 @@ Once built:
 **Source:** `docs/superpowers/specs/2026-09-05-detection-false-negative-reduction-design.md` · **Status:** superseded — the rewrite this described happened (see item 10 below and `TODO.md`); its 5-option menu is now background reading, not an open gap. The one piece still genuinely useful: re-running a large CLINC150/MASSIVE-scale corpus for extra false-positive-rate confidence beyond the 96-case benchmark already run — optional follow-up, not done.
 
 ### 10. ML detection strategies ("layered"/"full") — real chat verification
-**Source:** this session, commits `b8be3a2`/`d482bd1`/`9acff60`/`d5d1f1b` · **Status:** benchmarked (96 synthetic cases through the real extension — see `tests/benchmark/README.md`), but **never tried against an actual live Gmail/WhatsApp/Telegram conversation**
+**Source:** this session, commits `b8be3a2`/`d482bd1`/`9acff60`/`d5d1f1b`/`42c14a9` plus the 2026-10-06 legacy-removal commit · **Status:** benchmarked (96 synthetic cases through the real extension — see `tests/benchmark/README.md`) and default-switched, but **never tried against an actual live Gmail/WhatsApp/Telegram conversation**
 
-- [ ] In Settings → Detection, switch "Detection Engine" to **ML — Layered**. Type a few real messages in Gmail/WhatsApp/Telegram and confirm plans are still detected and popped up correctly, with a short (sub-second, once warmed up) delay for ambiguous messages only.
-- [ ] Switch to **ML — Full replacement**. Confirm it still works, but notice it's slower per message (every message now calls the model) and more prone to false positives per the benchmark — try a cancellation phrase ("I have to cancel lunch tomorrow") and see if it wrongly detects a plan, matching what the benchmark predicted.
-- [ ] Switch back to **Legacy** and confirm behavior is identical to before this session's changes.
-- [ ] With either ML strategy active, reload the extension (`chrome://extensions` → reload) and confirm the first message after reload takes longer (cold model load, ~15s observed) while subsequent ones are fast (~200ms observed) — this is expected, not a bug.
-- [ ] Open WhatsApp, Telegram, and Gmail in three tabs at once with an ML strategy active, type a plan in each close together, and confirm all three get detected correctly (tests the offscreen document's single-instance race guard under real concurrent use, not just the synthetic concurrent test already run).
+- [ ] With the default settings (toggle unchecked = **Layered**), type a few real messages in Gmail/WhatsApp/Telegram and confirm plans are still detected and popped up correctly, with a short (sub-second, once warmed up) delay for ambiguous messages only.
+- [ ] In Settings → Detection, flip the toggle to **Full replacement**. Confirm it still works, but notice it's slower per message (every message now calls the model) and more prone to false positives per the benchmark — try a cancellation phrase ("I have to cancel lunch tomorrow") and see if it wrongly detects a plan, matching what the benchmark predicted.
+- [ ] Flip the toggle back to **Layered** and confirm behavior returns to normal.
+- [ ] Reload the extension (`chrome://extensions` → reload) and confirm the first message after reload takes longer (cold model load, ~15s observed) while subsequent ones are fast (~200ms observed) — this is expected, not a bug.
+- [ ] Open WhatsApp, Telegram, and Gmail in three tabs at once, type a plan in each close together, and confirm all three get detected correctly (tests the offscreen document's single-instance race guard under real concurrent use, not just the synthetic concurrent test already run).
+- [ ] Force an ML failure (e.g. temporarily disable network, or break the offscreen relay) and confirm a plan still gets detected via the silent rules-engine fallback rather than being dropped entirely — check the console for the `"... strategy failed, falling back to the rule engine for this message"` warning.
 
 ---
 

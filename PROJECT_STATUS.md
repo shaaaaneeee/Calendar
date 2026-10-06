@@ -3,19 +3,22 @@
 _Last updated: 2026-10-03 (reflects repo state as of commit `d5d1f1b`,
 **local only — 4 commits ahead of `origin/main`, not yet pushed**)_
 
-## Detection engine rewrite — built, benchmarked, not yet the default
+## Detection engine rewrite — done, `layered` is now the shipped default
 
-Two new ML-based classification strategies (`layered`, `full`) were
-built alongside the existing rules engine (now called `legacy`),
-specifically so they could be measured against each other on real data
-rather than committing to one upfront. **Real benchmark result: `layered`
-wins (86.2% F1) vs. `legacy` (70.0%, the known under-triggering problem)
-and `full` (77.5%)** — see `tests/benchmark/README.md` for the full
-writeup and `TODO.md` for the build details. `legacy` still ships as the
-default pending an explicit decision to switch it; the
+Two ML-based classification strategies (`layered`, `full`) were built
+and benchmarked against the old rules engine on real data before
+deciding anything — **`layered` won (86.2% F1) vs. the old engine's
+70.0% (its known under-triggering problem) and `full`'s 77.5%** (see
+`tests/benchmark/README.md`). Following that result, the old rules-only
+mode has been **removed as a selectable strategy** (2026-10-06) —
+Settings → Detection is now a toggle between `layered` (default) and
+`full`, not a 3-way choice. `rules.js`/`engine.js` themselves are kept:
+`layered` still depends on their hard-block/creation-phrase fast path
+(that's the mechanism behind its win), and a content-script failure
+handler falls back to them as a silent safety net if the ML call itself
+breaks — neither is user-facing. The
 `detection-false-negative-reduction-design.md` spec's 5-option menu is
-superseded by this (it was the incremental path, this is the actual
-rewrite).
+superseded reference material.
 
 ## What this is
 
@@ -35,10 +38,14 @@ and a marketing landing page.
 
 ## Shipped and working
 
-- **Detection pipeline** (`extension/detection/`): two-stage regex
-  engine (`scoreText()` → `classifyIntent()`) + field extractor
-  (dates/times/titles/recurrence). Runs client-side in the content
-  script on the user's own compose box only.
+- **Detection pipeline** (`extension/detection/`): on-device ML
+  classification (`layered` default, `full` alternative, toggle in
+  Settings → Detection) plus a field extractor (dates/times/titles/
+  recurrence) unchanged from before. The original rules-only engine
+  (`scoreText()`/`classifyIntent()`) lives on as `layered`'s free
+  fast-path component and as a silent error-recovery fallback — not a
+  user-selectable mode anymore. Runs client-side, on the user's own
+  compose box only.
 - **Calendar dashboard** (`extension/dashboard/`): month/week views,
   independent mini-calendar for jumping dates without losing the main
   view, a month/year picker dropdown, multi-group event pills (stacked
@@ -69,25 +76,25 @@ and a marketing landing page.
   of a broken one when Supabase is unreachable, and dashboard also shows
   "Sign in required" when opened directly while signed out. Not yet
   manually verified — see `TO_TEST.md` item 3.
-- **ML-based detection strategies, experimental, opt-in** (2026-10-03,
-  commits `b8be3a2`/`d482bd1`/`9acff60`/`d5d1f1b`): on-device Transformers.js
-  classification (`extension/offscreen/`), two new strategies
-  (`layered`/`full`) selectable in Settings → Detection, a benchmark
-  harness (`npm run bench`) proving `layered` beats both alternatives.
-  `legacy` (today's rules engine) remains the default. Migration
-  `023_add_classification_strategy.sql` written but **not yet run
-  against the live Supabase project** — no DB access from this
-  environment to apply it.
+- **ML-based detection strategies** (2026-10-03 build, 2026-10-06 made
+  default): on-device Transformers.js classification
+  (`extension/offscreen/`), a benchmark harness (`npm run bench`)
+  proving `layered` beats both `full` and the old rules-only engine, and
+  — following that result — the old engine removed as a selectable
+  option. Settings → Detection is now a `layered`/`full` toggle,
+  `layered` is the default. Migration `023_add_classification_strategy.sql`
+  written but **not yet run against the live Supabase project** — no DB
+  access from this environment to apply it; local use works regardless,
+  cross-device sync of this one setting won't until it's run.
 
 ## Known gaps / open items
 
-- **Decide whether to switch the default detection strategy** from
-  `legacy` to `layered` given the benchmark result above — the data
-  points one way but nobody's flipped the switch yet. `layered`'s own
-  remaining false positives (questions about an existing plan, habitual
-  "every weekend" statements, non-English text) mirror guards `legacy`
-  already has that the model call doesn't inherit — a likely-valuable,
-  not-yet-built follow-up.
+- **`layered`'s remaining false positives** (questions about an existing
+  plan, habitual "every weekend" statements, non-English text) mirror
+  guards the old rules engine's `classifyIntent()` already has that the
+  model call doesn't inherit when it's reached — a likely-valuable,
+  not-yet-built follow-up (apply those same guards as a post-filter on
+  the model's verdict).
 - **GLiNER span-extraction spike** (location/participant enhancement)
   deliberately deferred — both new strategies ship with the existing
   regex extractor unchanged for now.

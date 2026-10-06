@@ -75,14 +75,19 @@
         <div class="font-mono text-xs text-on-muted">Threshold: <strong id="sensitivity-display" class="text-on-surface">2</strong></div>
       </div>
 
-      <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">
-        <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Detection Engine <span class="text-on-muted">(experimental)</span></label>
-        <p class="text-sm text-on-muted -mt-1">Legacy is the current rule-based engine. The other two are on-device ML models being benchmarked against it — expect them to be slower per message and occasionally wrong while this is being evaluated.</p>
-        <select id="classification-strategy-select" class="border border-outline px-3 py-1.5 text-sm bg-surface focus:outline-none">
-          <option value="legacy">Legacy (rules-based, default)</option>
-          <option value="layered">ML — Layered (rules fast-path + model for ambiguous text)</option>
-          <option value="full">ML — Full replacement (model decides every message)</option>
-        </select>
+      <div class="setting-group flex items-center justify-between gap-4 mb-8 pb-8 border-b border-outline-soft">
+        <div>
+          <label class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">Detection Engine <span class="text-on-muted">(experimental)</span></label>
+          <p class="text-sm text-on-muted mt-1">On-device ML models, no server involved either way. Layered keeps a free, instant pre-check before the model and scored higher in our own benchmark (86.2% vs 77.5% F1) — Full replacement sends every message straight to the model instead.</p>
+          <div class="flex items-center justify-between mt-2 font-mono text-[9px] font-bold tracking-wider uppercase text-on-muted max-w-[220px]">
+            <span>Layered</span>
+            <span>Full replacement</span>
+          </div>
+        </div>
+        <label class="toggle relative inline-flex items-center cursor-pointer shrink-0">
+          <input type="checkbox" id="toggle-classification-strategy" class="sr-only peer" />
+          <div class="w-9 h-5 bg-surface-top border border-outline peer-checked:bg-primary peer-checked:border-primary after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-on-primary after:w-4 after:h-4 after:border after:border-outline after:transition-all peer-checked:after:translate-x-4 peer-checked:after:border-on-primary"></div>
+        </label>
       </div>
 
       <div class="setting-group flex flex-col gap-3 mb-8 pb-8 border-b border-outline-soft">

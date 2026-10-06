@@ -23,7 +23,7 @@ let settings = {
   placeWords:           [],
   sensitivity:          2,
   notificationsEnabled: true,
-  classificationStrategy: "legacy",
+  classificationStrategy: "layered",
 };
 
 
@@ -127,7 +127,9 @@ async function syncRemoteSettings(fromLiveUpdate = false) {
       contacts:             remote.contacts              || [],
       sensitivity:          remote.sensitivity           ?? 2,
       notificationsEnabled: remote.notifications_enabled ?? true,
-      classificationStrategy: remote.classification_strategy || "legacy",
+      // Normalizes anything unexpected (including a stale pre-rewrite
+      // "legacy" value) to "layered" rather than passing it through.
+      classificationStrategy: remote.classification_strategy === "full" ? "full" : "layered",
       priorityNames:        remote.priority_names        || [],
       activityWords:        remote.activity_words        || [],
       meetingWords:         remote.meeting_words         || [],
@@ -236,11 +238,11 @@ function renderSensitivity() {
   el('sensitivity-display').textContent = settings.sensitivity;
 }
 
-// 'legacy' (default), 'layered', and 'full' are being benchmarked against
-// each other (see tests/benchmark/) - exposed here as an experimental,
-// opt-in switch rather than a decided-upon setting.
+// 'layered' (default, benchmark winner - see tests/benchmark/) vs
+// 'full' - both ML-based; the old rules-only 'legacy' mode has been
+// removed as a selectable strategy entirely.
 function renderClassificationStrategy() {
-  el('classification-strategy-select').value = settings.classificationStrategy;
+  el('toggle-classification-strategy').checked = settings.classificationStrategy === 'full';
 }
 
 function renderTriggerTags() {
@@ -461,8 +463,8 @@ function wireControls() {
     persistLocal();
   });
 
-  el('classification-strategy-select').addEventListener('change', () => {
-    settings.classificationStrategy = el('classification-strategy-select').value;
+  el('toggle-classification-strategy').addEventListener('change', () => {
+    settings.classificationStrategy = el('toggle-classification-strategy').checked ? 'full' : 'layered';
     persistLocal();
   });
 

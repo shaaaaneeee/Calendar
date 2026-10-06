@@ -148,36 +148,40 @@ let latestAnalyzeRequestId = 0;
 async function analyzeText(text, platform, fromSend = false) {
   const settings = await window.PlanWiseStorage.getSettings();
   const requestId = ++latestAnalyzeRequestId;
-  const strategy = settings.classificationStrategy || "legacy";
+  // Only "layered" and "full" are user-selectable (see settings.html's
+  // toggle) - the old rules-only "legacy" mode has been removed as a
+  // strategy choice. window.PlanWiseEngine.analyzeIntent() still exists
+  // and is used below, but only as a silent safety net if the ML call
+  // itself fails - never as something a user picks.
+  const strategy = settings.classificationStrategy === "full" ? "full" : "layered";
 
   let result;
-  if (strategy === "legacy") {
+  try {
+    const strategyResult = strategy === "full"
+      ? await window.PlanWiseStrategyFull.classify(text, window.PlanWiseML.classify)
+      : await window.PlanWiseStrategyLayered.classify(text, settings, window.PlanWiseML.classify);
+
+    // The text has already been superseded by newer typing - drop this
+    // response rather than act on text that's no longer current.
+    if (requestId !== latestAnalyzeRequestId) return;
+
+    result = {
+      triggered: strategyResult.intent === "CONFIRM",
+      score: null,
+      intent: strategyResult.intent,
+      reason: strategyResult.reason,
+      matches: {},
+      votes: {},
+      text,
+    };
+  } catch (err) {
+    // Fail open: a broken/slow ML call (offscreen doc down, model failed
+    // to load, etc.) must never silently drop a real plan. Fall back to
+    // the old rules engine for this one message only - not a mode switch,
+    // just a safety net so a transient ML failure doesn't mean "PlanWise
+    // stopped working" for the rest of the session.
+    console.warn(`[PlanWise] "${strategy}" strategy failed, falling back to the rule engine for this message:`, err.message);
     result = window.PlanWiseEngine.analyzeIntent(text, settings);
-  } else {
-    try {
-      const strategyResult = strategy === "full"
-        ? await window.PlanWiseStrategyFull.classify(text, window.PlanWiseML.classify)
-        : await window.PlanWiseStrategyLayered.classify(text, settings, window.PlanWiseML.classify);
-
-      // The text has already been superseded by newer typing - drop this
-      // response rather than act on text that's no longer current.
-      if (requestId !== latestAnalyzeRequestId) return;
-
-      result = {
-        triggered: strategyResult.intent === "CONFIRM",
-        score: null,
-        intent: strategyResult.intent,
-        reason: strategyResult.reason,
-        matches: {},
-        votes: {},
-        text,
-      };
-    } catch (err) {
-      // Fail open: a broken/slow ML call must never silently drop a real
-      // plan. Fall back to the legacy engine for this message only.
-      console.warn(`[PlanWise] "${strategy}" strategy failed, falling back to legacy engine:`, err.message);
-      result = window.PlanWiseEngine.analyzeIntent(text, settings);
-    }
   }
 
   console.log(

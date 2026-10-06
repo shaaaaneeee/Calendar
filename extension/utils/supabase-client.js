@@ -439,7 +439,7 @@ const SupabaseSettings = {
         meeting_words:         settings.meetingWords         || [],
         items:                 settings.items                || [],
         place_words:           settings.placeWords           || [],
-        classification_strategy: settings.classificationStrategy || 'legacy',
+        classification_strategy: settings.classificationStrategy === 'full' ? 'full' : 'layered',
       });
 
     if (error) throw error;

@@ -1,5 +1,36 @@
 # TODO
 
+## Legacy rules-only strategy removed; toggle replaces the 3-way selector (2026-10-06)
+
+Following the benchmark below, `legacy` has been removed as a
+**selectable** detection strategy entirely — Settings → Detection now has
+a toggle switch between `layered` (default, left/unchecked — the
+benchmark winner) and `full` (right/checked), not a 3-option dropdown.
+`DEFAULT_SETTINGS.classificationStrategy` changed from `"legacy"` to
+`"layered"`; migration 023 edited in place (never applied to the live
+project, so no follow-up migration needed) to drop `'legacy'` from its
+`CHECK` constraint and change its DB-side default to `'layered'` too.
+
+**What did *not* get deleted, deliberately:** `rules.js`/`engine.js`
+themselves, and the `analyzeIntent()`/`classifyIntent()`/`scoreText()`
+functions in them. `strategy-layered.js` still genuinely depends on
+`HARD_BLOCK_RULES`/`CREATION_PHRASES`/`scoreText()` as its free fast-path
+— that dependency is exactly why `layered` beat `full` in the benchmark,
+so removing those files would have broken the strategy the user chose to
+keep. `content-script.js`'s ML-call failure handler also still falls
+back to `analyzeIntent()` as a silent safety net (not a selectable mode)
+so a broken offscreen document doesn't mean zero detection for the rest
+of the session — flagging this explicitly since "remove the rule engine"
+could be read either way; this is the judgment call made, reversible if
+that's not what was wanted. `tests/detection.test.js`'s 80 cases and the
+benchmark's own `legacy` comparison column are both left as historical/
+regression material, not removed.
+
+Verified end-to-end against a real loaded unpacked extension (not just
+Jest): fresh-profile default resolves to `layered`, the full
+content-script → service worker → offscreen → model round trip still
+works, zero console errors. Full Jest suite (191/191) still green.
+
 ## Detection engine rewrite — Phase 0-3 done, real benchmark results in (2026-10-03)
 
 Plan at `C:\Users\shane\.claude\plans\sleepy-foraging-kettle.md` (dual-

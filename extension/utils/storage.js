@@ -21,10 +21,10 @@ const DEFAULT_SETTINGS = {
   placeWords: [],
   sensitivity: 2,
   notificationsEnabled: true,
-  // 'legacy' = rules.js/engine.js (default, unchanged behavior). 'layered'
-  // and 'full' are the two ML-based strategies being benchmarked against
-  // each other - see tests/benchmark/.
-  classificationStrategy: "legacy"
+  // 'layered' (default - won the benchmark, see tests/benchmark/) or
+  // 'full' - both on-device ML strategies. The old rules-only 'legacy'
+  // mode has been removed as a selectable strategy.
+  classificationStrategy: "layered"
 };
 
 const Storage = {
