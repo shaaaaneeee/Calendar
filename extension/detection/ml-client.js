@@ -8,7 +8,16 @@
  * rule engine) rather than drop a real plan on a timeout.
  */
 
-const ML_TIMEOUT_MS = 8000;
+// Cold start (first call after an extension reload/browser restart - the
+// offscreen document has to spin up and download/load the model) measured
+// at ~15s in manual testing; warm calls return in ~200ms regardless. 8s
+// was too short and made the very first real-world message on a fresh
+// load always time out and silently fall back to the rule engine - found
+// by a user noticing bare-event-noun plans weren't being caught, which
+// traced back to analyzeIntent()'s telltale "below_threshold"/
+// "no_intent_signal_drop" reasons showing up in the console instead of
+// the ML strategies' own reason strings.
+const ML_TIMEOUT_MS = 30000;
 
 function withTimeout(promise, ms) {
   return new Promise((resolve, reject) => {
