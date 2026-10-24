@@ -6,20 +6,28 @@
  * inference cost on every single flush, not just the ambiguous ones.
  * Built specifically to be measured against Strategy A on the same
  * benchmark (see tests/benchmark/) before either becomes the default.
+ *
+ * Wrapped in an IIFE: every manifest content script shares one global
+ * scope, and strategy-layered.js declares the same ML_LABELS/classify
+ * names - a top-level `const` redeclaration is a SyntaxError that kills
+ * this whole file, leaving window.PlanWiseStrategyFull undefined. Jest
+ * never caught it because require() gives each file its own module scope.
  */
 
-const ML_LABELS = [
-  "a plan to meet or do something at a specific time",
-  "a personal to-do or reminder, not tied to meeting anyone",
-  "neither",
-];
+(() => {
+  const ML_LABELS = [
+    "a plan to meet or do something at a specific time",
+    "a personal to-do or reminder, not tied to meeting anyone",
+    "neither",
+  ];
 
-async function classify(text, classifyFn) {
-  const modelResult = await classifyFn(text, ML_LABELS);
-  const intent = modelResult.label === ML_LABELS[0] ? "CONFIRM" : "REJECT";
-  return { intent, reason: `model: "${modelResult.label}"`, source: "model", modelResult };
-}
+  async function classify(text, classifyFn) {
+    const modelResult = await classifyFn(text, ML_LABELS);
+    const intent = modelResult.label === ML_LABELS[0] ? "CONFIRM" : "REJECT";
+    return { intent, reason: `model: "${modelResult.label}"`, source: "model", modelResult };
+  }
 
-if (typeof window !== "undefined") {
-  window.PlanWiseStrategyFull = { classify, ML_LABELS };
-}
+  if (typeof window !== "undefined") {
+    window.PlanWiseStrategyFull = { classify, ML_LABELS };
+  }
+})();

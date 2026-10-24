@@ -17,33 +17,35 @@
 // traced back to analyzeIntent()'s telltale "below_threshold"/
 // "no_intent_signal_drop" reasons showing up in the console instead of
 // the ML strategies' own reason strings.
-const ML_TIMEOUT_MS = 30000;
+(() => {
+  const ML_TIMEOUT_MS = 30000;
 
-function withTimeout(promise, ms) {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("ML call timed out")), ms);
-    promise.then(
-      (value) => { clearTimeout(timer); resolve(value); },
-      (err) => { clearTimeout(timer); reject(err); }
-    );
-  });
-}
-
-async function classify(text, labels) {
-  const response = await withTimeout(
-    chrome.runtime.sendMessage({ type: "ML_CLASSIFY", text, labels }),
-    ML_TIMEOUT_MS
-  );
-  if (!response || !response.ok) {
-    throw new Error(response?.error || "ML_CLASSIFY failed with no error detail");
+  function withTimeout(promise, ms) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("ML call timed out")), ms);
+      promise.then(
+        (value) => { clearTimeout(timer); resolve(value); },
+        (err) => { clearTimeout(timer); reject(err); }
+      );
+    });
   }
-  return response.result;
-}
 
-async function ping() {
-  return chrome.runtime.sendMessage({ type: "ML_PING" });
-}
+  async function classify(text, labels) {
+    const response = await withTimeout(
+      chrome.runtime.sendMessage({ type: "ML_CLASSIFY", text, labels }),
+      ML_TIMEOUT_MS
+    );
+    if (!response || !response.ok) {
+      throw new Error(response?.error || "ML_CLASSIFY failed with no error detail");
+    }
+    return response.result;
+  }
 
-if (typeof window !== "undefined") {
-  window.PlanWiseML = { classify, ping };
-}
+  async function ping() {
+    return chrome.runtime.sendMessage({ type: "ML_PING" });
+  }
+
+  if (typeof window !== "undefined") {
+    window.PlanWiseML = { classify, ping };
+  }
+})();
