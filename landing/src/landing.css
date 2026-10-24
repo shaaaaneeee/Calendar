@@ -370,7 +370,8 @@ a[href] {
   margin: 0;
   font-family: "Fraunces", Georgia, serif;
   font-weight: 500;
-  letter-spacing: -0.065em;
+  letter-spacing: -0.035em;
+  word-spacing: 0.08em;
 }
 
 .hero-title {
